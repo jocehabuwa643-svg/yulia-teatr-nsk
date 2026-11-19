@@ -29,14 +29,23 @@
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
 <script defer src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
 <style>
-/* Печать: только активный калькулятор и результат */
+/* Печать / PDF: только активный калькулятор и результат, всегда светлая палитра независимо от темы экрана */
 @media print{
-  #veil,.top,.hero-cta,#calcnav,.toolrow,.filters,.periods,details,.analytics{display:none!important}
-  body{background:#fff;color:#000}
+  @page{margin:14mm}
+  :root,:root[data-theme="dark"]{--bg:#fff;--card:#fff;--card2:#F5F5F7;--text:#0A0A0A;--text2:#1C1C1E;--mutedS:#2C2C2E;--muted:#2C2C2E;--line:#BDBDC2;--chip:#F5F5F7;--seg:#E5E5EA;--track:#E5E5EA;--solid:#1C1C1E;--on-solid:#fff;--shadow:none;--shadow-lg:none;color-scheme:light}
+  #veil,.skip,.top,#mobnav,.toast,.databanner,#overview,.section:not(#calc),.footin,.hero-cta,#calcnav,.toolrow,.filters,.periods,details,.analytics,.noscript{display:none!important}
+  html,body{background:#fff!important;color:#000!important}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv,.js-ready .rv{opacity:1!important;transform:none!important}
+  .lift::after,.btn::after,.mode::after{display:none}
+  .section{padding-top:0}
   .card{box-shadow:none;border:1px solid #999;break-inside:avoid}
   #calcpanels>div[hidden]{display:none!important}
   #calcpanels>div:not([hidden]){display:block!important}
+  .calcgrid{grid-template-columns:1fr 1fr}
   .result{position:static}
+  .costbar,.leg-mono .sw,.track>span{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  a{text-decoration:none}
 }
 </style>
 </head>
@@ -143,18 +152,18 @@
 <!-- ===== Шапка ===== -->
 <header class="top" id="topbar">
   <div class="wrap topin">
-    <a class="brand" href="#overview">
+    <a class="brand" href="#overview" aria-label="Помощник Юлии — к началу">
       <svg class="mark" viewBox="0 0 32 30" fill="none" aria-hidden="true" focusable="false"><path d="M16 27C12 24 3 18.5 3 10.5 3 6.2 6.2 3.4 10 3.4c2.6 0 4.9 1.5 6 3.9 1.1-2.4 3.4-3.9 6-3.9 3.8 0 7 2.8 7 7.1 0 8-9 13.5-13 16.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M11.5 22.5a4.5 4.5 0 0 1 9 0M13.5 22.5a2.5 2.5 0 0 1 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       <span><span class="bt">Помощник Юлии</span><small>Театр и студия · НСК</small></span>
     </a>
     <nav class="nav" aria-label="Основное меню"></nav>
     <div class="headtools">
       <div class="seg-theme" role="group" aria-label="Тема интерфейса">
-        <button id="thLight" aria-pressed="true"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><span>Светлая</span></button>
-        <button id="thDark" aria-pressed="false"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Тёмная</span></button>
+        <button id="thLight" type="button" aria-label="Светлая тема" aria-pressed="true"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><span>Светлая</span></button>
+        <button id="thDark" type="button" aria-label="Тёмная тема" aria-pressed="false"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Тёмная</span></button>
       </div>
-      <button class="ghostbtn" id="replay"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg><span>Заставка</span></button>
-      <button class="ghostbtn" id="menubtn" aria-expanded="false" aria-controls="mobnav" aria-label="Меню"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
+      <button class="ghostbtn" id="replay" type="button" aria-label="Показать заставку"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg><span>Заставка</span></button>
+      <button class="ghostbtn" id="menubtn" type="button" aria-expanded="false" aria-controls="mobnav" aria-label="Открыть меню"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
     </div>
   </div>
   <nav id="mobnav" class="wrap" aria-label="Мобильное меню"></nav>
@@ -163,18 +172,21 @@
 <main id="main" class="wrap">
 <!-- ===== Обзор ===== -->
 <section id="overview" class="hero" aria-label="Обзор">
+  <div class="hero-card">
+  <svg class="hero-mark" viewBox="0 0 32 30" fill="none" aria-hidden="true" focusable="false"><path d="M16 27C12 24 3 18.5 3 10.5 3 6.2 6.2 3.4 10 3.4c2.6 0 4.9 1.5 6 3.9 1.1-2.4 3.4-3.9 6-3.9 3.8 0 7 2.8 7 7.1 0 8-9 13.5-13 16.5Z" stroke="currentColor" stroke-width=".7" stroke-linejoin="round"/></svg>
   <div class="eyebrow"><span class="dash"></span>Личный бизнес-помощник Юлии · Новосибирск</div>
   <h1>Детский театр и студия — от первого зала до своей сцены</h1>
-  <p class="lead">Выезды по 300–350 ₽ с декабря 2026. Своя база 130 м² на Богдашке — с февраля 2027. Всё считается, рынок под рукой, законы — с источниками.</p>
+  <p class="lead" id="lead">Выезды с декабря 2026, своя база на Богдашке — с февраля 2027.</p>
   <div class="hero-cta">
     <a class="btn primary" href="#calc"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 7h.01"/><rect width="8" height="8" x="13" y="3" rx="2"/><path d="M17 7h.01"/><rect width="8" height="8" x="3" y="13" rx="2"/><path d="M7 17h.01"/><rect width="8" height="8" x="13" y="13" rx="2"/><path d="M17 17h.01"/></svg>Открыть калькуляторы</a>
     <a class="btn secondary" href="#launch">План на 30 дней<svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
   </div>
-  <p class="tiny" id="dataStatus" style="margin-top:18px"></p>
-  <div id="kpis" class="kpis cascade" style="margin-top:12px"></div>
+  <p class="datastat" id="dataStatus"></p>
+  </div>
+  <div id="kpis" class="kpis cascade"></div>
 
-  <div class="analytics" style="margin-top:26px">
-    <article class="card rv" style="padding:clamp(18px,2vw,28px)">
+  <div class="analytics">
+    <article class="card rv">
       <div class="rowline"><h3>Денежный поток</h3>
         <div class="seg" id="chartSwitch" role="group" aria-label="Вид графика">
           <button class="on" data-view="net" aria-pressed="true">Накопленный</button>
@@ -184,20 +196,20 @@
       <p class="tiny" style="margin-top:10px">Декабрь 2026 · Август 2027 · тыс. ₽ · Сен–Ноя — проекция</p>
       <div class="chartbox"><canvas id="cash" aria-label="Прогноз денежного потока в тысячах рублей" role="img"></canvas></div>
       <p class="tiny" style="margin-top:12px">Выезды и база · вклад за месяц, тыс. ₽</p>
-      <div class="chartbox" style="height:190px"><canvas id="split" aria-label="Вклад выездов и базы по месяцам в тысячах рублей" role="img"></canvas></div>
+      <div class="chartbox short"><canvas id="split" aria-label="Вклад выездов и базы по месяцам в тысячах рублей" role="img"></canvas></div>
       <div class="leg-mono" aria-hidden="true"><span class="s1"><span class="sw"></span>Выезды</span><span class="s3"><span class="sw"></span>База</span></div>
       <div class="readout" id="monthRead" aria-live="polite"></div>
       <div class="periods" id="periods" role="group" aria-label="Выбрать месяц"></div>
       <details><summary>Все месяцы: числа и сезонность</summary><div id="cashTable"></div></details>
     </article>
-    <article class="card rv" style="padding:clamp(18px,2vw,28px)">
+    <article class="card rv">
       <div class="rowline"><h3>Как растёт база</h3><span class="tiny">за месяц · без выездов</span></div>
       <div id="stages" class="stagelist"></div>
-      <figure style="margin-top:14px">
+      <figure class="growth-fig">
         <figcaption class="tiny" style="margin-bottom:8px">Рентабельность базы · прибыль / выручка</figcaption>
-        <svg id="marginSvg" viewBox="0 0 400 82" width="100%" height="82" role="img" aria-label="Рентабельность по стадиям: старт, разгон, зрелость">
-          <path d="M6 35H394" stroke="var(--line)" stroke-dasharray="3 4"/>
-          <path class="growth" d="M27 65 L200 34 L364 16" fill="none" stroke="currentColor" stroke-width="2.5" pathLength="1"/>
+        <svg id="marginSvg" viewBox="0 0 320 116" role="img" aria-label="Рентабельность по стадиям: нет данных">
+          <path class="zero" d="M8 86H312" stroke="var(--line)" stroke-dasharray="3 4" fill="none"/>
+          <path class="growth" d="" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           <g id="marginPts"></g>
         </svg>
       </figure>
@@ -220,95 +232,60 @@
 </section>
 
 <!-- ===== Схемы ===== -->
-<section class="section" aria-label="Схемы проекта">
+<section id="schemes" class="section" aria-label="Схемы проекта">
   <div class="secthead"><div><div class="eyebrow"><span class="dash"></span>Как устроен запуск</div><h2>Четыре схемы вместо длинных текстов</h2></div></div>
   <div class="schemes">
     <article class="card scheme rv">
-      <h3>Двухфазный старт</h3>
-      <svg viewBox="0 0 560 190" role="img" aria-label="Фаза 1: выезды, 600 000 рублей, 60 000 в месяц. Фаза 2: своя сцена, 585 000 рублей, 211 000 в месяц">
-        <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--silver)"/></marker></defs>
-        <rect x="8" y="26" width="230" height="120" rx="18" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <text x="28" y="54" class="t-strong" font-size="13">Фаза 01 · Декабрь — январь</text>
-        <text x="28" y="76" font-size="12">Театр на выезде, без аренды</text>
-        <text x="28" y="106" class="t-strong" font-size="21">600 000 ₽</text>
-        <text x="28" y="126" font-size="11">стартовый бюджет · фикс 60 000 ₽/мес</text>
-        <rect x="322" y="26" width="230" height="120" rx="18" fill="currentColor" opacity=".06"/>
-        <rect x="322" y="26" width="230" height="120" rx="18" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <text x="342" y="54" class="t-strong" font-size="13">Фаза 02 · С февраля 2027</text>
-        <text x="342" y="76" font-size="12">Своя сцена на Богдашке, 130 м²</text>
-        <text x="342" y="106" class="t-strong" font-size="21">585 000 ₽</text>
-        <text x="342" y="126" font-size="11">второй этап · фикс 211 000 ₽/мес</text>
-        <line x1="240" y1="86" x2="318" y2="86" stroke="var(--silver)" stroke-width="2" marker-end="url(#ar)"/>
-        <text x="279" y="166" text-anchor="middle" font-size="11">Бюджет финансирования: 1 185 000 ₽</text>
-      </svg>
-      <p class="cap">Экономия на готовом ремонте — 650 000 ₽. Пустое помещение: 1 835 000 ₽ до холостой аренды.</p>
+      <h3><span class="kicon"><i data-lucide="layers" aria-hidden="true"></i></span>Двухфазный старт</h3>
+      <div class="flow">
+        <div class="node">
+          <span class="tag">Фаза 01 · дек — янв</span>
+          <b class="nm">Театр на выезде, без аренды</b>
+          <span class="big" data-v="phase1">—</span>
+          <small>Фикс <span data-v="fix1">—</span></small>
+        </div>
+        <div class="link" aria-hidden="true"><i data-lucide="arrow-right"></i></div>
+        <div class="node on">
+          <span class="tag">Фаза 02 · с февраля 2027</span>
+          <b class="nm">Своя сцена на Богдашке</b>
+          <span class="big" data-v="phase2">—</span>
+          <small>Фикс <span data-v="fix2">—</span></small>
+        </div>
+      </div>
+      <div class="sumline"><span>Бюджет финансирования</span><b data-v="total">—</b></div>
+      <p class="cap">Экономия на готовом ремонте — <b data-v="saving">—</b>. Пустое помещение — <b data-v="empty">—</b> до холостой аренды.</p>
     </article>
     <article class="card scheme rv">
-      <h3>Воронка роста</h3>
-      <svg viewBox="0 0 560 190" role="img" aria-label="Спектакль в школе, QR-билет, студия, день рождения">
-        <g font-size="12">
-          <rect x="10" y="18" width="540" height="34" rx="10" fill="currentColor" opacity=".9"/>
-          <text x="280" y="40" text-anchor="middle" fill="var(--card)" font-weight="700">Спектакль в школе · 300–350 ₽</text>
-          <rect x="52" y="62" width="456" height="34" rx="10" fill="currentColor" opacity=".45"/>
-          <text x="280" y="84" text-anchor="middle" fill="var(--text)" font-weight="700">QR-билет на обороте памятки · 10 ₽/зритель</text>
-          <rect x="94" y="106" width="372" height="34" rx="10" fill="currentColor" opacity=".22"/>
-          <text x="280" y="128" text-anchor="middle" fill="var(--text)" font-weight="700">Студия · абонемент 4 200–4 400 ₽/мес</text>
-          <rect x="136" y="150" width="288" height="34" rx="17" fill="none" stroke="currentColor" stroke-width="1.6"/>
-          <text x="280" y="172" text-anchor="middle" fill="var(--text)" font-weight="700">День рождения · чек 9–11 тыс. ₽</text>
-        </g>
-      </svg>
+      <h3><span class="kicon"><i data-lucide="filter" aria-hidden="true"></i></span>Воронка роста</h3>
+      <ol class="funnel" aria-label="Воронка: спектакль в школе, QR-билет, студия, день рождения">
+        <li style="--w:100%"><b>Спектакль в школе</b><span>билет <span data-v="ticket">—</span></span></li>
+        <li style="--w:90%"><b>QR-билет на обороте памятки</b><span>печать <span data-v="print">—</span></span></li>
+        <li style="--w:80%"><b>Студия</b><span>абонемент <span data-v="sub">—</span></span></li>
+        <li style="--w:70%"><b>День рождения</b><span>чек <span data-v="party">—</span></span></li>
+      </ol>
       <p class="cap">Раздельные QR-коды по школам показывают конверсию. Контакты детей не собираются.</p>
     </article>
     <article class="card scheme rv">
-      <h3>Без наличных: 44-ФЗ / 54-ФЗ</h3>
-      <svg viewBox="0 0 560 190" role="img" aria-label="Три безналичные схемы: договор с учреждением, QR-билет родителю, уполномоченный родитель">
-        <g font-size="11.5">
-          <rect x="10" y="14" width="172" height="130" rx="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <text x="96" y="40" text-anchor="middle" class="t-strong" font-size="12">Схема 1</text>
-          <text x="96" y="62" text-anchor="middle">Учреждение → ИП</text>
-          <text x="96" y="82" text-anchor="middle">договор, п. 4/5 ч. 1</text>
-          <text x="96" y="100" text-anchor="middle">ст. 93 44-ФЗ</text>
-          <text x="96" y="126" text-anchor="middle" fill="var(--silver)">лимиты — заказчик</text>
-          <rect x="194" y="14" width="172" height="130" rx="14" fill="currentColor" opacity=".06"/>
-          <rect x="194" y="14" width="172" height="130" rx="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <text x="280" y="40" text-anchor="middle" class="t-strong" font-size="12">Схема 2</text>
-          <text x="280" y="62" text-anchor="middle">Родитель → QR-билет</text>
-          <text x="280" y="82" text-anchor="middle">платёжная ссылка,</text>
-          <text x="280" y="100" text-anchor="middle">кассовый чек 54-ФЗ</text>
-          <text x="280" y="126" text-anchor="middle" fill="var(--silver)">добровольно</text>
-          <rect x="378" y="14" width="172" height="130" rx="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 5"/>
-          <text x="464" y="40" text-anchor="middle" class="t-strong" font-size="12">Схема 3</text>
-          <text x="464" y="62" text-anchor="middle">Уполномоченный</text>
-          <text x="464" y="82" text-anchor="middle">родитель → договор</text>
-          <text x="464" y="100" text-anchor="middle">внеурочный показ</text>
-          <text x="464" y="126" text-anchor="middle" fill="var(--silver)">полномочия письменно</text>
-          <text x="280" y="172" text-anchor="middle" fill="var(--silver)">Родком — не юрлицо и не касса · ни одна схема не гарантирует вход в учреждение</text>
-        </g>
-      </svg>
-      <p class="cap">Учитель не собирает деньги. Продавец, цена, возврат и подтверждение расчёта известны заранее.</p>
+      <h3><span class="kicon"><i data-lucide="receipt" aria-hidden="true"></i></span>Без наличных: 44-ФЗ / 54-ФЗ</h3>
+      <div class="routes">
+        <div class="route"><span class="tag">Схема 1</span><b>Учреждение → ИП</b><small>Договор, п. 4/5 ч. 1 ст. 93 44-ФЗ. Лимиты — у заказчика.</small></div>
+        <div class="route"><span class="tag">Схема 2</span><b>Родитель → QR-билет</b><small>Платёжная ссылка, кассовый чек 54-ФЗ. Добровольно.</small></div>
+        <div class="route"><span class="tag">Схема 3</span><b>Уполномоченный родитель → договор</b><small>Внеурочный показ. Полномочия письменно.</small></div>
+      </div>
+      <p class="cap">Учитель не собирает деньги. Родком — не юрлицо и не касса; ни одна схема не гарантирует вход в учреждение.</p>
+      <details><summary>Что известно заранее</summary><p>Продавец, цена, возврат и подтверждение расчёта должны быть понятны родителю до оплаты.</p></details>
     </article>
     <article class="card scheme rv">
-      <h3>План зала 130 м²</h3>
-      <svg viewBox="0 0 560 190" role="img" aria-label="План зала: сцена, зрительный зал, студия с зеркалами, фойе, реквизиторская">
-        <g>
-          <rect x="14" y="14" width="532" height="152" rx="16" fill="none" stroke="currentColor" stroke-width="1.8"/>
-          <rect x="34" y="30" width="200" height="44" rx="8" fill="currentColor" opacity=".9"/>
-          <text x="134" y="57" text-anchor="middle" fill="var(--card)" font-size="12" font-weight="700">Сцена и ширма</text>
-          <rect x="34" y="86" width="200" height="62" rx="8" fill="currentColor" opacity=".18"/>
-          <text x="134" y="112" text-anchor="middle" font-size="11.5">Зрительный зал</text>
-          <text x="134" y="130" text-anchor="middle" font-size="10.5" fill="var(--silver)">2,5–3,5 м²/участник · менее 50 чел.</text>
-          <rect x="250" y="30" width="140" height="70" rx="8" fill="none" stroke="currentColor" stroke-width="1.4"/>
-          <text x="320" y="60" text-anchor="middle" font-size="11.5">Студия · зеркала</text>
-          <text x="320" y="78" text-anchor="middle" font-size="10.5" fill="var(--silver)">группы до 10</text>
-          <rect x="406" y="30" width="122" height="70" rx="8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="5 5"/>
-          <text x="467" y="60" text-anchor="middle" font-size="11.5">Фойе · reception</text>
-          <text x="467" y="78" text-anchor="middle" font-size="10.5" fill="var(--silver)">QR на входе</text>
-          <rect x="250" y="112" width="278" height="36" rx="8" fill="currentColor" opacity=".07"/>
-          <text x="389" y="135" text-anchor="middle" font-size="11.5">Реквизит и гримёрная</text>
-          <text x="284" y="182" font-size="10.5" fill="var(--silver)">Вместимость определяет заключение по планировке и эвакуации, не площадь</text>
-        </g>
-      </svg>
-      <p class="cap">Ориентиры: первый этаж, СП 1.13130.2020 для путей эвакуации. План БТИ — до договора.</p>
+      <h3><span class="kicon"><i data-lucide="layout-dashboard" aria-hidden="true"></i></span>План зала, <span data-v="area">—</span> м²</h3>
+      <div class="hall" role="group" aria-label="План зала: сцена, зрительный зал, студия, фойе, реквизит">
+        <div class="stage">Сцена и ширма</div>
+        <div class="studio">Студия · зеркала<small>группы до 10</small></div>
+        <div class="foyer">Фойе<small>QR на входе</small></div>
+        <div class="seat">Зрительный зал<small>2,5–3,5 м² на участника · менее 50 человек</small></div>
+        <div class="prop">Реквизит и гримёрная</div>
+      </div>
+      <p class="cap">Вместимость определяет заключение по планировке и эвакуации, не площадь.</p>
+      <details><summary>Ориентиры по нормам</summary><p>Первый этаж, СП 1.13130.2020 для путей эвакуации. План БТИ — до подписания договора.</p></details>
     </article>
   </div>
 </section>
@@ -319,20 +296,36 @@
     <div><div class="eyebrow"><span class="dash"></span>Навигатор рынка</div><h2>Конкуренты и спрос Новосибирска</h2></div>
     <p class="tiny">Срез исследования: 18.11.2026. «Нет данных» — честный статус, не бесплатность.</p>
   </div>
-  <div id="marketCards"></div>
-  <div class="analytics" style="margin-top:14px">
-    <article class="card demandbox rv">
+  <div class="mk-kpis" id="marketKpis" aria-label="Сводка по конкурентам"></div>
+  <article class="card mk-panel rv">
+    <div class="rowline"><h3>Конкуренты и ориентиры</h3><span class="tiny" id="rivalsMeta"></span></div>
+    <div class="filters" id="marketFilters" role="group" aria-label="Фильтр конкурентов по группам"></div>
+    <div class="rivals" id="marketCards" aria-live="polite"></div>
+  </article>
+  <div class="mk-bento">
+    <article class="card mk-panel rv">
+      <div class="rowline"><h3>Цены билетов</h3><span class="tiny">₽ за человека</span></div>
+      <div id="priceChart"></div>
+      <p class="chartmeta" id="priceMeta"></p>
+    </article>
+    <article class="card mk-panel rv">
       <div class="rowline"><h3>Спрос по запросам</h3><span class="badge" id="demandBadge">нет источника</span></div>
       <div id="demandBox"></div>
     </article>
-    <article class="card demandbox rv">
-      <div class="rowline"><h3>Сезонность и календарь</h3><span class="tiny">школьные циклы</span></div>
-      <div class="calstrip" id="seasonStrip"></div>
+  </div>
+  <div class="mk-bento mk-bento-rev">
+    <article class="card mk-panel rv">
+      <div class="rowline"><h3>Сезонность выездов</h3><span class="tiny">показов в месяц</span></div>
+      <div class="seas" id="seasonStrip" role="img" aria-label="График сезонности выездов по месяцам"></div>
       <p class="chartmeta" id="chartMeta"></p>
-      <div id="holidayList" class="chips" style="margin-top:8px"></div>
+    </article>
+    <article class="card mk-panel rv">
+      <div class="rowline"><h3>Каникулы</h3><span class="tiny">приблизительно</span></div>
+      <div class="hcal" id="holidayCal"></div>
+      <div id="holidayList" class="chips"></div>
     </article>
   </div>
-  <article class="card rv" style="padding:clamp(18px,2vw,28px);margin-top:14px">
+  <article class="card mk-panel rv">
     <div class="rowline"><h3>Образовательная сеть</h3><span class="tiny">что считать клиентом</span></div>
     <div id="networkStats"></div>
   </article>
@@ -347,11 +340,11 @@
   <div class="mapgrid">
     <article class="card mapcard rv">
       <div class="mapmodes" role="group" aria-label="Масштаб карты">
-        <button class="mmode on" id="cityMode" aria-pressed="true">Новосибирск и Богдана Хмельницкого</button>
-        <button class="mmode" id="areaMode" aria-pressed="false">Города области</button>
+        <button type="button" class="mmode on" id="cityMode" aria-pressed="true">Новосибирск и Богдана Хмельницкого</button>
+        <button type="button" class="mmode" id="areaMode" aria-pressed="false">Города области</button>
       </div>
-      <div id="map" class="mapstage" aria-label="Карта площадок и гастрольных маршрутов"></div>
-      <p class="mapwarning" id="mapwarning" hidden></p>
+      <div id="map" class="mapstage" role="region" aria-label="Карта площадок и гастрольных маршрутов"></div>
+      <p class="mapwarning" id="mapwarning" role="status" hidden></p>
       <div class="mapkey" aria-hidden="true">
         <span><span class="keyshape k-home"></span>Домашняя зона</span>
         <span><span class="keyshape k-city"></span>Площадки</span>
@@ -362,7 +355,8 @@
     <article class="card mapcardtext rv">
       <label for="location" class="eyebrow" style="margin-top:0"><span class="dash"></span>Карточка локации</label>
       <select class="mapselect" id="location"></select>
-      <div id="locDetails"></div>
+      <div class="mapscen" id="mapScenario" role="group" aria-label="Сценарий выезда для расчёта прибыли дня"></div>
+      <div id="locDetails" aria-live="polite"></div>
     </article>
   </div>
 </section>
@@ -392,12 +386,12 @@
     <span class="badge"><span class="dotp"></span>Личный чек-лист</span>
   </div>
   <div class="checklist-grid">
-    <article class="card rv" style="padding:clamp(18px,2vw,28px)">
+    <article class="card rv">
       <div class="rowline"><h3 id="checklistTitle">10 шагов</h3></div>
       <div id="checks"></div>
-      <div class="tally"><span class="track" style="flex:1"><span id="checkbar"></span></span><b id="checkcount"></b></div>
+      <div class="tally"><span class="track"><span id="checkbar"></span></span><b id="checkcount" aria-live="polite"></b></div>
     </article>
-    <article class="card notes rv" style="padding:clamp(18px,2vw,28px)">
+    <article class="card notes rv">
       <div class="rowline"><h3>Заметки Юлии</h3></div>
       <label class="sr" for="note">Личные заметки Юлии</label>
       <textarea id="note" maxlength="20000" placeholder="Кому позвонить, о чём договорились, что проверить до следующего показа…"></textarea>

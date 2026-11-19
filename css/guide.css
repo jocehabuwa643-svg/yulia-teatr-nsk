@@ -1,1 +1,67 @@
-/* guide.css — стили раздела (заполняется исполнителем раздела). */
+/* guide.css — раздел «Справочник». Только токены из tokens.css; анимации — transform/opacity. */
+
+/* Вкладки: тач-цель ≥44px, на узком экране — горизонтальная прокрутка внутри ряда, не страницы */
+#guideTabs{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:thin}
+#guideTabs .tab{flex:0 0 auto;min-height:var(--tap);white-space:nowrap}
+#guideTabs .tab:focus-visible,.g-check input:focus-visible+.g-box,.g-actions .btn:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px}
+.g-count{font-size:11px;font-weight:700;opacity:.8;font-variant-numeric:tabular-nums}
+.found{margin-bottom:10px}
+
+.g-intro{font-size:13px;color:var(--mutedS);margin:0 0 10px;max-width:70ch}
+
+/* Прогресс вкладки */
+.g-prog{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.g-track{flex:1;display:block;height:6px;border-radius:999px;background:var(--track);overflow:hidden}
+.g-track>span{display:block;height:100%;width:100%;background:var(--solid);transform-origin:left center;transition:transform var(--dur) var(--spring)}
+.g-prog b{font-size:13px;font-variant-numeric:tabular-nums;min-width:48px;text-align:right}
+
+/* Сетка карточек */
+.g-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.g-grid--terms{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.g-card{border:1px solid var(--line);border-radius:var(--r-s);background:var(--card);padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.g-card h3{font-size:15px;line-height:1.3;margin:0;overflow-wrap:anywhere}
+.g-cat{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mutedS)}
+.g-text,.g-card p{font-size:13px;line-height:1.55;color:var(--text2);margin:0}
+.g-term{gap:6px}
+
+/* Риск → решение */
+.g-risk{display:grid;gap:6px}
+.g-risk small{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mutedS);margin-bottom:2px}
+.g-arrow{color:var(--muted);font-weight:700;line-height:1}
+
+/* Чекбоксы: вся строка — тач-цель ≥44px */
+.g-checks{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.g-check{position:relative;display:flex;align-items:center;gap:12px;min-height:var(--tap);cursor:pointer;padding:4px 0;font-size:13px;line-height:1.4}
+.g-check input{position:absolute;opacity:0;width:24px;height:24px;margin:0}
+.g-box{flex:0 0 22px;width:22px;height:22px;border-radius:7px;border:1.5px solid var(--silver);background:var(--card);display:grid;place-items:center;transition:transform .25s var(--spring),background .2s}
+.g-box::after{content:"";width:10px;height:5px;border-left:2px solid var(--on-solid);border-bottom:2px solid var(--on-solid);transform:rotate(-45deg) scale(0);margin-top:-2px;transition:transform .25s var(--spring)}
+.g-check input:checked+.g-box{background:var(--solid);border-color:var(--solid)}
+.g-check input:checked+.g-box::after{transform:rotate(-45deg) scale(1)}
+.g-check input:active+.g-box{transform:scale(.92)}
+.g-check input:checked~.g-lbl{color:var(--mutedS);text-decoration:line-through;text-decoration-thickness:1px}
+.g-lbl{min-width:0;overflow-wrap:anywhere}
+
+/* «Подробнее» и шаблоны */
+.g-more,.g-tpl{border-top:1px solid var(--line);padding-top:2px}
+.g-more summary,.g-tpl summary{min-height:var(--tap);display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--text)}
+.g-more summary:focus-visible,.g-tpl summary:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px;border-radius:6px}
+.g-more p{margin-bottom:8px}
+.g-fields{display:grid;gap:10px;margin-bottom:12px}
+.g-field label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--text2)}
+.g-field input{width:100%;min-height:var(--tap);padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card2);color:var(--text);font:inherit;font-size:14px}
+.g-field input:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:1px}
+.g-preview{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.55 ui-monospace,Consolas,monospace;color:var(--text2);background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 12px}
+.g-actions{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:6px}
+
+/* Пометка достоверности */
+.g-card p.g-note{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;line-height:1.45;color:var(--mutedS);border-top:1px solid var(--line);padding-top:10px}
+.g-note span+span::before{content:"· ";}
+.g-note a{color:var(--text);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
+.g-note--warn span:first-child{font-weight:700;color:var(--text)}
+
+@media (max-width:900px){.g-grid--terms{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){.g-grid,.g-grid--terms{grid-template-columns:1fr}}
+
+@media (prefers-reduced-motion:reduce){
+  .g-track>span,.g-box,.g-box::after{transition:none}
+}

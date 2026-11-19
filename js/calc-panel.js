@@ -117,7 +117,9 @@ export function rerender(id) {
   const fields = mod.controls(state.CFG);
   rangeValues(fields);
   const inputs = readInputs(fields);
-  const result = mod.calc(inputs, state.CFG, state.DATA.market);
+  // travel читает n/p/k/r/dk/own, а поля формы называются kids/ticket/… — маппинг в fromForm модуля
+  const calcInput = mod.fromForm ? mod.fromForm(inputs) : inputs;
+  const result = mod.calc(calcInput, state.CFG, state.DATA.market);
   const el = $('res-' + id);
   el.innerHTML = renderResult(mod, inputs, state.CFG, result, state.DATA);
   const big = el.querySelector('.big-num');

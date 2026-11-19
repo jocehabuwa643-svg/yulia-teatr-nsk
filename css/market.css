@@ -1,1 +1,208 @@
-/* market.css — стили раздела (заполняется исполнителем раздела). */
+/* ============================================================
+   market.css — «Навигатор рынка» и «Карта прибыли».
+   Только токены из tokens.css/themes.css. Анимации — transform/opacity на кривой --ease;
+   при prefers-reduced-motion у всех элементов остаётся конечное видимое состояние.
+   ============================================================ */
+
+/* ---------- Появление блоков (JS ставит .arm, затем .shown) ---------- */
+.arm{opacity:0}
+.arm.shown{opacity:1;animation:mkIn .6s var(--ease) backwards;animation-delay:calc(var(--i,0) * 45ms)}
+@keyframes mkIn{from{opacity:0;transform:translateY(14px)}}
+
+/* ---------- Каркас раздела ---------- */
+.mk-panel{padding:clamp(18px,2vw,28px);margin-top:14px;min-width:0}
+.mk-bento{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:14px}
+.mk-bento-rev{grid-template-columns:1fr 1.25fr}
+.mk-bento>.mk-panel{margin-top:0}
+
+/* ---------- KPI-плашки ---------- */
+.mk-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.mk-kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:grid;gap:4px;min-width:0;align-content:start}
+.mk-kpi-ic{width:36px;height:36px;border-radius:12px;background:var(--chip);display:grid;place-items:center;margin-bottom:6px}
+.mk-kpi small{font-size:12px;font-weight:600;color:var(--mutedS)}
+.mk-kpi b{font-size:clamp(26px,3vw,36px);font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1.05}
+.mk-kpi b.d{font-size:clamp(18px,2.2vw,24px);letter-spacing:-.02em;padding-block:6px}
+.mk-kpi-sub{font-size:12px;color:var(--mutedS)}
+
+/* ---------- Фильтры ---------- */
+.filters .chip{display:inline-flex;align-items:center;gap:6px;min-height:var(--tap)}
+.chipn{font-weight:500;opacity:.75}
+
+/* ---------- Карточки конкурентов ---------- */
+.rivals{grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr))}
+.rival{padding:18px 20px;gap:12px;box-shadow:none;transition:transform .35s var(--ease),box-shadow .35s var(--ease),border-color .25s}
+@media(hover:hover){.rival:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--silver)}}
+.rv-top{display:flex;gap:12px;align-items:center;min-width:0}
+.rv-ic{width:40px;height:40px;border-radius:14px;background:var(--chip);display:grid;place-items:center;flex:none}
+.rv-t{min-width:0}
+.rv-t h4{font-size:15px;line-height:1.25;display:block;overflow-wrap:anywhere}
+.rv-t .tiny{display:block;margin-top:2px}
+.rv-st{display:flex;flex-wrap:wrap;gap:6px}
+.rv-addr{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--mutedS);overflow-wrap:anywhere}
+.rv-addr svg.lucide{width:16px;height:16px;margin-top:2px}
+.rival .rv-src{display:inline-flex;align-items:center;gap:6px;min-height:var(--tap);text-decoration:none}
+.rival .rv-src svg.lucide,.ps svg.lucide{width:13px;height:13px}
+span.rv-src{display:inline-flex;align-items:center;min-height:24px}
+
+/* Статусы: форма и штриховка, не цвет */
+.stat{display:inline-flex;align-items:center;font-size:11px;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:3px 9px;background:var(--chip);color:var(--text2)}
+.st-public{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
+.st-historical,.st-mixed,.st-model,.st-plan_benchmark{border-style:dashed;border-color:var(--silver)}
+.st-manual{border-color:var(--text2);font-weight:800}
+
+/* Блок цены */
+.pbox{border:1px solid var(--line);border-radius:var(--r-s);padding:11px 13px;display:grid;gap:4px;background:var(--card2);min-width:0}
+.pv{font-size:17px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.ps{font-size:12px;color:var(--mutedS);overflow-wrap:anywhere}
+.ps a{display:inline-flex;align-items:center;gap:3px;min-height:24px}
+.pbox.none{border-style:dashed}
+.pbox.none .pv{font-size:14px;font-weight:700;color:var(--mutedS)}
+.pbox.manual{border-color:var(--text2)}
+
+/* Бейджи свежести */
+.fb{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fbadge{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11px;line-height:1.5;background:var(--chip);color:var(--text2);cursor:help}
+.fbadge.stale{border-style:dashed;border-color:var(--text2);font-weight:700}
+
+/* Раскрывающиеся блоки внутри карточек */
+.mk-more{margin-top:0}
+.mk-more>summary{font-size:13px}
+.mk-more[open]>*:not(summary){animation:mkIn .4s var(--ease) backwards}
+.mk-more p,.mk-more li{padding-bottom:0}
+.mk-more p{margin:0 0 8px}
+.mk-more.wide{margin-top:10px}
+.plist{list-style:none;padding:0;display:grid;gap:6px;margin:8px 0 0}
+.plist li{display:flex;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line);padding-bottom:6px;font-size:13px;color:var(--mutedS)}
+.plist li b{color:var(--text);text-align:right;font-variant-numeric:tabular-nums}
+
+/* ---------- Формы ручного ввода ---------- */
+.mform{display:grid;gap:12px;margin:2px 0 4px}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mf{display:grid;gap:5px;font-size:12px;font-weight:600;color:var(--text2);min-width:0}
+.mf input{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 13px;min-height:var(--tap);width:100%;font-size:14px;color:var(--text);min-width:0}
+.mf input::placeholder{color:var(--mutedS);opacity:.8}
+.ferr{font-size:12px;color:var(--text);border:1px dashed var(--silver);border-radius:10px;padding:8px 10px}
+.iconbtn{min-width:var(--tap);min-height:var(--tap);display:inline-grid;place-items:center;border-radius:12px;color:var(--mutedS);transition:transform .3s var(--ease),color .2s}
+.iconbtn:hover{color:var(--text);transform:scale(1.08)}
+.iconbtn:active{transform:scale(.92)}
+
+/* ---------- Горизонтальные столбцы (цены, спрос) ---------- */
+.pbars{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:12px}
+.prow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr) minmax(96px,auto);gap:12px;align-items:center}
+.pname{font-size:13px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.pname small{display:block;font-size:11px;font-weight:500;color:var(--mutedS);margin-top:2px}
+.ptrack{height:12px;border-radius:99px;background:var(--track);position:relative;overflow:hidden}
+.pw{display:block;height:100%}
+.pfill{display:block;height:100%;border-radius:99px;background:var(--solid);transform-origin:left center;transition:transform .9s var(--ease)}
+.pre .pfill{transform:scaleX(0)}
+.prow.low .pfill{background:var(--silver)}
+.prow.manual .pfill{background:var(--text2)}
+.pfill.assume{background:repeating-linear-gradient(-45deg,var(--silver) 0 4px,transparent 4px 8px);border:1px solid var(--silver)}
+.prow.nod .ptrack{background:transparent;overflow:visible}
+.prow.nod .pw.dash{width:100%;height:0;margin-top:6px;border-top:1.5px dashed var(--silver)}
+.pval{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.pval small{display:block;font-size:11px;font-weight:500;color:var(--mutedS)}
+.pval small.stl{font-weight:700}
+.pval .muted{font-weight:500}
+.dbars .pval{display:flex;align-items:center;justify-content:flex-end;gap:2px;flex-wrap:wrap}
+.dbars .pval small{display:inline;margin-left:4px}
+.chartmeta{align-items:center;font-size:12px;margin-top:14px}
+.chartmeta .mk-more{flex:1 1 100%}
+.srclist{list-style:none;padding:0;display:grid;gap:10px;margin:4px 0 0}
+.srclist li{display:flex;gap:10px;align-items:flex-start;font-size:13px;padding:0}
+.srclist small{display:block;font-size:12px;color:var(--mutedS)}
+.srclist .dot{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--silver);margin-top:5px;flex:none}
+
+/* ---------- Сезонность ---------- */
+.seas{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;margin-top:14px;align-items:end}
+.seas-m{display:grid;grid-template-rows:auto 1fr auto;gap:5px;text-align:center;min-width:0}
+.seas-v{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.seas-t{height:130px;display:flex;align-items:flex-end;background:var(--track);border-radius:9px;overflow:hidden}
+.seas-f{display:block;width:100%;background:var(--silver);border-radius:9px 9px 0 0;transform-origin:bottom center;transition:transform .9s var(--ease)}
+.pre .seas-f{transform:scaleY(0)}
+.seas-m.peak .seas-f{background:var(--solid)}
+.seas-m b{font-size:12px;font-weight:700;color:var(--text2)}
+
+/* ---------- Календарь каникул ---------- */
+.hcal{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:14px 0 12px}
+.hc{border:1px solid var(--line);border-radius:12px;padding:9px 4px;text-align:center;font-size:12px;display:grid;gap:2px;color:var(--mutedS);transition:transform .5s var(--ease),opacity .5s var(--ease)}
+.hc b{color:inherit;font-weight:700}
+.hc small{font-size:11px}
+.hc.on{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
+.pre .hc{opacity:0;transform:scale(.92)}
+#holidayList{margin-bottom:0}
+
+/* ---------- Карта ---------- */
+.mapscen{margin:12px 0 4px}
+.mapscen-t{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mutedS);margin-bottom:8px}
+.mapscen .chips{margin:0}
+.mapcardtext .mapselect{min-height:var(--tap)}
+.loc{animation:mkIn .5s var(--ease) backwards}
+.loc-addr{display:flex;gap:8px;align-items:flex-start}
+.loc-addr svg.lucide{width:16px;height:16px;margin-top:2px}
+.loc-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 4px}
+.lt{background:var(--chip);padding:12px 13px;border-radius:var(--r-s);min-width:0;display:grid;gap:3px;align-content:start}
+.lt small{font-size:11px;font-weight:600;color:var(--mutedS)}
+.lt b{font-size:18px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;line-height:1.2}
+.lt b .u{font-size:12px;font-weight:600;color:var(--mutedS)}
+.lt b .small{font-size:13px;font-weight:600;letter-spacing:0}
+.lt .lt-sub{font-size:12px;color:var(--mutedS);overflow-wrap:anywhere}
+.lt .lt-sub a{display:inline-flex;align-items:center;min-height:24px}
+.lt.nd b{font-size:14px;font-weight:700}
+.lt.profit{grid-column:1/-1;background:var(--solid);color:var(--on-solid)}
+.lt.profit small,.lt.profit .lt-sub{color:inherit;opacity:.82}
+.lt.profit b{font-size:clamp(28px,4vw,38px);letter-spacing:-.04em}
+.lt.profit.nd{background:var(--chip);color:var(--text);border:1px dashed var(--silver)}
+.lt.profit.nd small,.lt.profit.nd .lt-sub{color:var(--mutedS);opacity:1}
+.lt.profit.neg{outline:2px dashed var(--on-solid);outline-offset:-7px}
+.mapcardtext .loc-h{display:block;font-size:13px;margin:14px 0 4px}
+.loc-steps{margin:0;padding-left:20px}
+.loc-src{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px;font-size:13px}
+.loc-src a{display:inline-flex;align-items:center;gap:5px;min-height:var(--tap)}
+.loc-src svg.lucide{width:13px;height:13px}
+
+/* Монохромная подложка из цветных тайлов OSM: статичный фильтр, переключается по теме без JS (не анимируется) */
+.mapstage .leaflet-tile-pane{filter:grayscale(1) contrast(.9) brightness(1.04)}
+:root[data-theme="dark"] .mapstage .leaflet-tile-pane{filter:grayscale(1) invert(1) contrast(.85) brightness(.95)}
+
+/* Метки: область касания 44×44, внутри — pin из components.css */
+.mk-pinwrap{background:none;border:0}
+.pinhit{display:grid;place-items:center;width:44px;height:44px}
+.mk-pinwrap .pin{transition:transform .3s var(--ease),box-shadow .3s var(--ease)}
+.mk-pinwrap .pin.sel{outline:0;transform:scale(1.3);box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--text)}
+.mk-pinwrap .pin-reg.sel{transform:rotate(45deg) scale(1.1)}
+@media(hover:hover){
+  .mk-pinwrap:hover .pin{transform:scale(1.18)}
+  .mk-pinwrap:hover .pin-reg{transform:rotate(45deg) scale(1)}
+}
+.leaflet-marker-icon.mk-pinwrap:focus-visible{outline:0}
+.mk-pinwrap:focus-visible .pin{box-shadow:0 0 0 3px var(--card),0 0 0 6px var(--a11y-focus)}
+.mk-zone{stroke:var(--silver);fill:var(--silver);fill-opacity:.12;stroke-width:1}
+.mk-zone:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px}
+
+/* ---------- Адаптив ---------- */
+@media(max-width:900px){
+  .mk-bento,.mk-bento-rev{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .mk-kpis{grid-template-columns:1fr 1fr;gap:10px}
+  .mk-kpi{padding:14px}
+  .prow{grid-template-columns:1fr auto;gap:6px 10px}
+  .prow .ptrack{grid-column:1/-1;grid-row:2}
+  .seas{grid-template-columns:repeat(6,1fr);row-gap:14px}
+  .seas-t{height:96px}
+  .mf input{font-size:16px}
+  .mapscen .chip,.filters .chip{min-height:var(--tap)}
+  .loc-tiles{grid-template-columns:1fr}
+}
+@media(max-width:420px){
+  .mrow{grid-template-columns:1fr}
+}
+
+/* ---------- Reduce-motion: конечное состояние видимо, переходов нет ---------- */
+@media(prefers-reduced-motion:reduce){
+  .arm{opacity:1}
+  .pre .pfill,.pre .seas-f{transform:none}
+  .pre .hc{opacity:1;transform:none}
+  .rival:hover{transform:none}
+}

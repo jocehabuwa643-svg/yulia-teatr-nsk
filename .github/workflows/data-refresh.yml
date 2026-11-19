@@ -5,30 +5,69 @@ on:
     - cron: '17 3 * * *' # ежедневно 03:17 UTC (10:17 НСК)
   workflow_dispatch:
 
+# contents: write — коммит данных; actions: write — запуск деплоя (пуш от GITHUB_TOKEN сам workflow не запускает)
 permissions:
   contents: write
+  actions: write
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    env:
+      # Секрет доступен шагам только через env; в лог он не печатается (GitHub маскирует значение)
+      WORDSTAT_TOKEN: ${{ secrets.WORDSTAT_TOKEN }}
+      WORDSTAT_FOLDER_ID: ${{ vars.WORDSTAT_FOLDER_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Обновить курсы ЦБ РФ
+
+      # Сбой источника не валит джоб: скрипт сам оставляет прежние данные и ставит stale
+      - name: Курсы ЦБ РФ
+        continue-on-error: true
         run: node scripts/fetch-cbr.mjs
-      - name: Wordstat (только с токеном)
+
+      # Только если секрет задан
+      - name: Спрос Wordstat
+        if: ${{ env.WORDSTAT_TOKEN != '' }}
+        continue-on-error: true
         run: node scripts/fetch-wordstat.mjs
-        env:
-          WORDSTAT_TOKEN: ${{ secrets.WORDSTAT_TOKEN }}
-      - name: Обновить мету
+
+      - name: Проверить, изменились ли данные
+        id: diff
         run: |
-          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('data/meta.json','utf8'));m.generated_at=new Date().toISOString();fs.writeFileSync('data/meta.json',JSON.stringify(m,null,2)+'\n')"
-      - name: Commit если изменилось
+          if git diff --quiet -- data/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Данные не изменились — коммит не нужен"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Метка времени и проверка JSON — только при реальных изменениях; тесты — страховка от битых данных
+      - name: Проверка и метка времени
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          node scripts/touch-meta.mjs --stamp
+          node --test
+
+      - name: Коммит и пуш
+        if: steps.diff.outputs.changed == 'true'
         run: |
           git config user.name "data-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data/
-          git diff --cached --quiet && echo "no changes" || git commit -m "data: обновление источников $(date +%F)"
+          git commit -m "data: обновление источников $(date -u +%F)"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push
+
+      # Пуш от GITHUB_TOKEN не запускает deploy.yml — запускаем явно, чтобы сайт получил свежие данные
+      - name: Пересобрать сайт
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref "${GITHUB_REF_NAME}"

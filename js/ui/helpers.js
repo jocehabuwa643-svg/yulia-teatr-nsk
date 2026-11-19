@@ -56,13 +56,36 @@ export function toast(msg) {
   el._t = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
-/* Появление при прокрутке + счётчики */
+/* Живая проверка reduced-motion (пользователь может переключить настройку без перезагрузки) */
+export const motionOK = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Счётчик KPI: ease-out-expo, 900 мс; при reduced-motion сразу конечное значение */
 export function counter(el) {
   const v = +el.dataset.target;
-  if (reduced || !isFinite(v)) { el.textContent = fmt(v); return; }
+  if (!motionOK() || !isFinite(v)) { el.textContent = fmt(v); return; }
   let start;
-  const frame = t => { if (!start) start = t; const p = Math.min(1, (t - start) / 750); el.textContent = fmt(v * (1 - (1 - p) ** 3)); if (p < 1) requestAnimationFrame(frame); };
+  const frame = t => {
+    if (!start) start = t;
+    const p = Math.min(1, (t - start) / 900);
+    el.textContent = fmt(v * (p >= 1 ? 1 : 1 - 2 ** (-10 * p)));
+    if (p < 1) requestAnimationFrame(frame); else el.textContent = fmt(v);
+  };
   requestAnimationFrame(frame);
+}
+
+/* Акцент при смене значения: короткий opacity/translateY-«поп» (класс .pop из base.css).
+   popNumber(el) — только анимация; popNumber(el, '12 000 ₽') — ещё и подставит текст, если он изменился.
+   Возвращает true, если значение действительно поменялось. */
+export function popNumber(el, value) {
+  if (!el) return false;
+  let changed = true;
+  if (value != null) { changed = el.textContent !== String(value); if (changed) el.textContent = String(value); }
+  if (!changed || !motionOK()) return changed;
+  el.classList.remove('pop');
+  void el.offsetWidth; // перезапуск CSS-анимации
+  el.classList.add('pop');
+  el.addEventListener('animationend', () => el.classList.remove('pop'), { once: true });
+  return changed;
 }
 export function enter(el, fn) {
   if (!window.IntersectionObserver) { fn(); return; }
@@ -71,11 +94,81 @@ export function enter(el, fn) {
 }
 export function initReveal(scope = document) {
   const els = $$('.rv', scope);
-  if (!window.IntersectionObserver || reduced) { els.forEach(e => e.classList.add('in')); return; }
+  if (!window.IntersectionObserver || !motionOK()) { els.forEach(e => e.classList.add('in', 'rv-done')); return; }
   // Скрывать .rv (opacity:0) можно только когда скрипт реально работает — иначе при сбое контент останется невидимым
   document.documentElement.classList.add('js-ready');
-  const ob = new IntersectionObserver(a => a.forEach(x => { if (x.isIntersecting) { x.target.classList.add('in'); ob.unobserve(x.target); } }), { threshold: .08 });
+  const ob = new IntersectionObserver(a => a.forEach(x => {
+    if (!x.isIntersecting) return;
+    x.target.classList.add('in');
+    ob.unobserve(x.target);
+    // после окончания появления снимаем каскадные задержки, чтобы hover отзывался сразу
+    setTimeout(() => x.target.classList.add('rv-done'), 1200);
+  }), { threshold: .08 });
   els.forEach(e => ob.observe(e));
+}
+
+/* ---------- Индикатор активного сегмента (переезжает через transform) ----------
+   Для групп .seg и .seg-theme: подложка-«пилюля» двигается translateX + scaleX под активную кнопку.
+   Активной считается кнопка с .on / aria-pressed="true" / aria-selected="true". */
+const SEG_ACTIVE = 'button.on,button[aria-pressed="true"],button[aria-selected="true"],a.active';
+function bindSegment(group) {
+  if (group._seg) return;
+  group._seg = true;
+  const ind = document.createElement('span');
+  ind.className = 'seg-ind';
+  ind.setAttribute('aria-hidden', 'true');
+  let placed = false;
+  const place = () => {
+    if (!ind.isConnected) group.prepend(ind);
+    const btn = group.querySelector(SEG_ACTIVE);
+    if (!btn || !btn.offsetWidth) { ind.style.opacity = '0'; return; }
+    ind.style.opacity = '1';
+    ind.style.transform = `translateX(${btn.offsetLeft}px) scaleX(${btn.offsetWidth / 100})`;
+    if (!placed) { placed = true; requestAnimationFrame(() => requestAnimationFrame(() => group.classList.add('seg-ready'))); }
+  };
+  group.classList.add('has-ind');
+  place();
+  new MutationObserver(place).observe(group, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-pressed', 'aria-selected'] });
+  if (window.ResizeObserver) new ResizeObserver(place).observe(group);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+}
+
+/* ---------- Заливка активной части ползунков (CSS-переменная --fill) ---------- */
+function paintRange(r) {
+  const min = +r.min || 0, max = r.max === '' ? 100 : +r.max, v = +r.value;
+  r.style.setProperty('--fill', max > min ? ((v - min) / (max - min) * 100).toFixed(2) + '%' : '0%');
+}
+
+/* ---------- Прогресс-полоса через scaleX ----------
+   Модули выставляют bar.style.width = 'N%'; мы переводим это в CSS-переменную --p,
+   а CSS рисует transform: scaleX(var(--p)) — анимируется только transform. */
+export function bindScaleBar(bar) {
+  if (!bar || bar._scaleBound) return;
+  bar._scaleBound = true;
+  const sync = () => {
+    const w = parseFloat(bar.style.width);
+    if (isFinite(w)) bar.style.setProperty('--p', Math.max(0, Math.min(1, w / 100)).toFixed(4));
+  };
+  new MutationObserver(sync).observe(bar, { attributes: true, attributeFilter: ['style'] });
+  // первое значение — через два кадра, чтобы полоса плавно «выросла» из нуля
+  requestAnimationFrame(() => requestAnimationFrame(sync));
+}
+
+/* Единая точка запуска UI-улучшений: сегменты, ползунки, прогресс-полосы.
+   Наблюдает DOM, поэтому подхватывает и элементы, которые разделы рисуют позже. */
+export function initUI() {
+  if (initUI.done) return;
+  initUI.done = true;
+  const scan = () => {
+    $$('.seg,.seg-theme,.nav').forEach(bindSegment);
+    $$('input[type=range]').forEach(paintRange);
+    $$('.track > span').forEach(bindScaleBar);
+  };
+  let queued = false;
+  new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; scan(); }); } })
+    .observe(document.body, { childList: true, subtree: true });
+  document.addEventListener('input', e => { if (e.target.matches && e.target.matches('input[type=range]')) paintRange(e.target); }, true);
+  scan();
 }
 
 /* localStorage с защитой и версией схемы */

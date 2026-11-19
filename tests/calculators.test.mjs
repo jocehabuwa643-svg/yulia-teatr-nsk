@@ -19,33 +19,11 @@ import { calc as grants } from '../js/calculators/grants.js';
 const rates = JSON.parse(readFileSync(new URL('../data/rates.json', import.meta.url), 'utf-8'));
 const config = JSON.parse(readFileSync(new URL('../data/config.json', import.meta.url), 'utf-8'));
 const market = JSON.parse(readFileSync(new URL('../data/market.json', import.meta.url), 'utf-8'));
+const competitors = JSON.parse(readFileSync(new URL('../data/competitors.json', import.meta.url), 'utf-8'));
 
-/* Тот же сборщик, что в data-loader.js (продублирован, чтобы тесты не зависели от DOM-модуля) */
-function buildCfg(rates, config) {
-  const t = rates.tax;
-  return {
-    usn: t.usn_income_rate.value,
-    usnDR: t.usn_income_minus_costs_rate.value,
-    usnSocial: t.usn_nso_social_income.value,
-    usnSocialDR: t.usn_nso_social_income_minus_costs.value,
-    vatThreshold: t.vat_threshold.value,
-    vatRate: t.vat_rate_in_price.value / 100,
-    gphRate: t.gph_contributions_rate.value / 100,
-    ipFixed: t.ip_fixed_contributions.value,
-    patentPotential: t.patent_potential_nsk.value,
-    contributions1pctThreshold: t.contributions_1pct_threshold.value,
-    npdCompanies: t.npd_rate_companies.value / 100,
-    ...config,
-    travel: {
-      ...config.travel_costs,
-      shareSchool: config.venue_share.school_garden / 100,
-      shareDk: config.venue_share.dk / 100,
-      gas: config.routes_gas.map(r => r.gas),
-      routeNames: config.routes_gas.map(r => r.name)
-    }
-  };
-}
-const cfg = buildCfg(rates, config);
+/* Тот же чистый сборщик, что использует приложение (js/calculators/config.js, без DOM) */
+import { buildCalcConfig } from '../js/calculators/config.js';
+const cfg = buildCalcConfig({ rates, config, competitors });
 
 test('travel: дефолт 45 детей × 325 ₽ × 1 показ, наём → +3 925 ₽/показ (эталон v1)', () => {
   const r = travel({ n: 45, p: 325, k: 1, r: 0, dk: 0, own: 0 }, cfg);

@@ -1,51 +1,75 @@
 #!/usr/bin/env node
-/* fetch-cbr.mjs — обновляет курсы USD/EUR в data/rates.json из публичных
-   XML-эндпоинтов Банка России. При ошибке сети оставляет прежние значения
-   и ставит stale:true. Запускается из GitHub Actions (data-refresh.yml).
-   Без ключей и токенов. */
-import { readFileSync, writeFileSync } from 'node:fs';
+/* fetch-cbr.mjs — обновляет курсы USD/EUR в data/rates.json (блок cbr) из публичного XML Банка России
+   (XML_daily.asp, без ключей). Таймаут 10 с, ретраи с бэкоффом (fetch-util.mjs).
+   При сбое источника прежние значения НЕ затираются: в блоке выставляются stale:true и stale_since.
+   Процесс всегда завершается кодом 0 — сбой источника не роняет workflow, сайт продолжает работать.
+   Переменные: DATA_DIR — каталог данных (для сухого прогона), CBR_URL — подмена адреса (тесты). */
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { DATA_DIR, fetchRetry, readJson, writeJsonIfChanged, markStale, clearStale } from './fetch-util.mjs';
 
-const RATES = 'data/rates.json';
+const RATES = join(DATA_DIR, 'rates.json');
+const URL_DAILY = process.env.CBR_URL || 'https://www.cbr.ru/scripts/XML_daily.asp';
+const CURRENCIES = { usd_rub: 'USD', eur_rub: 'EUR' };
 
-function decodeWin1251(buf) {
-  return new TextDecoder('windows-1251').decode(buf);
-}
-function lastValue(xml, charCode) {
-  const re = new RegExp(`<Valute ID="[^"]*"[^>]*>[\\s\\S]*?<CharCode>${charCode}</CharCode>[\\s\\S]*?<Value>([\\d,]+)</Value>`);
-  const m = xml.match(re);
-  return m ? parseFloat(m[1].replace(',', '.')) : null;
+/* Разбор XML: курс за 1 единицу = Value / Nominal; дата — из атрибута Date корневого элемента */
+export function parseDaily(xml) {
+  const dateM = xml.match(/<ValCurs[^>]*\sDate="(\d{2})\.(\d{2})\.(\d{4})"/);
+  if (!dateM) throw new Error('в ответе ЦБ нет даты (ValCurs/@Date)');
+  const validFrom = `${dateM[3]}-${dateM[2]}-${dateM[1]}`;
+  const out = {};
+  for (const blockXml of xml.split('<Valute ').slice(1)) {
+    const code = (blockXml.match(/<CharCode>([A-Z]{3})<\/CharCode>/) || [])[1];
+    const nominal = parseInt((blockXml.match(/<Nominal>(\d+)<\/Nominal>/) || [])[1], 10);
+    const value = parseFloat(((blockXml.match(/<Value>([\d\s,.]+)<\/Value>/) || [])[1] || '').replace(/\s/g, '').replace(',', '.'));
+    if (code && nominal > 0 && Number.isFinite(value) && value > 0) out[code] = Math.round((value / nominal) * 1e6) / 1e6;
+  }
+  return { validFrom, rates: out };
 }
 
 async function main() {
-  const rates = JSON.parse(readFileSync(RATES, 'utf-8'));
-  const today = new Date().toISOString().slice(0, 10);
-  const dd = String(new Date().getDate()).padStart(2, '0');
-  const mm = String(new Date().getMonth() + 1).padStart(2, '0');
-  const yyyy = new Date().getFullYear();
-  const dateReq = `${dd}/${mm}/${yyyy}`;
+  const rates = readJson(RATES);
+  if (!rates.cbr) throw new Error('в rates.json нет блока cbr');
+  const nowIso = new Date().toISOString();
+  const today = nowIso.slice(0, 10);
 
-  let ok = false;
+  let parsed = null, failReason = '';
   try {
-    const res = await fetch(`https://www.cbr.ru/scripts/XML_daily.asp?date_req=${dateReq}`, { signal: AbortSignal.timeout(20000) });
-    if (res.ok) {
-      const xml = decodeWin1251(Buffer.from(await res.arrayBuffer()));
-      const usd = lastValue(xml, 'USD'), eur = lastValue(xml, 'EUR');
-      if (usd) { rates.cbr.usd_rub = { ...rates.cbr.usd_rub, value: usd, fetched_at: today, valid_from: `${yyyy}-${mm}-${dd}`, confidence: 'high', status: undefined, stale: false }; ok = true; }
-      if (eur) { rates.cbr.eur_rub = { ...rates.cbr.eur_rub, value: eur, fetched_at: today, valid_from: `${yyyy}-${mm}-${dd}`, confidence: 'high', status: undefined, stale: false }; ok = true; }
-    }
+    const res = await fetchRetry(URL_DAILY, {}, { label: 'ЦБ РФ XML_daily' });
+    // Ответ в windows-1251
+    parsed = parseDaily(new TextDecoder('windows-1251').decode(Buffer.from(await res.arrayBuffer())));
   } catch (e) {
-    console.error('CBR fetch failed:', e.message);
+    failReason = e.message;
+    console.error('Источник ЦБ недоступен:', failReason);
   }
-  if (!ok) {
-    // источник упал: оставляем прежние данные, помечаем stale
-    rates.cbr.usd_rub.stale = true;
-    rates.cbr.eur_rub.stale = true;
-    console.log('Источник недоступен — данные помечены stale, прежние значения сохранены');
-    writeFileSync(RATES, JSON.stringify(rates, null, 2) + '\n');
-    process.exit(0); // не роняем workflow: сайт продолжает работать
+
+  for (const [key, code] of Object.entries(CURRENCIES)) {
+    const block = rates.cbr[key];
+    if (!block) continue;
+    const v = parsed && parsed.rates[code];
+    if (v) {
+      // Успех: значение, провенанс, снятие пометки stale
+      Object.assign(block, {
+        value: v, unit: '₽', fetched_at: today, valid_from: parsed.validFrom, confidence: 'high',
+        source_name: 'Банк России, XML_daily', source_url: 'https://www.cbr.ru/scripts/XML_daily.asp'
+      });
+      delete block.status;
+      clearStale(block);
+      console.log(`${code}/RUB = ${v} на ${parsed.validFrom}`);
+    } else if (block.value !== null && block.value !== undefined) {
+      // Сбой (или валюты нет в ответе): прежнее значение остаётся, помечаем устаревшим
+      markStale(block, failReason || `валюта ${code} отсутствует в ответе ЦБ`, nowIso);
+      console.log(`${code}: значение сохранено, помечено stale с ${block.stale_since}`);
+    } else {
+      console.log(`${code}: данных нет и источник не ответил — остаётся «нет данных»`);
+    }
   }
-  rates.generated_note = `cbr updated ${today}`;
-  writeFileSync(RATES, JSON.stringify(rates, null, 2) + '\n');
-  console.log('rates.json обновлён:', JSON.stringify({ usd: rates.cbr.usd_rub.value, eur: rates.cbr.eur_rub.value, date: today }));
+  const changed = writeJsonIfChanged(RATES, rates);
+  console.log(changed ? 'rates.json обновлён' : 'rates.json без изменений');
 }
-main();
+
+/* Запуск только как скрипт (импорт parseDaily в тестах не стартует сетевой код).
+   Сбой источника — код 0 (обработан выше); непредвиденная локальная ошибка (битый JSON) — код 1 */
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(e => { console.error('fetch-cbr: непредвиденная ошибка:', e.message); process.exit(1); });
+}

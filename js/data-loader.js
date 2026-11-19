@@ -41,6 +41,15 @@ export async function loadAll() {
   return out;
 }
 
+/* Архив исследования (HTML-фрагмент): вшит в офлайн-версию как window.__YULIA_DATA__.archive_html,
+   иначе читается из data/archive.html. Бросает исключение, если недоступен. */
+export async function loadArchive() {
+  if (typeof window !== 'undefined' && window.__YULIA_DATA__ && window.__YULIA_DATA__.archive_html) return window.__YULIA_DATA__.archive_html;
+  const r = await fetch('data/archive.html');
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.text();
+}
+
 /* Возраст значения со встроенным провенансом (fetched_at) в днях; Infinity если даты нет */
 export function ageDays(value) {
   if (!value || !value.fetched_at) return Infinity;
@@ -48,28 +57,7 @@ export function ageDays(value) {
   return isNaN(d) ? Infinity : (Date.now() - d.getTime()) / 864e5;
 }
 
-/* Собирает единый config для калькуляторов: JSON → плоская структура формул */
-export function buildCalcConfig({ rates, config }) {
-  const t = rates.tax || {};
-  return {
-    usn: (t.usn_income_rate && t.usn_income_rate.value) ?? 6,
-    usnDR: (t.usn_income_minus_costs_rate && t.usn_income_minus_costs_rate.value) ?? 15,
-    usnSocial: t.usn_nso_social_income && t.usn_nso_social_income.value,
-    usnSocialDR: t.usn_nso_social_income_minus_costs && t.usn_nso_social_income_minus_costs.value,
-    vatThreshold: (t.vat_threshold && t.vat_threshold.value) ?? 20000000,
-    vatRate: ((t.vat_rate_in_price && t.vat_rate_in_price.value) ?? 5) / 100, // доля; в цене = касса × 5/105
-    gphRate: ((t.gph_contributions_rate && t.gph_contributions_rate.value) ?? 30.2) / 100,
-    ipFixed: t.ip_fixed_contributions && t.ip_fixed_contributions.value,           // может быть null → no_data
-    patentPotential: t.patent_potential_nsk && t.patent_potential_nsk.value,       // null → no_data
-    contributions1pctThreshold: (t.contributions_1pct_threshold && t.contributions_1pct_threshold.value) ?? 300000,
-    npdCompanies: ((t.npd_rate_companies && t.npd_rate_companies.value) ?? 6) / 100,
-    ...config,
-    travel: {
-      ...config.travel_costs,
-      shareSchool: config.venue_share.school_garden / 100,
-      shareDk: config.venue_share.dk / 100,
-      gas: config.routes_gas.map(r => r.gas),
-      routeNames: config.routes_gas.map(r => `${r.name} · ${r.km ? r.km + ' км · ' : ''}${r.gas} ₽`)
-    }
-  };
-}
+/* Собирает единый config для калькуляторов: JSON → плоская структура формул.
+   Реализация — в чистом модуле js/calculators/config.js (годовые ставки rates.json,
+   переопределения пользователя, провенанс для бейджей). Здесь только реэкспорт. */
+export { buildCalcConfig } from './calculators/config.js';
