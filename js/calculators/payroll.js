@@ -8,6 +8,7 @@ export const meta = {
   id: 'payroll',
   sources: ['gph_contributions_rate', 'gph_contributions_base_rate', 'gph_contributions_above_base_rate', 'gph_contributions_base_limit*', 'npd_rate_companies', 'npd_income_limit'],
   icon: 'users',
+  headline: 'amount',            // тип главной цифры: result — со знаком, amount — сумма/цена без плюса, count — целое число
   title: 'ФОТ и ГПХ',
   what: 'Считает: стоимость команды в месяц по трём схемам оплаты труда',
   when: 'Когда: оформляете актёров и техника и выбираете договор'

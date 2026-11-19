@@ -22,7 +22,7 @@ export function askDialog({ title, lead = '', fields, ok = 'Сохранить',
       const isNum = f.type !== 'text';
       return `${head}<div class="dlg-field">
         <label for="${uid}f${i}">${esc(f.label)}${f.unit ? ` <span class="fsuf">(${esc(f.unit)})</span>` : ''}</label>
-        <input id="${uid}f${i}" name="${esc(f.id)}" type="text" ${isNum ? 'inputmode="decimal"' : `maxlength="${f.maxLength || 80}"`} autocomplete="off" value="${esc(f.value == null ? '' : f.value)}" ${f.placeholder ? `placeholder="${esc(f.placeholder)}"` : ''} aria-describedby="${uid}h${i}">
+        <input id="${uid}f${i}" name="${esc(f.id)}" type="text" ${isNum ? 'inputmode="decimal"' : (f.maxLength ? `maxlength="${f.maxLength}"` : '')} autocomplete="off" value="${esc(f.value == null ? '' : f.value)}" ${f.placeholder ? `placeholder="${esc(f.placeholder)}"` : ''} aria-describedby="${uid}h${i}">
         ${f.hint ? `<p class="tiny" id="${uid}h${i}">${f.hint}</p>` : `<span id="${uid}h${i}"></span>`}
       </div>`;
     }).join('');

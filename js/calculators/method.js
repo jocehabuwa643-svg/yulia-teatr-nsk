@@ -54,3 +54,11 @@ export function methodLines(id, cfg, year) {
   const vars = methodVars(cfg, year);
   return tpls.map(t => fillTemplate(t, vars));
 }
+
+/* Юридический текст интерфейса из cfg.calc.$legal[key]: ссылки на закон, ОКВЭД, пометки применимости лежат в данных,
+   а не в коде. x — значения для подстановки ({x.rate|num}); неизвестное значение превращается в «нет данных». */
+export function legalLine(cfg, key, x = {}) {
+  const tpl = cfg.calc && cfg.calc.$legal && cfg.calc.$legal[key];
+  if (tpl == null) return 'нет данных';
+  return fillTemplate(tpl, { ...cfg, x });
+}

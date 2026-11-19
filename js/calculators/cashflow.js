@@ -5,6 +5,7 @@ import { num, nonNeg, rangeField } from './util.js';
 export const meta = {
   id: 'cashflow',
   icon: 'wallet',
+  headline: 'result',            // тип главной цифры: result — со знаком, amount — сумма/цена без плюса, count — целое число
   title: 'Денежный поток на 12 месяцев',
   what: 'Считает: помесячный баланс с вложениями, минимальный остаток и кассовые разрывы',
   when: 'Когда: планируете платёжный календарь и решаете, сколько резервов нужно'

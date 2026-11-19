@@ -7,6 +7,7 @@ export const meta = {
   id: 'travel',
   sources: ['usn_income_rate', 'gph_contributions_rate'],
   icon: 'route',
+  headline: 'result',            // тип главной цифры: result — со знаком, amount — сумма/цена без плюса, count — целое число
   title: 'Выездной спектакль и область',
   what: 'Считает: чистую прибыль показа и дня, точку безубыточности по зрителям',
   when: 'Когда: перед каждым подтверждением выезда в сад, школу, ДК или область'

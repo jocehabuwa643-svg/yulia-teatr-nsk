@@ -2,6 +2,7 @@
 /* fetch-cbr.mjs — обновляет курсы USD/EUR в data/rates.json (блок cbr) из публичного XML Банка России
    (XML_daily.asp, без ключей). Таймаут 10 с, ретраи с бэкоффом (fetch-util.mjs).
    При сбое источника прежние значения НЕ затираются: в блоке выставляются stale:true и stale_since.
+   fetched_at меняется только при новом курсе, новой дате ЦБ или снятии stale.
    Процесс всегда завершается кодом 0 — сбой источника не роняет workflow, сайт продолжает работать.
    Переменные: DATA_DIR — каталог данных (для сухого прогона), CBR_URL — подмена адреса (тесты). */
 import { join, resolve } from 'node:path';
@@ -48,9 +49,11 @@ async function main() {
     if (!block) continue;
     const v = parsed && parsed.rates[code];
     if (v) {
-      // Успех: значение, провенанс, снятие пометки stale
+      // Успех. Если курс и дата ЦБ те же и блок не был stale — файл не трогаем (fetched_at не сдвигаем),
+      // иначе cron-бот коммитил бы пустышку каждый день
+      const same = block.value === v && block.valid_from === parsed.validFrom && !block.stale && block.fetched_at;
       Object.assign(block, {
-        value: v, unit: '₽', fetched_at: today, valid_from: parsed.validFrom, confidence: 'high',
+        value: v, unit: '₽', fetched_at: same ? block.fetched_at : today, valid_from: parsed.validFrom, confidence: 'high',
         source_name: 'Банк России, XML_daily', source_url: 'https://www.cbr.ru/scripts/XML_daily.asp'
       });
       delete block.status;

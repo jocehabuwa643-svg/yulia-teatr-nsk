@@ -8,6 +8,7 @@ export const meta = {
   id: 'goal',
   sources: ['vat_threshold*', 'vat_rate_special_low'],
   icon: 'target',
+  headline: 'result',            // тип главной цифры: result — со знаком, amount — сумма/цена без плюса, count — целое число
   title: 'Сколько нужно для моей цели',
   what: 'Считает: минимальное число показов, учеников и трупп под желаемую чистую прибыль',
   when: 'Когда: планируете целевой доход и решаете, чем его закрывать'

@@ -8,6 +8,7 @@ export const meta = {
   id: 'basecamp',
   sources: ['usn_income_rate', 'vat_threshold*', 'vat_rate_special_low', 'vat_rate_special_high', 'vat_band_special_low_upto*', 'gph_contributions_rate'],
   icon: 'building-2',
+  headline: 'result',            // тип главной цифры: result — со знаком, amount — сумма/цена без плюса, count — целое число
   title: 'Студия и база 130 м² на Богдашке',
   what: 'Считает: прибыль бизнеса в месяц, окупаемость вложений и автопорог НДС при превышении лимита УСН',
   when: 'Когда: меняете аренду, набор учеников, праздники или число выездов'

@@ -1,8 +1,9 @@
 /* ============================================================
    components.css — шапка, hero, bento-KPI, пилюли/сегменты, калькуляторы,
    схемы, аналитика, карта, навигатор, справочник, чек-лист, архив.
-   Движение: только transform/opacity (+ независимые translate/scale), кривая --spring.
-   Активное состояние пилюль рисует ::before (opacity+scale), а не смена background.
+   Движение: только transform/opacity (+ независимые translate/scale), кривая --spring; цвета, фоны, рамки, тени и размеры не анимируются.
+   Активное состояние пилюль рисует ::before (opacity+scale), а не смена background;
+   цвет текста при смене состояния переключается мгновенно (color не анимируется).
    ============================================================ */
 
 /* Заставка вынесена в css/splash.css */
@@ -10,21 +11,21 @@
 /* ===== Шапка (стекло) ===== */
 .top{position:sticky;top:0;z-index:100;background:var(--glass);backdrop-filter:saturate(1.8) blur(24px);-webkit-backdrop-filter:saturate(1.8) blur(24px);border-bottom:1px solid var(--glass-line)}
 /* тень под шапкой при прокрутке — псевдоэлемент, анимируется только opacity */
-.top::after{content:"";position:absolute;left:0;right:0;top:100%;height:20px;background:linear-gradient(rgba(0,0,0,.07),transparent);opacity:0;transition:opacity .4s var(--spring);pointer-events:none}
+.top::after{content:"";position:absolute;left:0;right:0;top:100%;height:20px;background:linear-gradient(var(--scrim-top),transparent);opacity:0;transition:opacity .4s var(--spring);pointer-events:none}
 .top.scrolled::after{opacity:1}
 .topin{display:flex;align-items:center;gap:14px;min-height:60px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:-.02em;text-decoration:none;color:var(--text);margin-right:auto;min-width:0;min-height:var(--tap);translate:0 0;transition:scale .35s var(--spring)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:-.02em;text-decoration:none;color:var(--text);margin-right:auto;min-width:var(--tap);min-height:var(--tap);translate:0 0;transition:scale .35s var(--spring)}
 .brand:active{scale:.97}
 .brand svg.mark{width:30px;height:30px;flex-shrink:0;color:var(--text)}
-.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS)}
+.brand small{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS)}
 .nav{position:relative;display:flex;gap:2px}
-.nav a{position:relative;z-index:1;text-decoration:none;color:var(--mutedS);font-weight:600;font-size:13px;padding:9px 13px;border-radius:999px;white-space:nowrap;transition:color .3s var(--spring),scale .35s var(--spring)}
+.nav a{position:relative;z-index:1;text-decoration:none;color:var(--mutedS);font-weight:600;font-size:13px;padding:9px 13px;border-radius:999px;white-space:nowrap;transition:scale .35s var(--spring)}
 .nav a:hover,.nav a.active{color:var(--text)}
 .nav a:active{scale:.95}
 .nav .seg-ind{top:0;bottom:0;border-radius:999px;background:var(--seg);box-shadow:none}
 .headtools{display:flex;align-items:center;gap:8px}
 .seg-theme{position:relative;display:flex;background:var(--seg);border-radius:999px;padding:3px}
-.seg-theme button{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;font-size:12px;font-weight:600;color:var(--mutedS);padding:0 13px;border-radius:999px;transition:color .3s var(--spring),scale .35s var(--spring)}
+.seg-theme button{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;font-size:12px;font-weight:600;color:var(--mutedS);padding:0 13px;border-radius:999px;transition:scale .35s var(--spring)}
 .seg-theme button:active{scale:.94}
 .seg-theme button svg.lucide{width:14px;height:14px}
 .seg-theme button[aria-pressed="true"]{color:var(--text)}
@@ -42,28 +43,28 @@
 /* мобильное меню: панель выезжает через transform/opacity; закрытая — visibility:hidden (вне Tab-порядка) */
 #mobnav{position:absolute;top:calc(100% + 8px);left:0;right:0;margin-inline:auto;display:grid;gap:2px;padding:8px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-lg);opacity:0;visibility:hidden;transform:translateY(-12px) scale(.97);transform-origin:top right;transition:opacity .3s var(--spring),transform .5s var(--spring),visibility 0s .5s}
 #mobnav.open{opacity:1;visibility:visible;transform:none;transition-delay:0s}
-#mobnav a{position:relative;isolation:isolate;display:flex;align-items:center;min-height:48px;padding:0 16px;text-decoration:none;color:var(--mutedS);font-weight:600;font-size:15px;border-radius:16px;transition:color .3s var(--spring),scale .35s var(--spring)}
+#mobnav a{position:relative;isolation:isolate;display:flex;align-items:center;min-height:48px;padding:0 16px;text-decoration:none;color:var(--mutedS);font-weight:600;font-size:15px;border-radius:16px;transition:scale .35s var(--spring)}
 #mobnav a:active{scale:.97}
 #mobnav a.active{color:var(--on-solid)}
 #mobnav a::before{border-radius:inherit}
 
 /* ===== Пилюли: единая механика состояний ===== */
 .chip,.tab,.mode,.mmode,.periods button,#mobnav a{position:relative;isolation:isolate}
-.chip::before,.tab::before,.mode::before,.mmode::before,.periods button::before,#mobnav a::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:var(--solid);opacity:0;transform:scale(.9);transition:opacity .3s var(--spring),transform .5s var(--spring);z-index:-1;pointer-events:none}
+.chip::before,.tab::before,.mode::before,.mmode::before,.periods button::before,#mobnav a::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:var(--solid);opacity:0;transform:scale(.9);transition:opacity .15s var(--spring),transform .5s var(--spring);z-index:-1;pointer-events:none}
 .chip.on::before,.tab.on::before,.mode.on::before,.mmode.on::before,.periods button.on::before,#mobnav a.active::before{opacity:1;transform:none}
 .chip.on,.tab.on,.mode.on,.mmode.on,.periods button.on{color:var(--on-solid)}
 @media(hover:hover){
   .chip:not(.on):hover::before,.tab:not(.on):hover::before,.mode:not(.on):hover::before,.mmode:not(.on):hover::before,.periods button:not(.on):hover::before,#mobnav a:not(.active):hover::before{opacity:.07;transform:none}
 }
-.chip,.tab,.mmode,.periods button{transition:color .3s var(--spring),scale .35s var(--spring)}
-.mode{transition:color .3s var(--spring),scale .35s var(--spring),translate var(--dur) var(--spring)}
+.chip,.tab,.mmode,.periods button{transition:scale .35s var(--spring)}
+.mode{transition:scale .35s var(--spring),translate var(--dur) var(--spring)}
 .chip:active,.tab:active,.mmode:active,.periods button:active{scale:.95}
 .mode:active{scale:.98}
 
 /* ===== Hero ===== */
 .hero{padding:clamp(16px,2.4vw,32px) 0 clamp(18px,2.4vw,28px)}
 .hero-card{position:relative;overflow:hidden;isolation:isolate;padding:clamp(24px,4.8vw,64px);background:var(--card);border:1px solid var(--glass-line);border-radius:var(--r);box-shadow:var(--shadow)}
-.hero-card::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(560px 340px at 100% 0%,rgba(142,142,147,.22),transparent 70%),radial-gradient(440px 300px at 0% 100%,rgba(142,142,147,.12),transparent 70%)}
+.hero-card::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(560px 340px at 100% 0%,var(--silver-a22),transparent 70%),radial-gradient(440px 300px at 0% 100%,var(--silver-a12),transparent 70%)}
 .hero-mark{position:absolute;right:-3%;bottom:-16%;width:min(46%,430px);height:auto;color:var(--text);opacity:.07;z-index:-1;pointer-events:none}
 .hero h1{margin:16px 0 14px;max-width:17ch;font-family:var(--font-serif);font-weight:600;font-size:clamp(34px,6.2vw,76px);letter-spacing:-.025em;line-height:1.02;text-wrap:balance}
 .hero .lead{font-size:clamp(15px,1.6vw,19px);color:var(--mutedS);max-width:44ch;line-height:1.5;text-wrap:pretty}
@@ -116,7 +117,7 @@
 .field input[type=number]{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 13px;width:100%;min-height:var(--tap)}
 
 /* ползунки: активный трек (--fill ставит helpers.initUI), thumb пружинит scale */
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;cursor:pointer;margin:0}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:var(--tap);background:transparent;cursor:pointer;margin:0}
 input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(var(--solid),var(--solid)) 0/var(--fill,0%) 100% no-repeat,var(--track)}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--card);border:1px solid var(--silver);box-shadow:var(--shadow);margin-top:-9px;transition:transform .35s var(--spring)}
 input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.14)}
@@ -240,7 +241,7 @@ details p,details li{font-size:13px;color:var(--mutedS);line-height:1.6;padding-
 .chartbox.short{height:190px}
 .chartbox canvas{max-width:100%}
 .seg{position:relative;display:inline-flex;background:var(--seg);border-radius:12px;padding:3px;gap:2px}
-.seg button{position:relative;z-index:1;border-radius:9px;padding:7px 13px;min-height:34px;font-size:12px;font-weight:600;color:var(--mutedS);transition:color .3s var(--spring),scale .35s var(--spring)}
+.seg button{position:relative;z-index:1;border-radius:9px;padding:7px 13px;min-height:34px;font-size:12px;font-weight:600;color:var(--mutedS);transition:scale .35s var(--spring)}
 .seg button:active{scale:.95}
 .seg button.on,.seg button[aria-pressed="true"]{color:var(--text)}
 .seg:not(.has-ind) button.on{background:var(--card);box-shadow:var(--shadow-pill)}
@@ -248,8 +249,8 @@ details p,details li{font-size:13px;color:var(--mutedS);line-height:1.6;padding-
 .seg-ind{position:absolute;left:0;top:3px;bottom:3px;width:100px;border-radius:9px;background:var(--card);box-shadow:var(--shadow-pill);transform-origin:0 50%;opacity:0;pointer-events:none;z-index:0}
 .seg-theme .seg-ind{border-radius:999px}
 .seg-ready .seg-ind{transition:transform .55s var(--spring),opacity .25s var(--spring)}
-:root[data-theme="dark"] .seg-ind{background:rgba(255,255,255,.16);box-shadow:none}
-:root[data-theme="dark"] .nav .seg-ind{background:rgba(255,255,255,.10)}
+:root[data-theme="dark"] .seg-ind{background:var(--ind);box-shadow:none}
+:root[data-theme="dark"] .nav .seg-ind{background:var(--ind-nav)}
 .rowline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .periods{display:flex;gap:3px;flex-wrap:wrap;margin-top:12px}
 .periods button{font-size:12px;font-weight:600;color:var(--mutedS);padding:5px 9px;min-height:32px;border-radius:9px}
@@ -290,7 +291,7 @@ tr:last-child td{border-bottom:0}
 .leaflet-control-zoom-in:hover,.leaflet-control-zoom-out:hover{background:var(--chip)}
 .leaflet-control-attribution{font-size:10px!important;background:var(--glass)!important;color:var(--mutedS)!important}
 .leaflet-control-attribution a{color:var(--mutedS)!important}
-.pin{width:20px;height:20px;border-radius:50%;border:2px solid var(--card);box-shadow:0 2px 8px rgba(28,28,30,.35);display:grid;place-items:center}
+.pin{width:20px;height:20px;border-radius:50%;border:2px solid var(--card);box-shadow:0 2px 8px var(--ink-a35);display:grid;place-items:center}
 .pin:after{content:"";width:5px;height:5px;border-radius:50%;background:var(--card)}
 .pin-home{background:var(--ink)}
 .pin-city{background:var(--silver)}
@@ -457,18 +458,20 @@ tr:last-child td{border-bottom:0}
   .chartbox.short{height:170px}
   .footin{flex-direction:column;align-items:flex-start}
   .calstrip{grid-template-columns:repeat(6,1fr)}
-  .periods{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+  .periods{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
   .periods button{min-height:var(--tap);padding:0}
   .seg button{min-height:var(--tap);padding:0 14px}
-  .chip,.tab,.mmode{min-height:var(--tap)}
-  .btn.small{min-height:var(--tap)}
   .checkrow{padding:16px 0}
 }
 @media(max-width:400px){
   .heatmap{gap:2px}
   .heatmap .hm-cell{padding:6px 0;font-size:10.5px}
   .brand small{display:none}
-  .seg-theme button{min-width:42px}
+}
+
+/* тач-цели ≥44px: узкий экран и любые сенсорные устройства (в т.ч. планшет) */
+@media(max-width:640px),(pointer:coarse){
+  .chip,.tab,.mmode,.btn.small,.btn[type=submit]{min-height:var(--tap)}
 }
 
 /* точки графика рентабельности: масштабирование от центра (анимирует overview.js через WAAPI) */

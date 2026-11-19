@@ -21,6 +21,8 @@ import { yearParams, vatStatus, vatInPrice, ipContributions, crossingMonth, gphC
 import { methodLines, methodVars } from '../js/calculators/method.js';
 import { loadScenarios, saveScenarios, addScenario, removeScenario, buildComparison, fmtValue, sanitizeName } from '../js/calculators/scenarios.js';
 import { readOverrides, setOverride, clearOverrides } from '../js/calculators/overrides.js';
+import { formatHeadline, thousands, HEADLINE_KINDS } from '../js/calculators/headline.js';
+import { legalLine } from '../js/calculators/method.js';
 
 const url = p => new URL(p, import.meta.url);
 const J = n => JSON.parse(readFileSync(url(`../data/${n}.json`), 'utf-8'));
@@ -129,20 +131,20 @@ test('месяц пересечения порога и начало НДС (с�
 
 test('точка перехода: остаток после НДС снова равен остатку на пороге — закрытая формула', () => {
   // УСН «Доходы», расходы 55%, без работников. На пороге остаток = 0,45·T − 0,06·T − 0,01·(T − 300 000) − фикс.
-  //   = 0,38·T + 3 000 − фикс. После порога НДС 5/105 в цене, налог 6% с (R − НДС):
-  //   остаток(R) = R·k + 3 000 − фикс, k = 0,45 − 0,06·100/105 − 5/105 − 0,01 = 0,3352381.
-  //   Равенство: R* = 0,38·T / k = 7 600 000 / 0,3352381 = 22 670 454,5. Потолок 1%-взноса (≥ 321 818) не достигается.
-  const k = 0.45 - 0.06 * 100 / 105 - 5 / 105 - 0.01;
+  //   = 0,38·T + 3 000 − фикс. После порога НДС 5/105 в цене; и налог 6%, и 1% взносов считаются от дохода УСН
+  //   БЕЗ НДС (R·100/105): остаток(R) = R·k + 3 000 − фикс, k = 0,45 − (0,06 + 0,01)·100/105 − 5/105 = 0,3357143.
+  //   Равенство: R* = 0,38·T / k = 7 600 000 / 0,3357143 = 22 638 297,9. Потолок 1%-взноса (≥ 321 818) не достигается.
+  const k = 0.45 - (0.06 + 0.01) * 100 / 105 - 5 / 105;
   const expected = 0.38 * T / k;
-  near(expected, 22670454.5, 1);
+  near(expected, 22638297.9, 1);
   for (const year of [2026, 2027]) {
     const r = taxes({ year, revenue: 3e6, costShare: 55, social: 0, employees: 0 }, cfg);
     near(r.crossing.breakEven, expected, 1);
   }
-  // расходы 80%: k = 0,2 − 0,057143 − 0,047619 − 0,01 = 0,085238; R* = (0,2·T − 0,06·T − 0,01·T + 3000... ) по формуле
-  const k8 = 0.2 - 0.06 * 100 / 105 - 5 / 105 - 0.01;
-  const base8 = 0.2 * T - 0.06 * T - 0.01 * (T - 3e5);              // остаток на пороге без фикса
-  near(taxes({ year: 2027, revenue: 3e6, costShare: 80, social: 0, employees: 0 }, cfg).crossing.breakEven, (base8 - 0.01 * 3e5) / k8, 1);
+  // расходы 80%: k = 0,2 − 0,07·100/105 − 5/105 = 0,0857143; на пороге остаток без фикса = 0,2·T − 0,06·T − 0,01·T + 3 000,
+  // после порога R·k + 3 000 — взнос 1% с (R − НДС) − 300 000, 3 000 сокращаются: R* = 0,13·T / k
+  const k8 = 0.2 - (0.06 + 0.01) * 100 / 105 - 5 / 105;
+  near(taxes({ year: 2027, revenue: 3e6, costShare: 80, social: 0, employees: 0 }, cfg).crossing.breakEven, 0.13 * T / k8, 1);
 });
 
 test('basecamp: темп ровно на пороге — без НДС; на 12 ₽ в год выше — НДС и штаб', () => {
@@ -526,7 +528,12 @@ test('METHOD-тексты строятся из данных: ни «нет да
       lines.forEach(l => assert.ok(!/NaN|undefined|[{}]/.test(l), `${mod.meta.id}/${year}: ${l}`));
       // каждый плейсхолдер шаблона разрешается в значение (иначе в тексте появилось бы «нет данных»)
       const vars = methodVars(cfg, year);
-      cfg.calc.$method[mod.meta.id].forEach(tpl => [...tpl.matchAll(/[{]([\w.$]+)/g)].forEach(m => assert.notEqual(getPath(vars, m[1]), null, `${mod.meta.id}: пусто ${m[1]}`)));
+      // параметры года (y.*) без проверенных данных (2028) честно дают «нет данных»; остальные плейсхолдеры обязаны разрешаться
+      cfg.calc.$method[mod.meta.id].forEach(tpl => [...tpl.matchAll(/[{]([\w.$]+)(?:\|\w+)?[}]/g)].forEach(m => {
+        const v = getPath(vars, m[1]);
+        if (m[1].startsWith('y.') && v == null) assert.ok(methodLines(mod.meta.id, cfg, year).some(l => l.includes('нет данных')), `${mod.meta.id}/${year}: ${m[1]} без «нет данных»`);
+        else assert.notEqual(v, null, `${mod.meta.id}: пусто ${m[1]}`);
+      }));
     }
   }
   // значения совпадают с данными: порог года и гонорар кластера
@@ -594,9 +601,9 @@ test('данные: ключевые константы проекта поме�
   assert.equal(c.gphRate, 0.302);
 });
 
-test('в js/calculators нет бизнес-констант: допустимы только 0, 1, 2, 3, 100 и 1e6 (единицы измерения)', () => {
+test('в js/calculators нет бизнес-констант: допустимы только 0, 1, 2, 3, 100, 1e3 и 1e6 (единицы измерения)', () => {
   const dir = url('../js/calculators/');
-  const ALLOWED = new Set(['0', '1', '2', '3', '100', '1e6']);
+  const ALLOWED = new Set(['0', '1', '2', '3', '100', '1e3', '1e6']);
   for (const f of readdirSync(dir).filter(n => n.endsWith('.js'))) {
     let s = readFileSync(new URL(f, dir), 'utf-8');
     s = s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\s\/\/ .*$/gm, '');
@@ -614,4 +621,145 @@ test('flatten: листья превращаются в значения, про
   assert.equal(out.a.b, 5);
   assert.equal(meta['a.b'].confidence, 'model');
   assert.deepEqual(out.$raw, { value: 1 });
+});
+
+
+/* ================= Взносы 1% от дохода УСН без НДС ================= */
+
+test('1% взносов ИП считается от дохода УСН без НДС: 20 000 001 ₽ (2026) — НДС 5/105 исключается из базы', () => {
+  // выручка 20 000 001 ₽ > порога 20 млн: НДС в цене = 20 000 001 × 5/105 = 952 381,05; доход УСН = 19 047 619,95;
+  // база 1% = 19 047 619,95 − 300 000 = 18 747 619,95 → допвзнос 187 476,20 (а не 197 000,01 от полной кассы)
+  const vat = 20000001 * 5 / 105;
+  const incomeUsn = 20000001 - vat;
+  const r = taxes({ year: 2026, revenue: 20000001, costShare: 55, social: 0, employees: 0 }, cfg);
+  near(r.vat, vat, 1e-6);
+  near(r.ip.over, incomeUsn - 300000, 1e-6);
+  near(r.ip.extra, (incomeUsn - 300000) * 0.01, 1e-6);
+  near(r.ip.extra, 187476.2, 0.01);
+  assert.ok(r.ip.extra < 197000.01, 'не от полной выручки с НДС');
+  assert.equal(r.ip.capApplied, false);
+  // ровно на пороге НДС нет — база совпадает с выручкой: (20 000 000 − 300 000) × 1% = 197 000
+  const at = taxes({ year: 2026, revenue: T, costShare: 55, social: 0, employees: 0 }, cfg);
+  assert.equal(at.vat, 0);
+  near(at.ip.extra, 197000, 1e-6);
+  // остаток владельца согласован с взносами: выручка − расходы − налог УСН − НДС − взносы ИП
+  const x = r.now;
+  near(x.netUsn6, 20000001 - x.costs - incomeUsn * 0.06 - vat - r.ip.total, 1e-6);
+});
+
+test('ставки 1% и ПСН читаются из rates.json: смена значения в данных меняет расчёт, в коде их нет', () => {
+  const hi = build({ rates: { contributions_1pct_rate: 2 }, cfg: {} });
+  near(taxes({ year: 2027, revenue: 3.6e6, costShare: 55, social: 0, employees: 0 }, hi).ip.extra, 66000, 1e-6);   // 2% × 3 300 000
+  const pat = build({ rates: { patent_potential_nsk: 1000000, patent_tax_rate: 4 }, cfg: {} });
+  near(taxes({ year: 2027, revenue: 3.6e6, costShare: 55, social: 0, employees: 0 }, pat).regimes.find(g => g.id === 'patent').tax, 40000, 1e-6);
+  // ставка ПСН без источника не выдаётся за надёжную: низкая надёжность видна в метаданных
+  assert.equal(cfg.rateMeta.patent_tax_rate.confidence, 'low');
+  assert.match(cfg.rateMeta.contributions_1pct_threshold.note, /без НДС/);
+});
+
+/* ================= Главная цифра: тип величины ================= */
+
+test('главная цифра: «+» только у итога со знаком; цена и налог без плюса; штуки без ₽', () => {
+  assert.equal(formatHeadline('result', 3925), '+3 925 ₽');
+  assert.equal(formatHeadline('result', -964900), '−964 900 ₽');
+  assert.equal(formatHeadline('result', -0.4), '0 ₽');                       // отрицательный ноль не выводится
+  assert.equal(formatHeadline('amount', 380), '380 ₽');
+  assert.equal(formatHeadline('amount', 0), '0 ₽');
+  assert.equal(formatHeadline('count', 2), '2');
+  assert.equal(formatHeadline('amount', null, 'недостижима'), 'недостижима');
+  assert.equal(formatHeadline('count', NaN), 'нет данных');
+  for (const mod of registry) assert.ok(HEADLINE_KINDS.includes(mod.meta.headline), `${mod.meta.id}: нет meta.headline`);
+  // цена билета, налог, стоимость команды — amount; гранты — count; прибыль/остаток — result
+  const kind = Object.fromEntries(registry.map(m => [m.meta.id, m.meta.headline]));
+  assert.deepEqual(kind, { travel: 'result', basecamp: 'result', goal: 'result', taxes: 'amount', payroll: 'amount', pricing: 'amount', parties: 'result', cashflow: 'result', grants: 'count' });
+  // цена из маржи 35% (380 ₽) показывается без плюса, а количество грантов — целым числом без ₽
+  const price = runCalc(registry.find(m => m.meta.id === 'pricing'), { margin: 35, audience: 45, venue: 0, route: 0 }, cfg, {});
+  assert.equal(formatHeadline(kind.pricing, price.priceFromMargin), '380 ₽');
+  const g = runCalc(registry.find(m => m.meta.id === 'grants'), { launch: 0 }, cfg, { market, now: Date.UTC(2026, 10, 19) });
+  assert.doesNotMatch(formatHeadline(kind.grants, g.usable.length), /₽|\+/);
+});
+
+test('тепловая карта: малые отрицательные — «0к», а не «−0к»', () => {
+  assert.equal(thousands(-400), '0к');
+  assert.equal(thousands(-499), '0к');
+  assert.equal(thousands(-12400), '−12к');
+  assert.equal(thousands(0), '0к');
+  assert.equal(thousands(45300), '45к');
+  for (const v of [-1, -250, -499, 499]) assert.ok(!/−0к/.test(thousands(v)), String(v));
+});
+
+/* ================= Год 2028 и «до/после» порога ================= */
+
+test('год 2028 в селекторе; где данных нет — честное «нет данных», расчёт без NaN', () => {
+  assert.deepEqual(cfg.years, [2026, 2027, 2028]);
+  for (const id of ['taxes', 'payroll', 'basecamp', 'goal']) {
+    const mod = registry.find(m => m.meta.id === id);
+    const ctx = { market, now: Date.UTC(2026, 10, 19) };
+    const inputs = { ...runDefaults(mod, cfg, ctx).inputs, year: 2028 };
+    assert.equal(firstBadNumber(runCalc(mod, inputs, cfg, ctx)), null, id);
+  }
+  const r = taxes({ year: 2028, revenue: 3.6e6, costShare: 55, social: 0, employees: 0 }, cfg);
+  assert.equal(r.year, 2028);
+  assert.equal(r.ipFixedNoData, true);                                              // фикс. взносы 2028 в данных нет
+  assert.equal(r.threshold, T);                                                     // порог 2028 в данных есть
+  assert.match(methodLines('taxes', cfg, 2028).join(' '), /нет данных/);
+  // селектор года содержит 2028
+  const yf = registry.find(m => m.meta.id === 'taxes').controls(cfg)[0];
+  assert.ok(yf.options.some(o => String(o[0]) === '2028'));
+});
+
+test('«до» и «после» порога сравниваются по одному режиму (УСН «Доходы»); лучший режим — отдельно', () => {
+  // с введённым потенциальным доходом патент (6% × 100 000 = 6 000) — лучший режим, но остаток считается по УСН «Доходы»
+  const c = build({ rates: { patent_potential_nsk: 100000 }, cfg: {} });
+  const r = taxes({ year: 2027, revenue: 3.6e6, costShare: 55, social: 0, employees: 0 }, c);
+  assert.equal(r.before.best.id, 'patent');
+  assert.equal(r.after.best.id, 'patent');
+  for (const side of [r.before, r.after]) {
+    const u = side.regimes.find(g => g.id === 'usn6');
+    near(side.netUsn6, side.revenue - side.costs - u.tax - side.vat - side.ip.total, 1e-6);   // остаток — именно по usn6, не по лучшему
+  }
+  // после порога НДС и штраф взносов уменьшают остаток при том же режиме: сравнение «яблоко с яблоком»
+  assert.equal(r.before.vat, 0);
+  assert.ok(r.after.vat > 0);
+});
+
+/* ================= Данные: провенанс и юридические тексты ================= */
+
+test('rates.cbr: единый формат провенанса (label, источник, даты, надёжность, юр-пометка); null только с no_data', () => {
+  for (const [k, l] of Object.entries(rates.cbr)) {
+    for (const f of ['value', 'unit', 'label', 'source_name', 'source_url', 'fetched_at', 'valid_from', 'valid_to', 'confidence', 'note', 'legal_note']) assert.ok(f in l, `cbr.${k}: нет поля ${f}`);
+    assert.match(l.legal_note, /^(Проверено|Не проверено): \d{4}-\d{2}-\d{2} · /, `cbr.${k}: формат юр-пометки`);
+    if (l.value == null) { assert.equal(l.status, 'no_data', k); assert.equal(l.confidence, 'no_data', k); assert.equal(l.fetched_at, null, k); }
+    else { assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(l.fetched_at), `cbr.${k}: нет fetched_at`); assert.notEqual(l.status, 'no_data', k); }
+  }
+});
+
+test('config.json: общий блок $provenance для допущений проекта; юридические тексты — в calc.$legal', () => {
+  assert.equal(config.$provenance.confidence, 'model');
+  for (const f of ['source_name', 'fetched_at', 'applies_to', 'note', 'legal_note']) assert.ok(config.$provenance[f], `$provenance.${f}`);
+  for (const key of ['patent_nodata', 'patent_note', 'social_note', 'social_missing', 'social_reference', 'social_need_status']) assert.ok(config.calc.$legal[key], key);
+  // тексты строятся из данных: подстановка значений, никаких «undefined»/«NaN»/остатков шаблона
+  assert.equal(legalLine(cfg, 'social_note', { rate: 1, rateDR: 5 }), '1% «Доходы» / 5% «Д−Р» по 142-ОЗ; применимость проверить');
+  assert.equal(legalLine(cfg, 'social_missing', { year: 2027 }), 'На 2027 год ставка не опубликована.');
+  assert.equal(legalLine(cfg, 'social_reference', { refYear: 2026, refRate: 1 }), ' Ориентир 2026: 1% «Доходы» — вводите после публикации.');
+  assert.match(legalLine(cfg, 'patent_nodata'), /90\.01 \/ 93\.29 \/ 85\.41/);
+  assert.equal(legalLine(cfg, 'нет_такого_ключа'), 'нет данных');
+});
+
+test('в js/ui/calc-*.js и calc-panel.js нет бизнес-констант и юридических ссылок: цифры и законы — только из data/', () => {
+  const files = [['../js/ui/', 'calc-ui.js'], ['../js/ui/', 'calc-dialog.js'], ['../js/ui/', 'calc-charts.js'], ['../js/', 'calc-panel.js']];
+  const ALLOWED = new Set(['0', '1', '2', '3', '4', '100', '1e3', '1e6']);
+  // геометрия отрисовки графиков (размеры SVG, отступы, шаг подписей): не бизнес-данные, перечислена явно
+  const GEOMETRY = { 'calc-charts.js': new Set(['320', '150', '8', '12', '22', '3.5']), 'calc-panel.js': new Set(['36', '6']) };   // calc-panel: основание системы счисления и длина суффикса id сценария
+  for (const [dir, f] of files) {
+    const raw = readFileSync(new URL(f, url(dir)), 'utf-8');
+    // юридические ссылки, ОКВЭД и номера законов в коде запрещены: они в data/config.json (calc.$legal) и rates.json
+    for (const re of [/\d{2,3}-ОЗ/, /ОКВЭД/, /Ориентир\s+\$\{/, /ст\.\s*\d/, /НК РФ/]) assert.doesNotMatch(raw, re, `${f}: юридический текст ${re} в коде`);
+    let src = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\s\/\/ .*$/gm, '');
+    src = src.replace(/'(?:[^'\\\n]|\\.)*'/g, "''").replace(/`(?:[^`\\]|\\.)*`/g, m => m.replace(/[^${}()+*\-/.,\w\s|?:<>=!&[\]]/g, ' '));
+    src = src.replace(/\{\d+(,\d*)?\}/g, '');                                       // квантификаторы регулярных выражений
+    const geo = GEOMETRY[f] || new Set();
+    const found = [...src.matchAll(/(?<![\w.$#])(\d+(?:\.\d+)?(?:e\d+)?)(?![\w])/g)].map(m => m[1]).filter(x => !ALLOWED.has(x) && !geo.has(x));
+    assert.deepEqual([...new Set(found)], [], `${f}: числовые литералы ${found.join(', ')}`);
+  }
 });

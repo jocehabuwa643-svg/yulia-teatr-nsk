@@ -1,12 +1,12 @@
 /* ============================================================
    market.css — «Навигатор рынка» и «Карта прибыли».
-   Только токены из tokens.css/themes.css. Анимации — transform/opacity на кривой --ease;
+   Только токены из tokens.css/themes.css. Анимации — только transform/opacity, длительность и кривая из токенов --dur/--spring;
    при prefers-reduced-motion у всех элементов остаётся конечное видимое состояние.
    ============================================================ */
 
 /* ---------- Появление блоков (JS ставит .arm, затем .shown) ---------- */
 .arm{opacity:0}
-.arm.shown{opacity:1;animation:mkIn .6s var(--ease) backwards;animation-delay:calc(var(--i,0) * 45ms)}
+.arm.shown{opacity:1;animation:mkIn calc(var(--dur) * 1.5) var(--spring) backwards;animation-delay:calc(var(--i,0) * 45ms)}
 @keyframes mkIn{from{opacity:0;transform:translateY(14px)}}
 
 /* ---------- Каркас раздела ---------- */
@@ -30,8 +30,8 @@
 
 /* ---------- Карточки конкурентов ---------- */
 .rivals{grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr))}
-.rival{padding:18px 20px;gap:12px;box-shadow:none;transition:transform .35s var(--ease),box-shadow .35s var(--ease),border-color .25s}
-@media(hover:hover){.rival:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--silver)}}
+.rival{padding:18px 20px;gap:12px;box-shadow:none;transition:transform var(--dur) var(--spring)}
+@media(hover:hover){.rival:hover{transform:translateY(-3px)}}
 .rv-top{display:flex;gap:12px;align-items:center;min-width:0}
 .rv-ic{width:40px;height:40px;border-radius:14px;background:var(--chip);display:grid;place-items:center;flex:none}
 .rv-t{min-width:0}
@@ -67,7 +67,7 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
 /* Раскрывающиеся блоки внутри карточек */
 .mk-more{margin-top:0}
 .mk-more>summary{font-size:13px}
-.mk-more[open]>*:not(summary){animation:mkIn .4s var(--ease) backwards}
+.mk-more[open]>*:not(summary){animation:mkIn var(--dur) var(--spring) backwards}
 .mk-more p,.mk-more li{padding-bottom:0}
 .mk-more p{margin:0 0 8px}
 .mk-more.wide{margin-top:10px}
@@ -75,14 +75,23 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
 .plist li{display:flex;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line);padding-bottom:6px;font-size:13px;color:var(--mutedS)}
 .plist li b{color:var(--text);text-align:right;font-variant-numeric:tabular-nums}
 
+/* Вложенный <details> внутри «Подробнее»: без лишних отступов */
+.mk-sub{margin:0}
+.mk-sub>summary{padding:8px 0}
+.mk-sub p{margin:0 0 6px}
+
+/* Метаданные графиков: компактная строка, длинное — в <details> */
+.chartmeta .tiny{font-size:11px;color:var(--mutedS)}
+
 /* ---------- Формы ручного ввода ---------- */
 .mform{display:grid;gap:12px;margin:2px 0 4px}
 .mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mf{display:grid;gap:5px;font-size:12px;font-weight:600;color:var(--text2);min-width:0}
+.mform .btn.small{min-height:var(--tap)}
 .mf input{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 13px;min-height:var(--tap);width:100%;font-size:14px;color:var(--text);min-width:0}
 .mf input::placeholder{color:var(--mutedS);opacity:.8}
 .ferr{font-size:12px;color:var(--text);border:1px dashed var(--silver);border-radius:10px;padding:8px 10px}
-.iconbtn{min-width:var(--tap);min-height:var(--tap);display:inline-grid;place-items:center;border-radius:12px;color:var(--mutedS);transition:transform .3s var(--ease),color .2s}
+.iconbtn{min-width:var(--tap);min-height:var(--tap);display:inline-grid;place-items:center;border-radius:12px;color:var(--mutedS);transition:transform var(--dur-s) var(--spring)}
 .iconbtn:hover{color:var(--text);transform:scale(1.08)}
 .iconbtn:active{transform:scale(.92)}
 
@@ -93,7 +102,7 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
 .pname small{display:block;font-size:11px;font-weight:500;color:var(--mutedS);margin-top:2px}
 .ptrack{height:12px;border-radius:99px;background:var(--track);position:relative;overflow:hidden}
 .pw{display:block;height:100%}
-.pfill{display:block;height:100%;border-radius:99px;background:var(--solid);transform-origin:left center;transition:transform .9s var(--ease)}
+.pfill{display:block;height:100%;border-radius:99px;background:var(--solid);transform-origin:left center;transition:transform calc(var(--dur) * 2) var(--spring)}
 .pre .pfill{transform:scaleX(0)}
 .prow.low .pfill{background:var(--silver)}
 .prow.manual .pfill{background:var(--text2)}
@@ -118,26 +127,28 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
 .seas-m{display:grid;grid-template-rows:auto 1fr auto;gap:5px;text-align:center;min-width:0}
 .seas-v{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
 .seas-t{height:130px;display:flex;align-items:flex-end;background:var(--track);border-radius:9px;overflow:hidden}
-.seas-f{display:block;width:100%;background:var(--silver);border-radius:9px 9px 0 0;transform-origin:bottom center;transition:transform .9s var(--ease)}
+.seas-f{display:block;width:100%;background:var(--silver);border-radius:9px 9px 0 0;transform-origin:bottom center;transition:transform calc(var(--dur) * 2) var(--spring)}
 .pre .seas-f{transform:scaleY(0)}
 .seas-m.peak .seas-f{background:var(--solid)}
 .seas-m b{font-size:12px;font-weight:700;color:var(--text2)}
 
 /* ---------- Календарь каникул ---------- */
 .hcal{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:14px 0 12px}
-.hc{border:1px solid var(--line);border-radius:12px;padding:9px 4px;text-align:center;font-size:12px;display:grid;gap:2px;color:var(--mutedS);transition:transform .5s var(--ease),opacity .5s var(--ease)}
+.hc{border:1px solid var(--line);border-radius:12px;padding:9px 4px;text-align:center;font-size:12px;display:grid;gap:2px;color:var(--mutedS);transition:transform var(--dur) var(--spring),opacity var(--dur) var(--spring)}
 .hc b{color:inherit;font-weight:700}
 .hc small{font-size:11px}
 .hc.on{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
 .pre .hc{opacity:0;transform:scale(.92)}
 #holidayList{margin-bottom:0}
+#holidayList .mk-more{flex:1 1 100%;min-width:0}
+.mmode{min-height:var(--tap)}
 
 /* ---------- Карта ---------- */
 .mapscen{margin:12px 0 4px}
 .mapscen-t{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mutedS);margin-bottom:8px}
 .mapscen .chips{margin:0}
 .mapcardtext .mapselect{min-height:var(--tap)}
-.loc{animation:mkIn .5s var(--ease) backwards}
+.loc{animation:mkIn var(--dur) var(--spring) backwards}
 .loc-addr{display:flex;gap:8px;align-items:flex-start}
 .loc-addr svg.lucide{width:16px;height:16px;margin-top:2px}
 .loc-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 4px}
@@ -168,7 +179,7 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
 /* Метки: область касания 44×44, внутри — pin из components.css */
 .mk-pinwrap{background:none;border:0}
 .pinhit{display:grid;place-items:center;width:44px;height:44px}
-.mk-pinwrap .pin{transition:transform .3s var(--ease),box-shadow .3s var(--ease)}
+.mk-pinwrap .pin{transition:transform var(--dur-s) var(--spring)}
 .mk-pinwrap .pin.sel{outline:0;transform:scale(1.3);box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--text)}
 .mk-pinwrap .pin-reg.sel{transform:rotate(45deg) scale(1.1)}
 @media(hover:hover){
@@ -176,8 +187,9 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
   .mk-pinwrap:hover .pin-reg{transform:rotate(45deg) scale(1)}
 }
 .leaflet-marker-icon.mk-pinwrap:focus-visible{outline:0}
+.leaflet-marker-icon.mk-pinwrap:focus-visible .pinhit{outline:2px solid var(--a11y-focus);outline-offset:-2px;border-radius:50%}
 .mk-pinwrap:focus-visible .pin{box-shadow:0 0 0 3px var(--card),0 0 0 6px var(--a11y-focus)}
-.mk-zone{stroke:var(--silver);fill:var(--silver);fill-opacity:.12;stroke-width:1}
+.mk-zone{stroke:var(--silver);fill:color-mix(in srgb,var(--silver) 12%,transparent);fill-opacity:1;stroke-width:1}
 .mk-zone:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px}
 
 /* ---------- Адаптив ---------- */
@@ -191,9 +203,12 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
   .prow .ptrack{grid-column:1/-1;grid-row:2}
   .seas{grid-template-columns:repeat(6,1fr);row-gap:14px}
   .seas-t{height:96px}
-  .mf input{font-size:16px}
+  .mform .btn.small{min-height:var(--tap)}
+.mf input{font-size:16px}
   .mapscen .chip,.filters .chip{min-height:var(--tap)}
   .loc-tiles{grid-template-columns:1fr}
+  .ps a,.lt .lt-sub a,.srclist a{min-height:var(--tap)}
+  .chartmeta{gap:6px 10px}
 }
 @media(max-width:420px){
   .mrow{grid-template-columns:1fr}
@@ -204,5 +219,6 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
   .arm{opacity:1}
   .pre .pfill,.pre .seas-f{transform:none}
   .pre .hc{opacity:1;transform:none}
-  .rival:hover{transform:none}
+  .rival:hover,.iconbtn:hover{transform:none}
+  .mk-pinwrap .pin,.mk-pinwrap:hover .pin{transition:none}
 }

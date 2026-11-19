@@ -151,8 +151,21 @@ function buildMap() {
       icon: L.divIcon({ className: 'mk-pinwrap', html: `<span class="pinhit"><span class="pin ${PIN[p.g] || 'pin-city'}"></span></span>`, iconSize: [44, 44], iconAnchor: [22, 22] })
     }).addTo(mapObj).bindTooltip(p.n, { direction: 'top', offset: [0, -10] });
     marker.on('click', () => showLocation(p.id, { fromMap: true }));
-    const el = marker.getElement();
-    if (el) { el.setAttribute('role', 'button'); el.setAttribute('aria-label', `${p.n} — ${TYPES[p.g] || 'локация'}. Открыть карточку`); }
+    // Элемент маркера создаётся при добавлении на карту — атрибуты ставим на 'add' (и сразу, если уже добавлен)
+    const label = `${p.n} — ${TYPES[p.g] || 'локация'}. Открыть карточку`;
+    const a11y = () => {
+      const el = marker.getElement();
+      if (!el) return;
+      el.setAttribute('role', 'button'); el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-label', label); el.setAttribute('title', p.n);
+      el.setAttribute('aria-current', String(p.id === selected));
+      if (!el.dataset.kb) { // Enter/Space открывают карточку; preventDefault на keydown гасит keypress, поэтому Leaflet не дублирует click
+        el.dataset.kb = '1';
+        el.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); showLocation(p.id, { fromMap: true }); } });
+      }
+    };
+    marker.on('add', a11y);
+    a11y();
     marks[p.id] = marker;
   });
 

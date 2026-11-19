@@ -9,6 +9,7 @@ export const meta = {
   id: 'taxes',
   sources: ['usn_income_rate', 'usn_income_minus_costs_rate', 'usn_min_tax_rate', 'usn_nso_social_income*', 'usn_nso_social_income_minus_costs*', 'vat_threshold*', 'vat_rate_special_low', 'vat_rate_special_high', 'vat_rate_general', 'vat_band_special_low_upto*', 'vat_band_special_high_upto*', 'ip_fixed_contributions*', 'contributions_1pct_threshold', 'contributions_1pct_rate', 'ip_extra_contrib_cap*', 'usn_deduction_no_staff_pct', 'usn_deduction_with_staff_pct', 'patent_potential_nsk', 'patent_tax_rate'],
   icon: 'scale',
+  headline: 'amount',            // тип главной цифры: result — со знаком, amount — сумма/цена без плюса, count — целое число
   title: 'Налоги и режимы',
   what: 'Считает: налоговую нагрузку года по режимам, переход через порог НДС и взносы ИП',
   when: 'Когда: выбираете режим до регистрации или выручка подходит к порогу НДС'
@@ -39,7 +40,8 @@ export function scenario(rev0, ctx) {
   const vat = vs.state === 'exempt' ? 0 : vatInPrice(rev, vs.rate);
   const costs = rev * share(ctx.costShare);
   const usnIncome = rev - (lost ? 0 : vat);                   // НДС исключается из дохода УСН
-  const ip = ipContributions(rev, p, cfg);
+  // 1% взносов ИП — от дохода УСН (без НДС), а не от кассы: допущение проекта, см. contributions_1pct_threshold в rates.json
+  const ip = ipContributions(usnIncome, p, cfg);
   const gphContribs = ctx.employees * cfg.gphRate;            // модельная ставка взносов с гонораров
   // пул вычета: взносы ИП за себя + взносы с гонораров; лимит — % налога (без работников выше, с выплатами физлицам ниже)
   const pool = ip.total + (ctx.employees > 0 ? gphContribs : 0);
