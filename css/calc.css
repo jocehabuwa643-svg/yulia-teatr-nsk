@@ -1,24 +1,142 @@
-/* calc.css — стили раздела «Калькуляторы»: связка ползунок+число, единицы, фокус. */
+/* calc.css — раздел «Калькуляторы»: ввод слева, результат справа, графики, плашки «до/после», сценарии, диалог.
+   Цвета — только токены из tokens.css/themes.css; анимации — только transform/opacity (пружина --spring);
+   при prefers-reduced-motion анимации выключены глобально в base.css, здесь — дополнительно для диалога. */
 
-/* Поле: подпись сверху (единицы в скобках), ползунок и число в одной строке */
-.frow{display:grid;grid-template-columns:1fr 96px;gap:10px;align-items:center}
-.frow input[type=range]{width:100%}
+/* ---------- Раскладка: слева ввод, справа результат; на узких экранах — столбиком ---------- */
+.calcgrid>*{min-width:0}
+.calcgrid>.compare{grid-column:1/-1}
+.calcglobal{margin:0 0 6px}
+.calcdesc span{display:block}
+.result h3{margin-top:8px}
+.result .hint{margin-top:10px}
+.subh{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS);margin:20px 0 6px;font-family:var(--font-text);font-weight:700}
+.big-num.sm{font-size:26px;margin:2px 0}
+.items.one{grid-template-columns:1fr}
+
+/* ---------- Поле: подпись сверху (единицы в скобках), ползунок и число в одной строке ---------- */
+.frow{display:grid;grid-template-columns:minmax(0,1fr) 104px;gap:10px;align-items:center}
+.frow input[type=range]{width:100%;min-width:0}
 .fnum{
-  width:96px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;
-  background:var(--card);color:var(--text);font-size:13px;font-weight:700;
+  width:104px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;min-height:var(--tap);
+  background:var(--card);color:var(--text);font-size:14px;font-weight:700;
   font-variant-numeric:tabular-nums;text-align:right;
 }
-.fnum:focus{border-color:var(--silver);outline:none;box-shadow:0 0 0 3px rgba(142,142,147,.25)}
+.fnum:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px}
 .fnum::-webkit-outer-spin-button,.fnum::-webkit-inner-spin-button{opacity:.35}
 .fsuf{color:var(--mutedS);font-weight:500}
-.fv{display:block;font-size:11.5px;color:var(--mutedS);margin-top:2px;min-height:14px}
-
-/* Тач-цели: ползунок и число не меньше 44px в высоту взаимодействия */
-@media (pointer:coarse){
-  .frow input[type=range]{height:44px}
-  .fnum{min-height:44px}
-}
+.fv{display:block;font-size:12px;color:var(--mutedS);margin-top:2px;min-height:14px}
+@media(pointer:coarse){.frow input[type=range]{height:44px}}
 @media(max-width:640px){
-  .frow{grid-template-columns:1fr 84px}
-  .fnum{width:84px}
+  .frow{grid-template-columns:minmax(0,1fr) 92px}
+  .fnum{width:92px}
 }
+
+/* ---------- Плашки источников ---------- */
+.srcinfo .sbadge.consult{border-style:dashed}
+.srcinfo .sbadge.manual{border-color:var(--text2)}
+.srcinfo{margin:2px 4px 2px 0;flex-wrap:wrap}
+.srclist,.methodlist{padding:0;margin:0;display:grid;gap:12px}
+.srclist{list-style:none}
+.methodlist{padding-left:18px;gap:2px}
+.srclist li{padding-bottom:0;line-height:1.5}
+.sl-name{font-weight:600;color:var(--text2)}
+
+/* ---------- Плашки «до / после порога» ---------- */
+.platerow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.plate{border:1px solid var(--line);border-radius:var(--r-s);padding:12px 14px;background:var(--card2);display:grid;gap:4px;align-content:start;min-width:0}
+.plate small{font-size:12px;color:var(--mutedS);font-weight:600}
+.plate b{font-size:20px;letter-spacing:-.03em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.plate span{font-size:12px;color:var(--mutedS);overflow-wrap:anywhere}
+.plate:last-child{border-color:var(--text2)}
+@media(max-width:480px){.platerow{grid-template-columns:1fr}}
+
+/* ---------- Графики: линия, столбики, шкала порога ---------- */
+.chart{margin:14px 0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.ch-line{fill:none;stroke:var(--text);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.ch-area{fill:var(--text);opacity:.07}
+.ch-zero{stroke:var(--silver);stroke-width:1}
+.ch-goal{stroke:var(--text2);stroke-width:1;stroke-dasharray:4 4}
+.ch-mark{stroke:var(--silver);stroke-width:1;stroke-dasharray:2 3}
+.ch-dot{fill:var(--card);stroke:var(--text);stroke-width:2}
+.ch-t{fill:var(--mutedS);font-size:11px;font-family:var(--font-text)}
+.bars{display:grid;gap:10px}
+.bar-grp{display:grid;gap:4px}
+.bar-name{font-size:12px;font-weight:600;color:var(--text2)}
+.bar-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.bar-lab{color:var(--mutedS);min-width:48px}
+.bar-lab:empty{display:none}
+.bar-track{flex:1;min-width:0;height:10px;border-radius:6px;background:var(--track);overflow:hidden;display:block}
+.bar{display:block;height:100%;border-radius:6px}
+.bar-a{background:var(--text)}
+.bar-b{background:repeating-linear-gradient(-45deg,var(--silver),var(--silver) 3px,transparent 3px,transparent 6px)}
+.bar-row b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.gauge{margin:14px 0}
+.gauge-top{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--mutedS)}
+.gauge-top b{color:var(--text)}
+.gauge-track{display:block;height:8px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:6px}
+.gauge-fill{display:block;height:100%;background:var(--text);transform-origin:left center;transform:scaleX(var(--p,0));transition:transform var(--dur) var(--spring)}
+.gauge.over .gauge-fill{background:repeating-linear-gradient(-45deg,var(--text),var(--text) 4px,var(--text2) 4px,var(--text2) 8px)}
+
+/* ---------- Тепловая карта: затемнение — через переменную --a (0…1) и токены ---------- */
+.hm-cell{color:var(--text)}
+.hm-pos{background:color-mix(in srgb,var(--solid) calc(var(--a,0) * 100%),transparent)}
+.hm-neg{background:color-mix(in srgb,var(--silver) calc(var(--a,0) * 40% + 12%),transparent)}
+/* тёмные ячейки: скачок яркости обходит зону, где ни тёмный, ни светлый текст не проходит AA */
+.hm-pos.hm-hi{background:color-mix(in srgb,var(--solid) calc(65% + (var(--a,0) - 0.35) * 53.8%),transparent);color:var(--on-solid)}
+
+/* ---------- Сценарии и сравнение ---------- */
+.scenlist{margin-top:14px}
+.scenul{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}
+.scenul li{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:var(--r-s);padding:4px 10px;padding-bottom:4px}
+.scen-check{display:flex;align-items:center;gap:10px;min-height:var(--tap);font-size:13px;font-weight:600;min-width:0;overflow-wrap:anywhere;cursor:pointer}
+.scen-check input{width:20px;height:20px;accent-color:var(--solid);flex-shrink:0}
+.scenul .btn{min-width:var(--tap)}
+@media(max-width:480px){
+  .scenul li{grid-template-columns:minmax(0,1fr) auto auto}
+  .scenul small{display:none}
+}
+.compare{padding:clamp(16px,2vw,26px)}
+.cmphead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.cmp{min-width:420px}
+.cmp th,.cmp td{min-width:120px;font-variant-numeric:tabular-nums}
+.cmp thead th{font-size:12px;color:var(--text2);white-space:nowrap}
+.cmp th small,.cmp td small{display:block;font-weight:500;color:var(--mutedS);font-size:11px}
+.cmp tbody th{font-weight:600;color:var(--text2)}
+.cmp tbody th[scope=row]{position:sticky;left:0;background:var(--card);z-index:1;min-width:150px}
+.cmp tr.differs th,.cmp tr.differs td{background:var(--card2)}
+
+/* ---------- Диалог ручного ввода: нативный <dialog> ---------- */
+.calcdlg{border:1px solid var(--line);border-radius:var(--r);padding:0;background:var(--card);color:var(--text);box-shadow:var(--shadow-lg);width:min(520px,calc(100% - 32px));max-height:min(86vh,760px)}
+.calcdlg::backdrop{background:color-mix(in srgb,var(--void) 55%,transparent)}
+.calcdlg form{padding:20px 22px;display:grid;gap:12px;max-height:min(86vh,760px);overflow:auto}
+.calcdlg[open]{animation:dlg-in .4s var(--spring)}
+@keyframes dlg-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+.dlg-body{display:grid;gap:14px}
+.dlg-field{display:grid;gap:5px}
+.dlg-field label{font-weight:600;font-size:13px}
+.dlg-field input{border:1px solid var(--line);border-radius:12px;padding:10px 13px;min-height:var(--tap);background:var(--card);width:100%;font-weight:600}
+.dlg-field input:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px}
+.dlg-group{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS);margin-top:8px;font-family:var(--font-text);font-weight:700}
+.dlg-err{border:1px dashed var(--silver);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--text)}
+.dlg-actions{position:sticky;bottom:-20px;background:var(--card);padding:10px 0 2px;margin-top:0}
+@media(prefers-reduced-motion:reduce){.calcdlg[open]{animation:none}.gauge-fill{transition:none}}
+
+/* ---------- Печать: сравнение сценариев видно, служебные блоки скрыты ---------- */
+@media print{
+  .scenlist,.calcglobal,dialog{display:none!important}
+  .compare:not([hidden]){display:block!important;grid-column:1/-1;break-inside:avoid}
+  .compare details{display:block!important}
+  .tablebox{overflow:visible}
+  .cmp tbody th[scope=row]{position:static}
+}
+
+/* ---------- Узкие экраны: строки «подпись — значение» с плашками переносятся, а не расширяют страницу ---------- */
+.result .kv,.compare .kv{flex-wrap:wrap;gap:2px 10px;min-width:0}
+.result .kv>span{min-width:0}
+.result .kv b{white-space:normal;text-align:right;min-width:0;overflow-wrap:anywhere;margin-left:auto}
+.result .srcinfo .sbadge,.srclist .sbadge{white-space:normal;text-align:left}
+.srclist li{min-width:0;overflow-wrap:anywhere}
+
+/* Атрибут hidden должен побеждать display:grid у панелей и блока сравнения */
+.calcgrid[hidden],.compare[hidden],.scenlist[hidden]{display:none!important}

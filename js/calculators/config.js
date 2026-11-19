@@ -73,10 +73,11 @@ export function buildCalcConfig({ rates, config, competitors }, overrides = {}) 
   // годы расчёта и год по умолчанию — из config.calc
   const years = (flat.calc && flat.calc.years) || [];
   const defYear = (flat.calc && flat.calc.default_year) || years[years.length - 1];
-  const rateMeta = {};
+  // rateMeta — провенанс без значения (бейджи), rateVals — значения по тем же ключам («vat_threshold.2027», «usn_income_rate»)
+  const rateMeta = {}, rateVals = {};
   Object.entries(t).forEach(([k, node]) => {
-    if (isYears(node)) Object.entries(node.years).forEach(([y, leaf]) => { const { value, ...rest } = leaf; rateMeta[`${k}.${y}`] = rest; });
-    else if (isLeaf(node)) { const { value, ...rest } = node; rateMeta[k] = rest; }
+    if (isYears(node)) Object.entries(node.years).forEach(([y, leaf]) => { const { value, ...rest } = leaf; rateMeta[`${k}.${y}`] = rest; rateVals[`${k}.${y}`] = value; });
+    else if (isLeaf(node)) { const { value, ...rest } = node; rateMeta[k] = rest; rateVals[k] = value; }
   });
 
   const pctVal = key => (one(t, key) == null ? null : one(t, key));
@@ -119,7 +120,7 @@ export function buildCalcConfig({ rates, config, competitors }, overrides = {}) 
     gphAboveRate: one(t, 'gph_contributions_above_base_rate'),     // % сверх базы
     patentPotential: one(t, 'patent_potential_nsk'),
     patentRate: one(t, 'patent_tax_rate'),
-    meta, rateMeta
+    meta, rateMeta, rateVals
   };
   // совместимость со старым cfg: значения года по умолчанию на верхнем уровне
   const dp = byYear[defYear] || {};

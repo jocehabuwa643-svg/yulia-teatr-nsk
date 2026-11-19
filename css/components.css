@@ -170,6 +170,7 @@ details p,details li{font-size:13px;color:var(--mutedS);line-height:1.6;padding-
 .planresult small{font-size:12px;color:var(--mutedS)}
 .heatmap{display:grid;gap:3px;margin:12px 0}
 .heatmap .hm-cell{border-radius:6px;padding:6px 4px;text-align:center;font-size:11px;font-variant-numeric:tabular-nums;border:1px solid var(--line)}
+.heatmap>*{min-width:0}
 .heatmap .hm-lab{font-size:11px;color:var(--mutedS);display:flex;align-items:center;justify-content:center}
 .cmpgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:10px}
 .cmpcol{border:1px solid var(--line);border-radius:var(--r-s);padding:14px;background:var(--card2);display:grid;gap:8px;align-content:start}
@@ -410,6 +411,8 @@ tr:last-child td{border-bottom:0}
 }
 @media(max-width:1060px){
   .nav{display:none}
+  /* тач-цели шапки ≥44px на планшете и телефоне */
+  .seg-theme button,.ghostbtn{min-height:var(--tap)}
   #menubtn{display:inline-flex;width:var(--tap);padding:0}
   .kpi,.kpi:nth-child(1),.kpi:nth-child(6){grid-column:span 4}
   .kpi:nth-child(1) .num,.kpi:nth-child(6) .num{font-size:clamp(28px,2.6vw,38px)}
@@ -462,6 +465,8 @@ tr:last-child td{border-bottom:0}
   .checkrow{padding:16px 0}
 }
 @media(max-width:400px){
+  .heatmap{gap:2px}
+  .heatmap .hm-cell{padding:6px 0;font-size:10.5px}
   .brand small{display:none}
   .seg-theme button{min-width:42px}
 }

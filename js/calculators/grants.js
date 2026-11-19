@@ -45,7 +45,7 @@ export function calc(input, cfg, marketData, now) {
   return {
     launchDate: opts[idx].date,
     launchLabel: opts[idx].label,
-    today: today.toISOString().slice(0, 10),
+    today: today.toISOString().split('T')[0],
     programs, usable,
     openNow: programs.filter(p => p.canApply).length,
     conclusion: usable.length

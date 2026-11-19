@@ -5,6 +5,7 @@ import { num, nonNeg, share, safeDiv, rangeField, ruNum } from './util.js';
 
 export const meta = {
   id: 'travel',
+  sources: ['usn_income_rate', 'gph_contributions_rate'],
   icon: 'route',
   title: 'Выездной спектакль и область',
   what: 'Считает: чистую прибыль показа и дня, точку безубыточности по зрителям',

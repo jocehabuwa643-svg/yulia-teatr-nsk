@@ -4,6 +4,7 @@ import { nonNeg, share, safeDiv, rangeField } from './util.js';
 
 export const meta = {
   id: 'parties',
+  sources: ['usn_income_rate', 'gph_contributions_rate'],
   icon: 'cake',
   title: 'Праздники и аренда',
   what: 'Считает: прибыль одного праздника и месяца при заданном пакете',

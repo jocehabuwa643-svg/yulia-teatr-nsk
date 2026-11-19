@@ -1,11 +1,12 @@
 /* basecamp.js — калькулятор «Студия и база» (база + выезды + порог НДС).
    Формулы baseMonth()/business() перенесены из проверенной версии; константы — из config/rates,
    НДС и УСН — через tax-core (порог по году, пониженные ставки 5/7%, «в цене» r/(100+r)). */
-import { num, nonNeg, share, safeDiv, rangeField, ruNum } from './util.js';
-import { yearParams, vatStatus, vatInPrice } from './tax-core.js';
+import { num, nonNeg, share, safeDiv, rangeField, yearField, ruNum } from './util.js';
+import { yearParams, vatStatus, vatInPrice, crossingMonth } from './tax-core.js';
 
 export const meta = {
   id: 'basecamp',
+  sources: ['usn_income_rate', 'vat_threshold*', 'vat_rate_special_low', 'vat_rate_special_high', 'vat_band_special_low_upto*', 'gph_contributions_rate'],
   icon: 'building-2',
   title: 'Студия и база 130 м² на Богдашке',
   what: 'Считает: прибыль бизнеса в месяц, окупаемость вложений и автопорог НДС при превышении лимита УСН',
@@ -13,6 +14,7 @@ export const meta = {
 };
 
 export const controls = cfg => [
+  yearField(cfg, { wide: true }),
   { type: 'select', id: 'area', label: 'Площадь базы', options: cfg.calc.controls.basecamp.area_options.map(a => [a, `${a} м²`]), def: cfg.calc.base_area_default },
   rangeField(cfg, 'basecamp', 'rent', 'Ставка аренды'),
   rangeField(cfg, 'basecamp', 'students', 'Ученики'),
@@ -61,17 +63,24 @@ export function business(b, n0, troupes0, cfg, cap = true, year = cfg.year) {
   const save = vatSum * share(cfg.usn);
   const baseProfit = b.profit - (reg ? vatInPrice(b.gross, vs.rate) * keep : 0);
   const profit = b.profit + served * unit - vatSum + save - hq;
+  // «до порога»: та же прибыль без НДС и штаба — разница с profit и есть цена перехода через порог
+  const profitNoVat = b.profit + served * unit;
+  // «после порога» как гипотеза: прибыль, если бы НДС по низкой ставке и штаб уже действовали (когда порог ещё не превышен)
+  const vatOver = reg ? vatSum : vatInPrice(g, p.vatLow);
+  const profitOver = reg ? profit : profitNoVat - vatOver + vatOver * share(cfg.usn) - cfg.phases_budget.hq_month_over_threshold;
   return {
-    served, aud, annual, reg, vat: vatSum, hq, save, baseProfit, profit, g, unit, unitSales,
+    served, aud, annual, reg, vat: vatSum, hq, save, baseProfit, profit, profitNoVat, profitOver, vatOver, vatCost: profitNoVat - profit, g, unit, unitSales,
+    threshold: p.vatThreshold, crossMonth: crossingMonth(annual, p.vatThreshold, cfg.calendar.months_per_year),
     vatRate: vs.rate, vatState: vs.state, usnLost: !!vs.usnLost, year: p.year,
     tourProfit: served * unit - (reg ? vatInPrice(served * unitSales, vs.rate) * keep : 0)
   };
 }
 
 export function calc(input, cfg) {
+  // входы приводятся к неотрицательным числам: пустое поле и NaN дают 0, а не NaN в результате
   const m = {
-    area: input.area, rent: input.rent, s: input.students, p: input.sub,
-    w: input.week, h: input.party, a: input.attendance, c: input.eventprice
+    area: nonNeg(input.area), rent: nonNeg(input.rent), s: nonNeg(input.students), p: nonNeg(input.sub),
+    w: nonNeg(input.week), h: nonNeg(input.party), a: nonNeg(input.attendance), c: nonNeg(input.eventprice)
   };
   const year = input.year ?? cfg.year;
   const b = baseMonth(m, cfg);
@@ -87,6 +96,7 @@ export const summary = r => [
   { label: 'База отдельно', v: r.x.baseProfit, t: 'rub' },
   { label: 'Выезды', v: r.x.tourProfit, t: 'rub' },
   { label: 'Окупаемость, мес.', v: r.payback, t: 'int', empty: 'не достигается' },
-  { label: 'Годовой темп выручки', v: r.x.annual, t: 'rub' }
+  { label: 'Годовой темп выручки', v: r.x.annual, t: 'rub' },
+  { label: 'Без НДС и штаба (до порога)', v: r.x.profitNoVat, t: 'rub' }
 ];
 export const hint = cfg => `порог НДС ${ruNum(yearParams(cfg, cfg.year).vatThreshold / 1e6)} млн ₽`;
