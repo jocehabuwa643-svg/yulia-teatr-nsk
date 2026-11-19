@@ -12,12 +12,18 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<script src="js/boot.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap"></noscript>
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/themes.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/splash.css">
+<link rel="stylesheet" href="css/calc.css">
+<link rel="stylesheet" href="css/market.css">
+<link rel="stylesheet" href="css/guide.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
@@ -37,41 +43,97 @@
 <body>
 <a class="skip" href="#main">Перейти к содержанию</a>
 
-<!-- ===== Онбординг ===== -->
-<div id="veil" role="dialog" aria-modal="true" aria-label="Приветствие">
+<!-- ===== Заставка: логотип, приветствие, выбор режима (логика — js/boot.js) ===== -->
+<div id="veil" role="dialog" aria-modal="true" aria-labelledby="veilTitle">
   <div class="veil-in">
     <div class="veil-screen" id="veil1">
-      <svg class="emblem" viewBox="0 0 200 170" fill="none" aria-hidden="true">
-        <g class="glow"><path d="M100 12 L38 108 H162 Z" fill="currentColor" opacity=".06"/></g>
-        <g class="beam" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
-          <path class="draw" pathLength="1" d="M100 14 L40 106"/>
-          <path class="draw" pathLength="1" d="M100 14 L160 106"/>
-          <path class="draw" pathLength="1" d="M100 14 L100 112" stroke-dasharray="1 6"/>
+      <!-- Вектор-логотип: сердце из детских символов и солнце. Воспроизводит анимацию из видео (линия → иконки → искра) -->
+      <svg id="logo" class="logo" viewBox="0 0 320 300" fill="none" aria-hidden="true" focusable="false">
+        <defs>
+          <radialGradient id="lg-glow" cx="50%" cy="48%" r="55%"><stop offset="0" stop-color="#F5F5F7" stop-opacity=".22"/><stop offset="1" stop-color="#F5F5F7" stop-opacity="0"/></radialGradient>
+        </defs>
+        <ellipse class="glow" cx="160" cy="150" rx="170" ry="150" fill="url(#lg-glow)" stroke="none"/>
+        <path class="heart" pathLength="1" d="M160 262C124 238 28 180 28 100C28 58 60 30 98 30C126 30 148 46 160 70C172 46 194 30 222 30C260 30 292 58 292 100C292 180 196 238 160 262Z"/>
+        <path class="comet" pathLength="1" d="M160 262C124 238 28 180 28 100C28 58 60 30 98 30C126 30 148 46 160 70C172 46 194 30 222 30C260 30 292 58 292 100C292 180 196 238 160 262Z"/>
+        <!-- воздушный шар -->
+        <g class="ic" style="--i:0"><ellipse cx="74" cy="86" rx="17" ry="22"/><path d="M71 108l3 6 3-6z"/><path d="M74 114C70 126 80 132 75 146"/><path d="M66 78c2-5 6-8 11-8"/></g>
+        <!-- волшебная палочка -->
+        <g class="ic" style="--i:1"><path d="M104 102L133 64"/><path d="M137 51l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/></g>
+        <!-- раскрытая книга -->
+        <g class="ic" style="--i:2"><path d="M188 56C197 50 206 50 214 56 222 50 231 50 240 56V82C231 76 222 76 214 82 206 76 197 76 188 82Z"/><path d="M214 56V82"/></g>
+        <!-- ладошка слева -->
+        <g class="ic" style="--i:3"><g transform="translate(56 104)"><path d="M2 40C-2 32 0 26 3 22L3 8A3.5 3.5 0 0 1 10 8L10 20 10 3A3.5 3.5 0 0 1 17 3L17 20 17 6A3.5 3.5 0 0 1 24 6L24 20 24 12A3.5 3.5 0 0 1 31 12L31 34C31 46 24 52 15 52 9 52 5 48 2 40Z"/></g></g>
+        <!-- светофор -->
+        <g class="ic" style="--i:4"><rect x="146" y="92" width="28" height="58" rx="9"/><circle cx="160" cy="105" r="4.5"/><circle cx="160" cy="121" r="4.5"/><circle cx="160" cy="137" r="4.5"/><path d="M160 150V162"/></g>
+        <!-- пожарная машина -->
+        <g class="ic" style="--i:5"><path d="M90 186V168H104L110 158H134V186Z"/><path d="M112 172H134"/><circle cx="102" cy="189" r="5"/><circle cx="124" cy="189" r="5"/></g>
+        <!-- праздничный колпак -->
+        <g class="ic" style="--i:6"><path d="M206 150L226 100 246 150Z"/><path d="M202 152H250"/><path d="M212 136H240"/><path d="M217 124H235"/><circle cx="226" cy="95" r="4"/></g>
+        <!-- ладошка справа (зеркально) -->
+        <g class="ic" style="--i:7"><g transform="translate(278 104) scale(-1 1)"><path d="M2 40C-2 32 0 26 3 22L3 8A3.5 3.5 0 0 1 10 8L10 20 10 3A3.5 3.5 0 0 1 17 3L17 20 17 6A3.5 3.5 0 0 1 24 6L24 20 24 12A3.5 3.5 0 0 1 31 12L31 34C31 46 24 52 15 52 9 52 5 48 2 40Z"/></g></g>
+        <!-- бабочка -->
+        <g class="ic" style="--i:8"><path d="M200 176C190 160 176 168 184 180 176 186 188 200 200 184"/><path d="M200 176C210 160 224 168 216 180 224 186 212 200 200 184"/><path d="M200 170V190"/><path d="M200 170q-3-7-8-8M200 170q3-7 8-8"/></g>
+        <!-- солнце: горизонт, три дуги и лучи -->
+        <g class="sun">
+          <path d="M112 238H208"/>
+          <path d="M124 238A36 36 0 0 1 196 238"/><path d="M134 238A26 26 0 0 1 186 238"/><path d="M144 238A16 16 0 0 1 176 238"/>
+          <path class="ray" style="--r:0" pathLength="1" d="M119.3 221.2L110.1 217.3"/>
+          <path class="ray" style="--r:1" pathLength="1" d="M128.9 206.9L121.8 199.8"/>
+          <path class="ray" style="--r:2" pathLength="1" d="M143.2 197.4L139.3 188.1"/>
+          <path class="ray" style="--r:3" pathLength="1" d="M160 194V184"/>
+          <path class="ray" style="--r:4" pathLength="1" d="M176.8 197.4L180.7 188.1"/>
+          <path class="ray" style="--r:5" pathLength="1" d="M191.1 206.9L198.2 199.8"/>
+          <path class="ray" style="--r:6" pathLength="1" d="M200.7 221.2L209.9 217.3"/>
         </g>
-        <circle cx="100" cy="12" r="5" stroke="currentColor" stroke-width="1.6"/>
-        <path class="draw" pathLength="1" d="M22 118 H178" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-        <path class="draw" pathLength="1" d="M28 118 C28 152 66 156 70 118" stroke="currentColor" stroke-width="1.4"/>
-        <path class="draw" pathLength="1" d="M130 118 C134 156 172 152 172 118" stroke="currentColor" stroke-width="1.4"/>
-        <path class="draw" pathLength="1" d="M84 118 c0-9 7-14 16-14 s16 5 16 14" stroke="currentColor" stroke-width="1.4"/>
-        <path class="draw" pathLength="1" d="M92 104 a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="1.2"/>
-        <path class="draw" pathLength="1" d="M18 162 H182" stroke="currentColor" stroke-width="1.2" stroke-dasharray="1 7" stroke-linecap="round"/>
+        <!-- искры -->
+        <path class="sp" style="--s:0" d="M44 52l2.4 6.6L53 61l-6.6 2.4L44 70l-2.4-6.6L35 61l6.6-2.4z"/>
+        <path class="sp" style="--s:1" d="M280 46l2 5.4 5.4 2-5.4 2-2 5.4-2-5.4-5.4-2 5.4-2z"/>
+        <path class="sp" style="--s:2" d="M304 150l1.8 4.8 4.8 1.8-4.8 1.8-1.8 4.8-1.8-4.8-4.8-1.8 4.8-1.8z"/>
+        <path class="sp" style="--s:3" d="M18 146l1.8 4.8 4.8 1.8-4.8 1.8-1.8 4.8-1.8-4.8-4.8-1.8 4.8-1.8z"/>
+        <path class="sp" style="--s:4" d="M160 14l1.8 4.8 4.8 1.8-4.8 1.8-1.8 4.8-1.8-4.8-4.8-1.8 4.8-1.8z"/>
       </svg>
-      <h1>Юлия, приветствую вас</h1>
-      <p class="veil-sub">Я ваш справочник, помощник и калькулятор в одном лице — для развития вашего бизнеса</p>
-      <button class="btn-next" id="veilNext">Далее <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+      <!-- Название и слоган из логотипа (текст прочитан с кадров видео; подтвердить у владельца — см. HANDOFF.md) -->
+      <div class="logo-word"><b>Лаборатория волшебных событий</b><i>нескучные уроки</i></div>
+
+      <h2 id="veilTitle" class="veil-title" aria-label="Юлия, приветствую Вас">
+        <span class="w" style="--w:0" aria-hidden="true">Юлия,</span>
+        <span class="w" style="--w:1" aria-hidden="true">приветствую</span>
+        <span class="w" style="--w:2" aria-hidden="true"><em>Вас</em></span>
+      </h2>
+      <p class="veil-sub">
+        <span class="l" style="--l:0">Я <b>Ваш</b> справочник, помощник и калькулятор в одном лице —</span>
+        <span class="l" style="--l:1">для развития <b>Вашего</b> бизнеса</span>
+      </p>
+      <button class="btn-next" id="veilNext" type="button">Далее <svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
     </div>
+
     <div class="veil-screen veil-q" id="veil2" hidden>
-      <h2>Выберите режим</h2>
+      <h2>Выберите режим интерфейса</h2>
+      <p class="q-sub">Изменить можно в любой момент — переключатель всегда в шапке.</p>
       <div class="theme-cards">
-        <button class="theme-card" data-pick="light">
-          <span class="mock mock-light" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i><i class="e"></i></span>
+        <button class="theme-card" type="button" data-pick="light" aria-pressed="false">
+          <span class="mini mini-light" aria-hidden="true">
+            <span class="m-bar"><i class="m-dot"></i><i class="m-pill"></i><i class="m-pill s"></i></span>
+            <span class="m-body">
+              <span class="m-side"><i></i><i></i><i></i><i></i></span>
+              <span class="m-main"><span class="m-title"></span><span class="m-kpis"><i></i><i></i><i></i></span>
+                <svg class="m-chart" viewBox="0 0 100 30" preserveAspectRatio="none"><path d="M0 24L18 20 36 22 56 12 78 14 100 4"/></svg></span>
+            </span>
+          </span>
           <strong>Светлый режим</strong>
-          <span>Белый фон, светло-серые панели, графитовый текст</span>
+          <small>Белые карточки на светло-сером фоне. Удобно днём и для печати.</small>
         </button>
-        <button class="theme-card" data-pick="dark">
-          <span class="mock mock-dark" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i><i class="e"></i></span>
+        <button class="theme-card" type="button" data-pick="dark" aria-pressed="false">
+          <span class="mini mini-dark" aria-hidden="true">
+            <span class="m-bar"><i class="m-dot"></i><i class="m-pill"></i><i class="m-pill s"></i></span>
+            <span class="m-body">
+              <span class="m-side"><i></i><i></i><i></i><i></i></span>
+              <span class="m-main"><span class="m-title"></span><span class="m-kpis"><i></i><i></i><i></i></span>
+                <svg class="m-chart" viewBox="0 0 100 30" preserveAspectRatio="none"><path d="M0 24L18 20 36 22 56 12 78 14 100 4"/></svg></span>
+            </span>
+          </span>
           <strong>Тёмный режим</strong>
-          <span>Фон #0A0A0A, карточки #161618, серебристый текст</span>
+          <small>Графитовые карточки на чёрном. Спокойно вечером, меньше нагрузки на глаза.</small>
         </button>
       </div>
     </div>
@@ -79,14 +141,10 @@
 </div>
 
 <!-- ===== Шапка ===== -->
-<header class="top">
+<header class="top" id="topbar">
   <div class="wrap topin">
     <a class="brand" href="#overview">
-      <svg class="mark" viewBox="0 0 200 170" fill="none" aria-hidden="true">
-        <path d="M100 14 L40 106 M100 14 L160 106" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
-        <path d="M22 118 H178" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
-        <path d="M84 118 c0-9 7-14 16-14 s16 5 16 14" stroke="currentColor" stroke-width="6"/>
-      </svg>
+      <svg class="mark" viewBox="0 0 32 30" fill="none" aria-hidden="true" focusable="false"><path d="M16 27C12 24 3 18.5 3 10.5 3 6.2 6.2 3.4 10 3.4c2.6 0 4.9 1.5 6 3.9 1.1-2.4 3.4-3.9 6-3.9 3.8 0 7 2.8 7 7.1 0 8-9 13.5-13 16.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M11.5 22.5a4.5 4.5 0 0 1 9 0M13.5 22.5a2.5 2.5 0 0 1 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       <span><span class="bt">Помощник Юлии</span><small>Театр и студия · НСК</small></span>
     </a>
     <nav class="nav" aria-label="Основное меню"></nav>
@@ -335,7 +393,7 @@
   </div>
   <div class="checklist-grid">
     <article class="card rv" style="padding:clamp(18px,2vw,28px)">
-      <div class="rowline"><h3>10 шагов</h3></div>
+      <div class="rowline"><h3 id="checklistTitle">10 шагов</h3></div>
       <div id="checks"></div>
       <div class="tally"><span class="track" style="flex:1"><span id="checkbar"></span></span><b id="checkcount"></b></div>
     </article>
@@ -357,7 +415,7 @@
   <a href="#overview">К началу ↑</a>
 </footer>
 </main>
-<noscript><div class="noscript">Включите JavaScript, чтобы пользоваться калькуляторами, картой и чек-листом. Архив исследования доступен без него.</div></noscript>
+<noscript><style>#veil{display:none!important}.rv{opacity:1!important}</style><div class="noscript">Включите JavaScript, чтобы пользоваться калькуляторами, картой и чек-листом. Архив исследования доступен без него.</div></noscript>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

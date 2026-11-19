@@ -8,6 +8,9 @@ const cacheKey = n => `data.v${DATA_VERSION}.${n}`;
 
 async function fetchOne(name) {
   const url = `data/${name}.json`;
+  // Офлайн-версия (один HTML-файл): данные вшиты в страницу сборкой scripts/build.mjs — сеть и fetch не нужны
+  const embedded = typeof window !== 'undefined' && window.__YULIA_DATA__ && window.__YULIA_DATA__[name];
+  if (embedded) return { data: embedded, fromCache: false, error: null };
   try {
     const r = await fetch(url, { cache: 'no-cache' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);

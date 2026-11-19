@@ -45,9 +45,10 @@ svg.lucide{width:18px;height:18px;stroke-width:1.7;flex-shrink:0}
 
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);min-width:0}
 
-/* появление: только transform/opacity */
-.rv{opacity:0;transform:translateY(22px) scale(.985);transition:opacity .7s var(--ease),transform .7s var(--ease)}
-.rv.in{opacity:1;transform:none}
+/* появление: только transform/opacity. Скрываем лишь когда скрипт реально работает (html.js-ready),
+   иначе при сбое модулей весь контент остался бы невидимым */
+.js-ready .rv{opacity:0;transform:translateY(22px) scale(.985);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.js-ready .rv.in{opacity:1;transform:none}
 .cascade .rv:nth-child(1){transition-delay:.02s}.cascade .rv:nth-child(2){transition-delay:.08s}.cascade .rv:nth-child(3){transition-delay:.14s}.cascade .rv:nth-child(4){transition-delay:.2s}.cascade .rv:nth-child(5){transition-delay:.26s}.cascade .rv:nth-child(6){transition-delay:.32s}
 
 ol,ul{padding-left:20px}
@@ -55,5 +56,5 @@ ol,ul{padding-left:20px}
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   *,*::before,*::after{animation:none!important;transition:none!important}
-  .rv{opacity:1;transform:none}
+  .js-ready .rv{opacity:1;transform:none}
 }

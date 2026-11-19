@@ -72,6 +72,8 @@ export function enter(el, fn) {
 export function initReveal(scope = document) {
   const els = $$('.rv', scope);
   if (!window.IntersectionObserver || reduced) { els.forEach(e => e.classList.add('in')); return; }
+  // Скрывать .rv (opacity:0) можно только когда скрипт реально работает — иначе при сбое контент останется невидимым
+  document.documentElement.classList.add('js-ready');
   const ob = new IntersectionObserver(a => a.forEach(x => { if (x.isIntersecting) { x.target.classList.add('in'); ob.unobserve(x.target); } }), { threshold: .08 });
   els.forEach(e => ob.observe(e));
 }

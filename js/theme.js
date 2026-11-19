@@ -1,5 +1,6 @@
-/* theme.js — единая точка смены темы: DOM, мета, тайлы карты, графики */
-import { $, store, icons } from './ui/helpers.js';
+/* theme.js — подписчики смены темы: тайлы карты и графики.
+   Саму тему (data-theme, localStorage, кнопки шапки) ведёт js/boot.js и сообщает событием `yulia:theme`. */
+import { icons } from './ui/helpers.js';
 
 const listeners = new Set();
 export function onThemeChange(fn) { listeners.add(fn); }
@@ -9,19 +10,23 @@ export function registerMap(map, tiles) { mapObj = map; tileLayer = tiles; }
 
 export function isDark() { return document.documentElement.dataset.theme === 'dark'; }
 
-export function theme(dark, persist = true) {
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  const light = $('thLight'), darkBtn = $('thDark');
-  if (light && darkBtn) {
-    light.setAttribute('aria-pressed', String(!dark));
-    darkBtn.setAttribute('aria-pressed', String(dark));
-  }
-  document.querySelectorAll('meta[name=theme-color]').forEach(m => { m.content = dark ? '#0A0A0A' : '#F5F5F7'; });
-  if (persist) store.set('theme', dark ? 'dark' : 'light');
+/* CartoDB Positron — для светлой темы, Dark Matter — для тёмной */
+export function tileUrl(dark) {
+  return dark
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+}
+
+/* Единственная публичная точка смены темы из модулей: делегирует boot.js через клик по кнопкам шапки */
+export function theme(dark) {
+  const btn = document.getElementById(dark ? 'thDark' : 'thLight');
+  if (btn) btn.click();
+}
+
+function onTheme(dark) {
   if (tileLayer && mapObj) {
-    tileLayer.setUrl(dark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
+    tileLayer.setUrl(tileUrl(dark));
+    // Размер контейнера не меняется при смене темы, но пересчёт безопасен и чинит «серые» тайлы
     setTimeout(() => mapObj && mapObj.invalidateSize({ pan: false }), 50);
   }
   icons();
@@ -29,7 +34,5 @@ export function theme(dark, persist = true) {
 }
 
 export function initTheme() {
-  theme(store.get('theme', 'light') === 'dark', false);
-  $('thLight').onclick = () => theme(false);
-  $('thDark').onclick = () => theme(true);
+  document.addEventListener('yulia:theme', e => onTheme(!!(e.detail && e.detail.dark)));
 }

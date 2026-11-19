@@ -3,42 +3,7 @@
    схемы, аналитика, карта, навигатор, справочник, чек-лист, архив
    ============================================================ */
 
-/* ===== Онбординг ===== */
-#veil{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:var(--bg);transition:transform .7s var(--ease),opacity .7s var(--ease),visibility 0s .7s}
-#veil.gone{transform:translateY(-56px);opacity:0;visibility:hidden;pointer-events:none}
-#veil::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 44% at 50% 34%,rgba(142,142,147,.14),transparent 70%);pointer-events:none}
-.veil-in{position:relative;width:min(680px,calc(100% - 40px));text-align:center;padding:20px 8px}
-.veil-screen[hidden]{display:none}
-.emblem{width:min(190px,44vw);height:auto;margin:0 auto 26px;display:block;color:var(--text)}
-.emblem .beam{animation:beam 3.2s ease-in-out infinite}
-.emblem .draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.6s var(--ease) forwards}
-.emblem .glow{opacity:.25;animation:pulse 3.2s ease-in-out infinite}
-.veil-in h1{font-size:clamp(30px,5vw,46px);margin-bottom:14px}
-.veil-sub{color:var(--mutedS);font-size:clamp(13px,1.6vw,17px);line-height:1.45;max-width:640px;margin:0 auto 30px}
-.btn-next{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:var(--bg);font-weight:600;font-size:15px;padding:14px 30px;border-radius:999px;box-shadow:var(--shadow-lg);transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
-.btn-next:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 12px 40px rgba(28,28,30,.22)}
-.btn-next:active{transform:translateY(0) scale(.99)}
-.veil-q{margin-top:34px}
-.veil-q h2{font-size:clamp(20px,2.4vw,26px);margin-bottom:22px}
-.theme-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.theme-card{text-align:left;border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:18px;display:grid;gap:12px;transition:transform .35s var(--ease),box-shadow .35s var(--ease),border-color .2s}
-.theme-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--silver)}
-.theme-card strong{font-size:15px}
-.theme-card span{font-size:12px;color:var(--mutedS);line-height:1.45}
-.mock{height:74px;border-radius:12px;position:relative;overflow:hidden;border:1px solid transparent}
-.mock i{position:absolute;border-radius:4px;display:block}
-.mock-light{background:#FFFFFF;border-color:#E5E5EA}
-.mock-light .a{left:8px;top:8px;width:38%;height:12px;background:#E5E5EA}
-.mock-light .b{left:8px;top:26px;width:54%;height:7px;background:#F5F5F7}
-.mock-light .c{left:8px;top:38px;width:44%;height:7px;background:#F5F5F7}
-.mock-light .d{right:8px;top:8px;width:34%;height:56px;background:#F5F5F7;border:1px solid #E5E5EA}
-.mock-light .e{left:8px;bottom:8px;width:60%;height:8px;background:#2C2C2E}
-.mock-dark{background:#0A0A0A;border-color:#161618}
-.mock-dark .a{left:8px;top:8px;width:38%;height:12px;background:#2C2C2E}
-.mock-dark .b{left:8px;top:26px;width:54%;height:7px;background:#161618}
-.mock-dark .c{left:8px;top:38px;width:44%;height:7px;background:#161618}
-.mock-dark .d{right:8px;top:8px;width:34%;height:56px;background:#161618;border:1px solid #2C2C2E}
-.mock-dark .e{left:8px;bottom:8px;width:60%;height:8px;background:#E5E5EA}
+/* Заставка вынесена в css/splash.css */
 
 /* ===== Шапка ===== */
 .top{position:sticky;top:0;z-index:100;background:var(--glass);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border-bottom:1px solid var(--line)}
@@ -53,7 +18,7 @@
 .seg-theme{display:flex;background:var(--seg);border-radius:999px;padding:3px}
 .seg-theme button{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--mutedS);padding:7px 13px;border-radius:999px;transition:all .25s var(--ease)}
 .seg-theme button svg.lucide{width:14px;height:14px}
-.seg-theme button.on{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(28,28,30,.14)}
+.seg-theme button[aria-pressed="true"]{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(28,28,30,.14)}
 .ghostbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;color:var(--text2);transition:transform .25s var(--ease),border-color .2s}
 .ghostbtn:hover{border-color:var(--silver);transform:translateY(-1px)}
 .ghostbtn svg.lucide{width:14px;height:14px}
