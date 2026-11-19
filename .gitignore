@@ -1,0 +1,16 @@
+# Служебное и временное
+node_modules/
+_site/
+dist/
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+!.env.example
+# Файлы ИИ-инструментов и IDE (не часть проекта)
+.zcode/
+.mimosa/
+.claude/
+.vscode/
+.idea/

@@ -1,0 +1,87 @@
+/* ============================================================
+   base.css — сброс, типографика, каркас, утилиты, общие микро-анимации
+   Правило движения: анимируем только transform и opacity (и независимые
+   свойства translate/scale, которые компонуются на GPU). Кривая — --spring.
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:84px;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font:15px/1.5 var(--font-text);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4,p,figure,blockquote{margin:0}
+h1,h2,h3,h4{font-family:var(--font-display);line-height:1.12;letter-spacing:-.03em;font-weight:700}
+h1{font-size:clamp(30px,4.6vw,54px);letter-spacing:-.04em;font-weight:800}
+h2{font-size:clamp(23px,2.6vw,36px)}
+h3{font-size:clamp(18px,1.6vw,23px)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0;-webkit-tap-highlight-color:transparent}
+button:disabled{cursor:not-allowed}
+a{color:inherit;text-underline-offset:3px;-webkit-tap-highlight-color:transparent}
+img,svg{max-width:100%}
+:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px;border-radius:6px}
+svg.lucide,i[data-lucide]{width:18px;height:18px;stroke-width:1.7;flex-shrink:0}
+i[data-lucide]{display:inline-block}
+
+.sr{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}
+.skip{position:fixed;top:12px;left:12px;z-index:2000;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 16px;box-shadow:var(--shadow);transform:translateY(-160%);transition:transform .4s var(--spring)}
+.skip:focus{transform:none}
+.wrap{width:min(1240px,100% - clamp(28px,6vw,72px));margin-inline:auto}
+
+.eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mutedS)}
+.eyebrow .dash{display:inline-block;width:22px;height:1.5px;background:currentColor;flex-shrink:0}
+.muted{color:var(--mutedS)}
+.tiny{font-size:12px;color:var(--mutedS)}
+.hint{font-size:12px;color:var(--mutedS);line-height:1.5}
+.tnum{font-variant-numeric:tabular-nums}
+
+.section{padding:clamp(34px,4.4vw,56px) 0 0;scroll-margin-top:70px}
+.secthead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.secthead h2{margin-top:8px;text-wrap:balance}
+.secthead .tiny{max-width:52ch}
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--text2);border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 13px}
+.badge .dotp{width:7px;height:7px;border-radius:50%;background:var(--silver);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:.8}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes beam{0%,100%{opacity:.85}50%{opacity:.35}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);min-width:0}
+
+/* ---------- Подъём и мягкая тень (hover) ----------
+   Подъём — свойство translate, тень — псевдоэлемент с opacity: ни layout, ни paint не анимируются.
+   Нажатие — пружинное scale. Независимые translate/scale не конфликтуют с transform появления (.rv). */
+.lift,.btn,.ghostbtn,.mode{position:relative;isolation:isolate;transition:translate var(--dur) var(--spring),scale var(--dur) var(--spring)}
+.lift::after,.btn::after,.ghostbtn::after,.mode::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:var(--shadow-lg);opacity:0;transition:opacity var(--dur) var(--spring);pointer-events:none;z-index:-1}
+@media(hover:hover){
+  .lift:hover,.btn:hover,.ghostbtn:hover,.mode:hover{translate:0 -3px}
+  .lift:hover::after,.btn:hover::after,.ghostbtn:hover::after,.mode:hover::after{opacity:1}
+}
+.lift:active,.btn:active,.ghostbtn:active,.mode:active{scale:.97;translate:0 0}
+.kpi.lift:active{scale:.985}
+
+/* ---------- Акцент при смене значения (helpers.js → popNumber) ---------- */
+.pop{display:inline-block;animation:pop .5s var(--spring)}
+.big-num.pop,.num.pop{display:block}
+@keyframes pop{0%{opacity:.25;transform:translateY(7px) scale(.97)}100%{opacity:1;transform:none}}
+
+/* ---------- Появление: только transform/opacity ----------
+   Скрываем лишь когда скрипт реально работает (html.js-ready), иначе при сбое модулей контент остался бы невидимым */
+.js-ready .rv{opacity:0;transform:translateY(22px) scale(.985);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.js-ready .rv.in{opacity:1;transform:none}
+.js-ready .rv.lift{transition:opacity .7s var(--ease),transform .7s var(--ease),translate var(--dur) var(--spring),scale var(--dur) var(--spring)}
+.cascade .rv:nth-child(1){transition-delay:.02s}.cascade .rv:nth-child(2){transition-delay:.08s}.cascade .rv:nth-child(3){transition-delay:.14s}.cascade .rv:nth-child(4){transition-delay:.2s}.cascade .rv:nth-child(5){transition-delay:.26s}.cascade .rv:nth-child(6){transition-delay:.32s}
+/* после появления каскадные задержки снимаются, чтобы hover отзывался сразу */
+.js-ready .rv.rv-done{transition-delay:0s!important}
+
+ol,ul{padding-left:20px}
+
+/* ---------- Уменьшение движения: сразу конечное видимое состояние ---------- */
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js-ready .rv,.js-ready .rv.in{opacity:1;transform:none}
+  .pop{opacity:1;transform:none}
+  .badge .dotp{opacity:.6}
+}
