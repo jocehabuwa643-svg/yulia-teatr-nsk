@@ -1,0 +1,44 @@
+/* ============================================================
+   themes.css — тёмная тема и темы зависимые значения
+   ============================================================ */
+:root[data-theme="dark"]{
+  --bg:var(--void);
+  --card:#161618;
+  --card2:#1C1C1E;
+  --text:#F5F5F7;
+  --text2:#E5E5EA;
+  --muted:var(--silver);        /* на #0A0A0A даёт 4.9:1 — AA */
+  --mutedS:var(--silver);
+  --line:#2C2C2E;
+  --chip:#161618;
+  --seg:#1C1C1E;
+  --track:#2C2C2E;
+  --glass:rgba(10,10,10,.88);
+  --a11y-focus:#F5F5F7;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 28px rgba(0,0,0,.45);
+  --shadow-lg:0 2px 6px rgba(0,0,0,.55),0 24px 64px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+
+/* инверсные элементы, зависящие от темы */
+:root[data-theme="dark"] .btn.primary,
+:root[data-theme="dark"] .btn-next,
+:root[data-theme="dark"] .chip.on,
+:root[data-theme="dark"] .mode.on,
+:root[data-theme="dark"] .mmode.on,
+:root[data-theme="dark"] .tab.on,
+:root[data-theme="dark"] .periods button.on{background:#F5F5F7;border-color:#F5F5F7;color:#0A0A0A}
+:root[data-theme="dark"] .mode.on svg.lucide,
+:root[data-theme="dark"] .btn-next{color:#0A0A0A}
+:root[data-theme="dark"] .costbar .c1{background:#F5F5F7}
+:root[data-theme="dark"] .costbar .c2{background:repeating-linear-gradient(-45deg,#8E8E93,#8E8E93 3px,transparent 3px,transparent 6px)}
+:root[data-theme="dark"] .costbar .c4{background:#2C2C2E}
+:root[data-theme="dark"] .leg-mono .s1 .sw{background:#F5F5F7}
+:root[data-theme="dark"] .leg-mono .s2 .sw{background:repeating-linear-gradient(-45deg,#8E8E93,#8E8E93 3px,transparent 3px,transparent 6px)}
+:root[data-theme="dark"] .leg-mono .s4 .sw{background:#2C2C2E}
+:root[data-theme="dark"] .k-home,
+:root[data-theme="dark"] .pin-home,
+:root[data-theme="dark"] .pin-reg,
+:root[data-theme="dark"] .k-reg{background:#F5F5F7}
+:root[data-theme="dark"] .checkrow input:checked{background:#F5F5F7;border-color:#F5F5F7}
+:root[data-theme="dark"] .checkrow input:checked:after{border-color:#0A0A0A}

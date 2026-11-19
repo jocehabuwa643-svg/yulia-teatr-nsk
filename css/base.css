@@ -1,0 +1,59 @@
+/* ============================================================
+   base.css — сброс, типографика, каркас, утилиты
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font:15px/1.5 var(--font-text);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4,p,figure,blockquote{margin:0}
+h1,h2,h3,h4{font-family:var(--font-display);line-height:1.12;letter-spacing:-.03em;font-weight:700}
+h1{font-size:clamp(30px,4.6vw,54px);letter-spacing:-.04em;font-weight:800}
+h2{font-size:clamp(23px,2.6vw,36px)}
+h3{font-size:clamp(18px,1.6vw,23px)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+button:disabled{cursor:not-allowed}
+a{color:inherit;text-underline-offset:3px}
+img,svg{max-width:100%}
+:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px;border-radius:6px}
+svg.lucide{width:18px;height:18px;stroke-width:1.7;flex-shrink:0}
+
+.sr{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}
+.skip{position:fixed;top:-80px;left:12px;z-index:2000;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 16px;box-shadow:var(--shadow);transition:top .3s var(--ease)}
+.skip:focus{top:12px}
+.wrap{width:min(1240px,100% - clamp(28px,6vw,72px));margin-inline:auto}
+
+.eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mutedS)}
+.eyebrow .dash{display:inline-block;width:22px;height:1.5px;background:currentColor}
+.muted{color:var(--mutedS)}
+.tiny{font-size:12px;color:var(--mutedS)}
+.hint{font-size:12px;color:var(--mutedS);line-height:1.5}
+
+.section{padding:clamp(34px,4.4vw,56px) 0 0;scroll-margin-top:70px}
+.secthead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.secthead h2{margin-top:8px}
+.secthead .tiny{max-width:52ch}
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--text2);border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 13px}
+.badge .dotp{width:7px;height:7px;border-radius:50%;background:var(--silver);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.12}50%{opacity:.4}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes beam{0%,100%{opacity:.85}50%{opacity:.35}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);min-width:0}
+
+/* появление: только transform/opacity */
+.rv{opacity:0;transform:translateY(22px) scale(.985);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.rv.in{opacity:1;transform:none}
+.cascade .rv:nth-child(1){transition-delay:.02s}.cascade .rv:nth-child(2){transition-delay:.08s}.cascade .rv:nth-child(3){transition-delay:.14s}.cascade .rv:nth-child(4){transition-delay:.2s}.cascade .rv:nth-child(5){transition-delay:.26s}.cascade .rv:nth-child(6){transition-delay:.32s}
+
+ol,ul{padding-left:20px}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv{opacity:1;transform:none}
+}
