@@ -14,8 +14,8 @@ export const meta = {
 export const controls = cfg => [
   rangeField(cfg, 'travel', 'kids', 'Дети на показ'),
   rangeField(cfg, 'travel', 'ticket', 'Цена билета'),
+  rangeField(cfg, 'travel', 'cluster', 'Показов в день'),
   { type: 'select', id: 'venue', label: 'Формат площадки', options: [[0, `Сад / школа · оргсбор ${ruNum(cfg.venue_share.school_garden)}%`], [1, `Зал ДК · доля ${ruNum(cfg.venue_share.dk)}%`]] },
-  { type: 'select', id: 'cluster', label: 'Показов в день', options: [[1, 'Один показ'], [2, 'Два подряд'], [3, 'Три подряд']] },
   { type: 'select', id: 'route', label: 'Маршрут и ГСМ', options: cfg.travel.routeNames.map((n, i) => [i, n]) },
   { type: 'select', id: 'cast', label: 'Состав', options: [[0, `Наём по ГПХ · +${ruNum(cfg.gphRate * 100, 2)}% взносов (модель)`], [1, 'Основатели ИП · взносы 0% в модели']] }
 ];

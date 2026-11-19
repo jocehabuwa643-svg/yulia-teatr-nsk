@@ -22,11 +22,19 @@ export function calc({ revenue, costShare, social, employees }, cfg) {
   const vat = overVat ? revenue * cfg.vatRate / 1.05 : 0;      // НДС в цене: касса × 5/105
   const vatSaved = vat * cfg.usn / 100;                          // УСН не облагает НДС-часть
   const onePct = Math.max(0, revenue - cfg.contributions1pctThreshold) * 0.01;
+  // взносы с гонораров ГПХ (модельная ставка) — показываем, сколько они могут снять с налога УСН 6%
+  const gphContribs = Math.max(0, employees) * cfg.gphRate;
+  const dedLimitPct = cfg.deductWithStaff != null ? cfg.deductWithStaff : null; // % налога, не подтверждено (low)
+  // ориентир соцпредприятия: на год расчёта ставки может не быть — берём последний известный год
+  const socYear = cfg.usnSocial != null ? cfg.year : lastSocialYear(cfg);
 
   const regimes = [];
   regimes.push({
     id: 'usn6', name: 'УСН «Доходы»', rate: cfg.usn,
-    tax: revenue * cfg.usn / 100 - vatSaved, note: 'Базовая ставка; взносы уменьшают налог — здесь не учтено',
+    tax: revenue * cfg.usn / 100 - vatSaved,
+    note: gphContribs > 0 && dedLimitPct != null
+      ? `Взносы с гонораров (модель 30,2%): ${Math.round(gphContribs).toLocaleString('ru-RU')} ₽ — могут уменьшить налог до ${dedLimitPct}% (ст. 346.21 п. 3.1, в итоговой цифре не учтено)`
+      : 'Базовая ставка; взносы уменьшают налог — здесь не учтено',
     noData: false
   });
   regimes.push({
@@ -36,9 +44,13 @@ export function calc({ revenue, costShare, social, employees }, cfg) {
   });
   regimes.push({
     id: 'usnSocial', name: 'УСН соцпредприятие НСО', rate: cfg.usnSocial,
-    tax: cfg.usnSocial != null && social ? Math.max(0, social ? (cfg.usnSocial / 100) * revenue - vatSaved : 0) : null,
+    tax: cfg.usnSocial != null && social ? Math.max(0, (cfg.usnSocial / 100) * revenue - vatSaved) : null,
     rateDR: cfg.usnSocialDR,
-    note: cfg.usnSocial != null && social ? `${cfg.usnSocial}% «Доходы» / ${cfg.usnSocialDR}% «Д−Р» по 142-ОЗ; применимость проверить` : 'нет данных по ставке',
+    note: social
+      ? (cfg.usnSocial != null
+        ? `${cfg.usnSocial}% «Доходы» / ${cfg.usnSocialDR}% «Д−Р» по 142-ОЗ${socYear && socYear !== cfg.year ? ` (ориентир ${socYear}: на ${cfg.year} не опубликован — проверить)` : ''}; применимость проверить`
+        : `На ${cfg.year} ставка не опубликована. Ориентир ${lastSocialYear(cfg) || '2026'}: ${(socialFallback(cfg))}% «Доходы» — ввести вручную после публикации`)
+      : 'Ставка применяется только при подтверждённом статусе — включите статус',
     noData: cfg.usnSocial == null || !social
   });
   regimes.push({
@@ -52,7 +64,20 @@ export function calc({ revenue, costShare, social, employees }, cfg) {
   const best = withTax.length ? withTax.reduce((a, b) => (a.tax <= b.tax ? a : b)) : null;
   return {
     revenue, costs, overVat, vat, vatSaved, onePct, ipFixed: cfg.ipFixed, regimes, best,
+    gphContribs, dedLimitPct,
     warning: overVat ? `Годовая выручка выше порога ${cfg.vatThreshold / 1e6} млн ₽: в цену включается НДС ${cfg.vatRate * 100}% (5/105), для УСН он исключается из дохода` : null,
     ipFixedNoData: cfg.ipFixed == null
   };
+}
+
+/* Последний год, за который известна ставка соцпредприятия (по cfg.byYear) */
+export function lastSocialYear(cfg) {
+  const by = cfg.byYear || {};
+  const years = Object.keys(by).filter(y => by[y] && by[y].usnSocial != null).sort();
+  return years.length ? years[years.length - 1] : null;
+}
+function socialFallback(cfg) {
+  const by = cfg.byYear || {};
+  const y = lastSocialYear(cfg);
+  return y ? by[y].usnSocial : null;
 }

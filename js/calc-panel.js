@@ -1,6 +1,6 @@
 /* calc-panel.js — раздел «Калькуляторы»: вкладки, поля ввода, пресеты, сценарии, печать. */
 import { $, $$, rub, ic, icons, toast, store } from './ui/helpers.js';
-import { fieldHTML, readInputs, rangeValues, renderResult } from './ui/calc-ui.js';
+import { fieldHTML, readInputs, rangeValues, renderResult, bindNumberSync } from './ui/calc-ui.js';
 import { registry } from './calculators/index.js';
 import { state } from './state.js';
 
@@ -69,9 +69,12 @@ export function initCalc(cfg) {
     rerender('basecamp');
   };
 
-  // Ввод
-  $('calcpanels').addEventListener('input', e => { if (e.target.matches('input,select')) rerender(activeCalcId()); });
-  $('calcpanels').addEventListener('change', e => { if (e.target.matches('select')) rerender(activeCalcId()); });
+  // Ввод: ползунки/селекты сразу, поля ручного ввода — через синхронизацию с ползунком
+  $('calcpanels').addEventListener('input', e => { if (e.target.matches('input[type=range],select')) rerender(activeCalcId()); });
+  $('calcpanels').addEventListener('change', e => { if (e.target.matches('select,input[type=range]')) rerender(activeCalcId()); });
+  // Поле числа ↔ ползунок: clamp и пересчёт (ввод «123» не ломает формулы)
+  bindNumberSync($('calcpanels'), () => rerender(activeCalcId()));
+  $('calcpanels').addEventListener('change', e => { if (e.target.classList.contains('fnum')) rerender(activeCalcId()); });
 
   // Тулбар
   $('calcpanels').addEventListener('click', e => {

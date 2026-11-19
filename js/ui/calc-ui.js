@@ -4,7 +4,15 @@ import { $, $$, fmt, rub, signed, pct, ic, icons, kv, minis, resultHead, costBar
 
 export function fieldHTML(f) {
   if (f.type === 'range') {
-    return `<div class="field ${f.wide ? 'wide' : ''}"><label for="${f.id}">${f.label} <output for="${f.id}" id="${f.id}Val"></output></label><input data-suffix="${f.suffix || ''}" id="${f.id}" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.def}"></div>`;
+    // Ползунок + связанное поле ручного ввода числа (двусторонняя синхронизация в calc-panel)
+    return `<div class="field ${f.wide ? 'wide' : ''}">
+      <label for="${f.id}">${f.label}${f.suffix ? ` <span class="fsuf">(${f.suffix})</span>` : ''}</label>
+      <div class="frow">
+        <input data-suffix="${f.suffix || ''}" id="${f.id}" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.def}" aria-label="${f.label}">
+        <input class="fnum" id="${f.id}Num" type="number" inputmode="numeric" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.def}" aria-label="${f.label}, точное значение">
+      </div>
+      <output class="fv" for="${f.id}" id="${f.id}Val" aria-hidden="true"></output>
+    </div>`;
   }
   return `<div class="field ${f.wide ? 'wide' : ''}"><label for="${f.id}">${f.label}</label><select id="${f.id}">${f.options.map(o => { const [val, s] = Array.isArray(o) ? o : [o, o]; return `<option value="${val}" ${String(val) === String(f.def ?? f.options[0][0]) ? 'selected' : ''}>${s}</option>`; }).join('')}</select></div>`;
 }
@@ -24,6 +32,25 @@ export function rangeValues(fields) {
     const v = fmt(+e.value) + ' ' + (e.dataset.suffix || '');
     const o = $(f.id + 'Val');
     if (o) { o.textContent = v.trim(); e.setAttribute('aria-valuetext', v.trim()); }
+    const num = $(f.id + 'Num');
+    if (num && document.activeElement !== num && Number(num.value) !== Number(e.value)) num.value = e.value;
+  });
+}
+
+/* Синхронизация ползунок ↔ число: clamp + пересчёт; вызывается из делегирования calc-panel */
+export function bindNumberSync(container, onChange) {
+  container.addEventListener('input', e => {
+    const t = e.target;
+    if (t.classList && t.classList.contains('fnum')) {
+      const range = $(t.id.slice(0, -3)); // «kidsNum» → «kids»
+      if (!range) return;
+      const v = t.value === '' ? Number(range.min) : Math.min(Number(range.max), Math.max(Number(range.min), Number(t.value)));
+      range.value = v;
+      onChange();
+    } else if (t.type === 'range') {
+      const num = $(t.id + 'Num');
+      if (num && document.activeElement !== num) num.value = t.value;
+    }
   });
 }
 
@@ -100,7 +127,7 @@ R.taxes = (input, cfg, r) =>
   `<div class="cmpgrid">${r.regimes.map(g => `
     <div class="cmpcol ${r.best && g.id === r.best.id ? 'best' : ''}">
       <h4>${g.name}</h4>
-      ${g.noData || g.tax == null ? `<div class="nodata"><span>Нет проверенных данных по ставке.</span><button class="btn small secondary" data-fill="${g.id}">Ввести вручную</button></div>`
+      ${g.noData || g.tax == null ? `<div class="nodata"><span>Нет проверенных данных по ставке.</span>${g.note ? `<p class="tiny" style="margin:0">${g.note}</p>` : ''}<button class="btn small secondary" data-fill="${g.id}">Ввести вручную</button></div>`
       : `<div class="big-num" style="font-size:26px">${rub(g.tax)}</div>
          <div class="kv"><span>ставка</span><b>${g.rate != null ? g.rate + '%' : '—'}</b></div>
          <p class="tiny">${g.note}</p>`}
@@ -139,6 +166,11 @@ R.pricing = (input, cfg, r) =>
 R.parties = (input, cfg, r) =>
   resultHead('Прибыль праздника', r.profit, 'Один «День рождения в театре» после переменных, ФОТ и налога.') +
   minis([['Выручка пакета', rub(r.revenue)], ['Маржа', pct(r.margin)], ['За месяц (' + input.perMonth + ')', signed(r.perMonth)]]) +
+  minis([
+    ['Выручка на гостя', rub(input.guests > 0 ? r.revenue / input.guests : 0)],
+    ['Прибыль на гостя', signed(input.guests > 0 ? r.profit / input.guests : 0)],
+    ['Час пакета', rub(input.hours > 0 ? r.revenue / input.hours : 0)]
+  ]) +
   costBar([
     ['Переменные праздника', r.variables, 'c1'],
     ['ФОТ (модель выходного)', r.fee, 'c2'],

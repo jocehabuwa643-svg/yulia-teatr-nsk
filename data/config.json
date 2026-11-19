@@ -1218,18 +1218,25 @@
     "controls": {
       "travel": {
         "kids": {
-          "min": 20,
-          "max": 250,
+          "min": 1,
+          "max": 500,
           "step": 1,
           "def": 45,
           "suffix": "чел."
         },
         "ticket": {
-          "min": 250,
-          "max": 500,
-          "step": 5,
+          "min": 100,
+          "max": 1000,
+          "step": 10,
           "def_from": "tour_unit.ticket",
           "suffix": "₽"
+        },
+        "cluster": {
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "def": 1,
+          "suffix": "показов"
         }
       },
       "basecamp": {
@@ -1242,7 +1249,7 @@
         },
         "students": {
           "min": 0,
-          "max": 80,
+          "max": 200,
           "step": 1,
           "def": 40,
           "suffix": "чел."
