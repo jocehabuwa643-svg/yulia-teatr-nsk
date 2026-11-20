@@ -132,12 +132,25 @@ export async function initNotes() {
   notes = normalize(await store2.get(KEY, []));
   requestPersistence();
 
-  const card = el('article', 'card notes rv in');
+  // Разовый перенос текста из прежнего простого поля «Заметки Юлии» (localStorage yulia.v2.note) в список заметок
+  try {
+    const old = JSON.parse(localStorage.getItem('yulia.v2.note') || '""');
+    if (typeof old === 'string' && old.trim() && !localStorage.getItem('yulia.v2.noteMigrated')) {
+      notes.push({ id: nextId(notes), text: old.slice(0, 5000), pinned: true, section: 'launch', created: Date.now(), updated: Date.now() });
+      save(notes);
+    }
+    localStorage.setItem('yulia.v2.noteMigrated', '1');
+  } catch (e) { /* хранилище недоступно — перенос не критичен */ }
+
+  // Один блок заметок вместо двух: встраиваемся в существующую карточку «Заметки Юлии»,
+  // прежнее простое поле прячем (checklist.js продолжает к нему обращаться — элемент остаётся в DOM)
+  const host = launch.querySelector('article.notes');
+  const card = host ? el('div', 'notes-rich') : el('article', 'card notes rv in');
   card.id = 'notesCard';
-  card.style.cssText = 'padding:clamp(18px,2vw,28px);margin-top:14px';
+  if (!host) card.style.cssText = 'padding:clamp(18px,2vw,28px);margin-top:14px';
   card.innerHTML = `
     <div class="rowline">
-      <h3>Заметки</h3>
+      <h3>Заметки Юлии</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn small secondary" data-act="add">＋ Заметка</button>
         <button class="btn small secondary" data-act="export">Экспорт</button>
@@ -149,11 +162,16 @@ export async function initNotes() {
     <div class="notes-list"></div>
     <p class="tiny saved-ind" aria-live="polite"></p>
     <div class="advice warn" data-backup hidden style="margin-top:10px">
-      <strong>Резервная копия</strong>Прошло больше двух недель с последнего экспорта. Нажмите «Экспорт» и сохраните JSON-файл.
+      <strong>Резервная копия</strong><span data-backup-text></span> Нажмите «Экспорт» и сохраните JSON-файл.
     </div>`;
-  // вставляем после заметок Юлии (или в конец секции)
-  const anchor = launch.querySelector('.notes') || launch.querySelector('.checklist-grid') || launch;
-  anchor.insertAdjacentElement('afterend', card);
+  if (host) {
+    // прячем старые заголовок/поле/статус, совет «перед премьерой» оставляем под заметками
+    host.querySelectorAll(':scope > .rowline, :scope > label[for=note], :scope > #note, :scope > #saved').forEach(n => { n.hidden = true; n.style.display = 'none'; });
+    host.prepend(card);
+  } else {
+    const anchor = launch.querySelector('.checklist-grid') || launch;
+    anchor.insertAdjacentElement('afterend', card);
+  }
 
   ui = { list: card.querySelector('.notes-list'), status: card.querySelector('.saved-ind'), search: card.querySelector('input[type=search]'), backup: card.querySelector('[data-backup]') };
   card.querySelector('[data-act=add]').addEventListener('click', addNote);
@@ -163,6 +181,12 @@ export async function initNotes() {
   renderList();
 
   const lastBackup = await store2.get('lastBackupAt', null);
-  if (backupDue(lastBackup)) ui.backup.hidden = false;
+  // Напоминание о копии — только когда есть что сохранять, и с текстом по фактическому состоянию
+  if (notes.some(n => (n.text || '').trim()) && backupDue(lastBackup)) {
+    ui.backup.querySelector('[data-backup-text]').textContent = lastBackup
+      ? 'Прошло больше двух недель с последнего экспорта.'
+      : 'Копии заметок ещё нет.';
+    ui.backup.hidden = false;
+  }
   return notes;
 }
