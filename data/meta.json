@@ -1,13 +1,32 @@
 {
   "schema_version": "2.0.0",
-  "generated_at": "2026-11-19T00:00:00+07:00",
+  "generated_at": "2026-11-20T11:39:45.430Z",
   "project": "Бизнес-помощник Юлии · детский театр и студия, Новосибирск",
-  "data_files": ["rates.json", "config.json", "regions.json", "competitors.json", "market.json", "guide.json", "meta.json", "archive.html"],
+  "data_files": [
+    "rates.json",
+    "config.json",
+    "regions.json",
+    "competitors.json",
+    "market.json",
+    "guide.json",
+    "meta.json",
+    "archive.html"
+  ],
   "data_version": 2,
   "refresh_policy": {
-    "automated": ["data/rates.json → scripts/fetch-cbr.mjs (Банк России)"],
-    "manual": ["налоговые пороги и ставки (проверка по ссылкам в DATA_SOURCES.md)", "цены конкурентов", "сроки грантов"],
-    "stale_after_days": { "rates": 7, "prices": 30, "grants": 30 }
+    "automated": [
+      "data/rates.json → scripts/fetch-cbr.mjs (Банк России)"
+    ],
+    "manual": [
+      "налоговые пороги и ставки (проверка по ссылкам в DATA_SOURCES.md)",
+      "цены конкурентов",
+      "сроки грантов"
+    ],
+    "stale_after_days": {
+      "rates": 7,
+      "prices": 30,
+      "grants": 30
+    }
   },
   "source_of_truth": "https://github.com/jocehabuwa643-svg/yulia-teatr-nsk"
 }

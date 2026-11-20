@@ -671,31 +671,32 @@
   },
   "cbr": {
     "usd_rub": {
-      "value": 80.9734,
+      "value": 81.929,
       "unit": "₽",
       "label": "Курс USD/RUB (Банк России)",
-      "source_name": "Банк России, XML_dynamic (R01235)",
-      "source_url": "https://www.cbr.ru/scripts/XML_dynamic.asp",
-      "fetched_at": "2026-11-19",
-      "valid_from": "2026-11-04",
+      "source_name": "Банк России, XML_daily",
+      "source_url": "https://www.cbr.ru/scripts/XML_daily.asp",
+      "fetched_at": "2026-11-20",
+      "valid_from": "2026-11-20",
       "valid_to": null,
       "confidence": "high",
       "note": "Обновляется scripts/fetch-cbr.mjs.",
-      "legal_note": "Проверено: 2026-11-19 · Банк России, XML_dynamic (R01235) · официальный курс, не налоговая ставка"
+      "legal_note": "Проверено: 2026-11-20 · Банк России, XML_daily · официальный курс, не налоговая ставка",
+      "stale": false
     },
     "eur_rub": {
-      "value": null,
+      "value": 89.8597,
       "unit": "₽",
       "label": "Курс EUR/RUB (Банк России)",
-      "status": "no_data",
       "source_name": "Банк России, XML_daily",
       "source_url": "https://www.cbr.ru/scripts/XML_daily.asp",
-      "fetched_at": null,
-      "valid_from": null,
+      "fetched_at": "2026-11-20",
+      "valid_from": "2026-11-20",
       "valid_to": null,
-      "confidence": "no_data",
-      "note": "Заполнит fetch-cbr.mjs.",
-      "legal_note": "Не проверено: 2026-11-19 · Банк России, XML_daily · официальный курс, не налоговая ставка"
+      "confidence": "high",
+      "note": "Обновляется scripts/fetch-cbr.mjs.",
+      "legal_note": "Проверено: 2026-11-20 · Банк России, XML_daily · официальный курс, не налоговая ставка",
+      "stale": false
     },
     "key_rate": {
       "value": null,
