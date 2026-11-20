@@ -624,24 +624,26 @@
   },
   "cbr": {
     "usd_rub": {
-      "value": 80.9734,
+      "value": 81.929,
       "unit": "₽",
-      "source_name": "Банк России, XML_dynamic (R01235)",
-      "source_url": "https://www.cbr.ru/scripts/XML_dynamic.asp",
-      "fetched_at": "2026-11-19",
-      "valid_from": "2026-11-04",
-      "confidence": "high",
-      "note": "Обновляется scripts/fetch-cbr.mjs."
-    },
-    "eur_rub": {
-      "value": null,
-      "unit": "₽",
-      "status": "no_data",
       "source_name": "Банк России, XML_daily",
       "source_url": "https://www.cbr.ru/scripts/XML_daily.asp",
-      "fetched_at": null,
-      "confidence": "no_data",
-      "note": "Заполнит fetch-cbr.mjs."
+      "fetched_at": "2026-11-20",
+      "valid_from": "2026-11-20",
+      "confidence": "high",
+      "note": "Обновляется scripts/fetch-cbr.mjs.",
+      "stale": false
+    },
+    "eur_rub": {
+      "value": 89.8597,
+      "unit": "₽",
+      "source_name": "Банк России, XML_daily",
+      "source_url": "https://www.cbr.ru/scripts/XML_daily.asp",
+      "fetched_at": "2026-11-20",
+      "confidence": "high",
+      "note": "Заполнит fetch-cbr.mjs.",
+      "valid_from": "2026-11-20",
+      "stale": false
     },
     "key_rate": {
       "value": null,
