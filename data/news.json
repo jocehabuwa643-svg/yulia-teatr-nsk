@@ -1,0 +1,125 @@
+{
+  "updated_at": "2026-11-20T13:54:36.910Z",
+  "stale": false,
+  "keep_days": 60,
+  "max_items": 40,
+  "sources": [
+    {
+      "name": "Минкультуры Новосибирской области",
+      "url": "https://mk.nso.ru/",
+      "feed_url": "https://mk.nso.ru/rss.xml",
+      "fetched_at": "2026-11-20T13:54:36.910Z",
+      "status": "ok",
+      "items": 4,
+      "total": 10
+    },
+    {
+      "name": "Правительство Новосибирской области",
+      "url": "https://www.nso.ru/",
+      "feed_url": "https://www.nso.ru/rss.xml",
+      "fetched_at": "2026-11-20T13:54:36.910Z",
+      "status": "ok",
+      "items": 2,
+      "total": 10
+    },
+    {
+      "name": "ФНС России (УФНС по Новосибирской области)",
+      "url": "https://www.nalog.gov.ru/rn54/",
+      "feed_url": "https://www.nalog.gov.ru/rn54/rss/",
+      "fetched_at": "2026-11-20T13:54:36.910Z",
+      "status": "empty",
+      "items": 0,
+      "total": 6
+    },
+    {
+      "name": "Минкультуры России — новости министерства",
+      "url": "https://culture.gov.ru/press/news/",
+      "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=2&lang=ru&TYPE=ministry&LIMIT=40&SECTION_ID=30",
+      "fetched_at": "2026-11-20T13:54:36.910Z",
+      "status": "ok",
+      "items": 2,
+      "total": 40
+    },
+    {
+      "name": "Минкультуры России — культурная жизнь регионов",
+      "url": "https://culture.gov.ru/press/news/",
+      "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=34&lang=ru&TYPE=news&LIMIT=40",
+      "fetched_at": "2026-11-20T13:54:36.910Z",
+      "status": "ok",
+      "items": 1,
+      "total": 40
+    }
+  ],
+  "items": [
+    {
+      "id": "f5af3db2e052",
+      "title": "Моноспектакль «Неглавный герой»",
+      "summary": "Моноспектакль – форма личного высказывания. Прикосновение Леси Андреевой к произведениям Анастасии Цветаевой вызвало нужную реакцию-искру, которая позволила создать театральное сочинение «Неглавный…",
+      "url": "https://culture.gov.ru/press/culture_life/monospektakl_neglavnyy_geroy_20261120012354_6aff76fa29f6e/",
+      "source_name": "Минкультуры России — культурная жизнь регионов",
+      "source_url": "https://culture.gov.ru/press/news/",
+      "published_at": "2026-11-20T13:51:57.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "dbc95373c2b2",
+      "title": "В Новосибирске стартует XVIII Международный молодёжный джазовый фестиваль «Из Сибири с Джазом / Jazzed In Siberia»",
+      "summary": "С 20 по 22 ноября 2026 года в Новосибирске состоится XVIII Международный молодёжный джазовый фестиваль «Из Сибири с Джазом / Jazzed In Siberia». О программе фестиваля рассказали на пресс-конференции…",
+      "url": "https://mk.nso.ru/news/12232",
+      "source_name": "Минкультуры Новосибирской области",
+      "source_url": "https://mk.nso.ru/",
+      "published_at": "2026-11-20T10:10:00.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "0bd8e117a064",
+      "title": "Фестиваль «Книжная Сибирь» открыл двери для первых гостей",
+      "summary": "Главное литературное событие года началось с церемонии открытия фестиваля детской книги «Сибирский воробей».",
+      "url": "https://mk.nso.ru/news/12230",
+      "source_name": "Минкультуры Новосибирской области",
+      "source_url": "https://mk.nso.ru/",
+      "published_at": "2026-11-20T09:30:00.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "d5669fd9f698",
+      "title": "Театр «Глобус» стал лауреатом премии Министерства культуры Российской Федерации",
+      "summary": "Министерство культуры Новосибирской области поздравляет Новосибирский академический молодежный театр «Глобус» с получением премии за лучшую театральную постановку по произведениям русской классики…",
+      "url": "https://mk.nso.ru/news/12226",
+      "source_name": "Минкультуры Новосибирской области",
+      "source_url": "https://mk.nso.ru/",
+      "published_at": "2026-11-19T11:50:00.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "1b95350e07f1",
+      "title": "Звездный состав писателей и более 100 издательств посетят фестиваль «Книжная Сибирь»",
+      "summary": "С 20 по 22 ноября в Новосибирске состоится международный фестиваль «Книжная Сибирь». Основной площадкой мероприятия станет Государственная публичная научно-техническая библиотека. О программе…",
+      "url": "https://mk.nso.ru/news/12223",
+      "source_name": "Минкультуры Новосибирской области",
+      "source_url": "https://mk.nso.ru/",
+      "published_at": "2026-11-19T11:40:00.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "3c2039f63c6a",
+      "title": "Мероприятия IX Большого Детского фестиваля собрали более 30 тысяч зрителей",
+      "summary": "IX Большой Детский фестиваль под руководством народного артиста Российской Федерации Сергея Безрукова проходил в двух городах: с 22 августа по 17 ноября в Москве и с 12 сентября по 4 ноября – в…",
+      "url": "https://culture.gov.ru/press/news/meropriyatiya_ix_bolshogo_detskogo_festivalya_sobrali_bolee_30_tysyach_zriteley/",
+      "source_name": "Минкультуры России — новости министерства",
+      "source_url": "https://culture.gov.ru/press/news/",
+      "published_at": "2026-11-18T09:01:51.000Z",
+      "topic": "grants"
+    },
+    {
+      "id": "851e8ebff9b7",
+      "title": "В Рязани открылся крупнейший в стране детский культурно-просветительский центр",
+      "summary": "13 ноября состоялось торжественное открытие детского культурно-просветительского центра «Паустовский» на базе Рязанской областной универсальной научной библиотеки имени Горького. В церемонии приняли…",
+      "url": "https://culture.gov.ru/press/news/v_ryazani_otkrylsya_krupneyshiy_v_strane_detskiy_kulturno_prosvetitelskiy_tsentr/",
+      "source_name": "Минкультуры России — новости министерства",
+      "source_url": "https://culture.gov.ru/press/news/",
+      "published_at": "2026-11-14T07:37:51.000Z",
+      "topic": "culture"
+    }
+  ]
+}
