@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="css/guide.css">
 <link rel="stylesheet" href="css/news.css">
 <link rel="stylesheet" href="css/afford.css">
+<link rel="stylesheet" href="css/preset-cards.css">
 <!-- Leaflet, Chart.js и Lucide здесь не подключаются: js/ui/helpers.js подгружает их лениво (карта/графики — за ~600px до блока, иконки — в простое) -->
 <style>
 /* Печать / PDF: только активный калькулятор и результат, всегда светлая палитра независимо от темы экрана */
@@ -229,6 +230,7 @@
     </div>
     <p class="tiny">Ставки — из data/*.json с источником и датой. Сценарии можно сохранять, сравнивать и печатать.</p>
   </div>
+  <div id="presetCards" aria-label="Кейсы «Рассчитай за 5 секунд»"></div>
   <div class="modes" id="calcnav" role="tablist" aria-label="Калькуляторы"></div>
   <div id="calcpanels"></div>
 </section>

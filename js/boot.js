@@ -184,9 +184,11 @@
   }, true);
 
   // Самоподключаемые модули (динамический импорт работает и из классического скрипта):
-  // notes — заметки Юлии с автосейвом в IndexedDB; afford — аффорданс кнопок («пальчик»)
+  // notes — заметки Юлии с автосейвом в IndexedDB; afford — аффорданс кнопок («пальчик»);
+  // preset-cards — кейс-карточки «Рассчитай за 5 секунд» с FLIP-раскрытием
   import('./notes.js').catch(function () {});
   import('./afford.js').catch(function () {});
+  import('./preset-cards.js').catch(function () {});
 
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else init();
 })();
