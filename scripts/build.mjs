@@ -9,6 +9,9 @@
       остаются ссылками: приложение работает и без них (иконки декоративны, графики/карта показывают плашку).
 
    Флаги: --offline-only — собрать только yulia-offline.html (каталог _site/ не очищается целиком).
+   Производительность _site/index.html: все css/*.css склеены и минифицированы в один assets/app.css (один запрос
+   вместо девяти), boot.js (минифицированный) встроен в <head> — без отдельного блокирующего запроса.
+   Исходники в репозитории не меняются.
    Запасной вариант: если esbuild не установлен — исходные модули копируются как есть, офлайн-файл пропускается.
    Любая ошибка завершает скрипт кодом 1 с понятным сообщением — молчаливых провалов нет. */
 import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, existsSync, readdirSync, statSync } from 'node:fs';
@@ -65,6 +68,59 @@ async function bundleApp(esbuild) {
   if (!out || !out.text) fail('esbuild не вернул результат для js/app.js');
   return out.text;
 }
+
+/* Стили делятся на две части. КРИТИЧЕСКАЯ (первый экран: токены, темы, база, шапка, hero, KPI, заставка) встраивается в <head>
+   и блокирует отрисовку минимально. ОТЛОЖЕННАЯ (калькуляторы, рынок, справочник, карта, схемы) — assets/rest.css,
+   подключается без блокировки отрисовки (media=print → all по загрузке).
+   Отложены файлы целиком (DEFER_FILES) и блоки в остальных файлах между CSS-комментариями-маркерами «@defer» и «@end-defer» (см. components.css). */
+const DEFER_FILES = new Set(['css/calc.css', 'css/market.css', 'css/guide.css']);
+
+/* Склеивает локальные таблицы стилей из index.html (в порядке подключения), делит на критические и отложенные,
+   минифицирует. Возвращает { critical, rest, hrefs } */
+async function bundleCss(esbuild, indexHtml) {
+  const hrefs = [...indexHtml.matchAll(/<link rel="stylesheet" href="(css\/[^"]+)">/g)].map(m => m[1]);
+  if (!hrefs.length) fail('в index.html не найдено ни одной ссылки на css/*.css');
+  const crit = [], rest = [];
+  for (const h of hrefs) {
+    const text = read(h);
+    if (DEFER_FILES.has(h)) { rest.push(text); continue; }
+    // блоки между маркерами уходят в отложенную часть, порядок внутри блока сохраняется
+    crit.push(text.replace(/\/\* @defer[^*]*\*\/([\s\S]*?)\/\* @end-defer \*\//g, (_, block) => { rest.push(block); return ''; }));
+  }
+  const min = async src => {
+    const res = await esbuild.transform(src, { loader: 'css', minify: true, legalComments: 'none' });
+    if (!res.code) fail('esbuild не вернул результат для css');
+    return res.code;
+  };
+  return { critical: await min(crit.join('\n')), rest: await min(rest.join('\n')), hrefs };
+}
+
+/* Лёгкая минификация HTML для _site: убираются комментарии и ведущие отступы строк. Содержимое <textarea>/<pre>/<script>/<style>
+   не трогается (там отступы и переводы строк значимы); печатные тексты страницы не меняются. */
+function minifyHtml(html) {
+  const keep = [];
+  // 1) прячем блоки, где пробелы значимы
+  let out = html.replace(/<(script|style|textarea|pre)\b[\s\S]*?<\/\1>/gi, m => { keep.push(m); return `\u0000${keep.length - 1}\u0000`; });
+  // 2) комментарии HTML (кроме условных) и ведущие пробелы строк
+  out = out.replace(/<!--(?!\[if)[\s\S]*?-->/g, '').replace(/^[ \t]+/gm, '').replace(/\r/g, '').replace(/\n{2,}/g, '\n');
+  // 3) возвращаем спрятанное
+  return out.replace(/\u0000(\d+)\u0000/g, (_, i) => keep[+i]);
+}
+
+/* Минифицированный boot.js для встраивания в <head> */
+async function minifyBoot(esbuild) {
+  const res = await esbuild.transform(read('js/boot.js'), { loader: 'js', minify: true, target: 'es2019', legalComments: 'none' });
+  if (!res.code) fail('esbuild не вернул результат для js/boot.js');
+  return res.code;
+}
+
+/* Загрузчик приложения: assets/app.js запрашивается ПОСЛЕ первой отрисовки (событие paint + 600 мс — главный заголовок успевает
+   отрисоваться как LCP-кандидат; запасной таймер 1500 мс).
+   Первый экран (шапка, hero, заставка) — статический HTML + CSS, ему скрипты не нужны; тяжёлый бандл и 8 файлов данных
+   не конкурируют за канал с первой отрисовкой. Порядок исполнения не важен: бандл самодостаточный классический скрипт. */
+const APP_LOADER = '<script>(function(){var d=0;function go(){if(d)return;d=1;var s=document.createElement("script");s.src="assets/app.js";s.defer=true;document.head.appendChild(s)}' +
+  'try{new PerformanceObserver(function(l,o){if(l.getEntriesByName("first-contentful-paint").length){o.disconnect();setTimeout(go,600)}}).observe({type:"paint",buffered:true})}catch(e){}' +
+  'setTimeout(go,1500)})()</script>';
 
 /* ---------- Данные для офлайн-версии ---------- */
 function collectData() {
@@ -140,19 +196,17 @@ async function main() {
     return;
   }
 
-  // Чистая сборка: каталог пересоздаётся целиком
-  rmSync(OUT, { recursive: true, force: true });
+  // Чистая сборка: содержимое каталога очищается, сам каталог остаётся (его может удерживать как рабочую папку
+  // локальный сервер раздачи — на Windows такой каталог удалить нельзя, а раздача продолжает работать)
   mkdirSync(OUT, { recursive: true });
+  for (const entry of readdirSync(OUT)) rmSync(join(OUT, entry), { recursive: true, force: true });
 
-  // Статика: стили, данные, иконка, служебный .nojekyll
-  cpSync(join(ROOT, 'css'), join(OUT, 'css'), { recursive: true });
+  // Статика: данные, иконка, служебный .nojekyll (стили — ниже: склеенный assets/app.css или, без esbuild, копия css/)
   cpSync(join(ROOT, 'data'), join(OUT, 'data'), { recursive: true });
   for (const f of ['favicon.svg', '.nojekyll']) {
     if (existsSync(join(ROOT, f))) cpSync(join(ROOT, f), join(OUT, f));
     else if (f === 'favicon.svg') console.warn('! нет favicon.svg — пропущено');
   }
-  mkdirSync(join(OUT, 'js'), { recursive: true });
-  cpSync(join(ROOT, 'js', 'boot.js'), join(OUT, 'js', 'boot.js'));
 
   // Скрипты приложения: бандл (основной путь) или копия модулей (запасной)
   let indexOut = indexSrc;
@@ -160,13 +214,33 @@ async function main() {
     mkdirSync(join(OUT, 'assets'), { recursive: true });
     writeFileSync(join(OUT, 'assets', 'app.js'), bundleJs);
     let n = 0;
-    indexOut = indexSrc.replace(/<script type="module" src="js\/app\.js"><\/script>/, () => { n++; return '<script defer src="assets/app.js"></script>'; });
+    indexOut = indexSrc.replace(/<script type="module" src="js\/app\.js"><\/script>/, () => { n++; return APP_LOADER; });
     if (n !== 1) fail('в index.html не найден <script type="module" src="js/app.js"> для подмены');
     console.log(`assets/app.js: ${kb(Buffer.byteLength(bundleJs))}`);
+
+    // Стили: критическая часть встраивается на месте первой ссылки, остальное — assets/rest.css (грузится без блокировки)
+    const { critical, rest, hrefs } = await bundleCss(esbuild, indexOut);
+    writeFileSync(join(OUT, 'assets', 'rest.css'), rest);
+    let first = true;
+    indexOut = indexOut.replace(/<link rel="stylesheet" href="css\/[^"]+">\r?\n?/g, () => {
+      if (!first) return '';
+      first = false;
+      return `<style>${critical}</style>\n` +
+        '<link rel="stylesheet" href="assets/rest.css" media="print" onload="this.media=\'all\'">\n' +
+        '<noscript><link rel="stylesheet" href="assets/rest.css"></noscript>\n';
+    });
+    console.log(`css: критический ${kb(Buffer.byteLength(critical))} (в HTML) + assets/rest.css ${kb(Buffer.byteLength(rest))}; склеено файлов: ${hrefs.length}`);
+
+    // boot.js встраивается в <head> (классический скрипт, выполняется до первой отрисовки, без лишнего запроса)
+    const bootMin = await minifyBoot(esbuild);
+    let nb = 0;
+    indexOut = indexOut.replace(/<script src="js\/boot\.js"><\/script>/, () => { nb++; return `<script>${escapeForScript(bootMin)}</script>`; });
+    if (nb !== 1) fail('в index.html не найден <script src="js/boot.js"></script> для встраивания');
   } else {
+    cpSync(join(ROOT, 'css'), join(OUT, 'css'), { recursive: true });
     cpSync(join(ROOT, 'js'), join(OUT, 'js'), { recursive: true });
   }
-  writeFileSync(join(OUT, 'index.html'), indexOut);
+  writeFileSync(join(OUT, 'index.html'), bundleJs ? minifyHtml(indexOut) : indexOut);
 
   // Офлайн-версия
   if (bundleJs) {

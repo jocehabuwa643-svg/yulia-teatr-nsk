@@ -1,6 +1,6 @@
 /* charts.js — фабрика монохромных графиков Chart.js: цвета берутся из CSS-токенов,
    рисуются лениво, перерисовываются при смене темы (событие yulia:theme → theme.js), с доступным описанием. */
-import { $, fmt, enter, motionOK } from './ui/helpers.js';
+import { $, fmt, enter, motionOK, ensureChart } from './ui/helpers.js';
 import { onThemeChange } from './theme.js';
 
 /* Читает значение CSS-токена (уже разрешённое браузером, например #1C1C1E) */
@@ -40,6 +40,14 @@ onThemeChange(() => {
   try { redraws.forEach(fn => fn()); } finally { quiet = false; }
 });
 export function onChartTheme(fn) { redraws.add(fn); }
+
+/* Chart.js подгружается лениво — за ~600px до блока графиков. Когда библиотека пришла, перерисовываем
+   те графики, которых модуль обзора уже успел «увидеть» (с обычной анимацией): без этого enter() в
+   overview.js мог сработать раньше, чем появился window.Chart, и холст остался бы пустым. */
+export function lazyChartLib(el) {
+  if (!el) return;
+  enter(el, () => ensureChart().then(() => { redraws.forEach(fn => { try { fn(); } catch (e) { console.error('[графики]', e); } }); }).catch(() => { /* CDN недоступен: холсты остаются пустыми, таблица под графиком доступна */ }), '600px');
+}
 
 export function baseOptions(extra = {}) {
   const c = chartColors();

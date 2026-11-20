@@ -118,11 +118,18 @@
     box.className = 'bootnotice';
     box.setAttribute('role', 'alert');
     var cmd = 'npx serve .';
+    // Офлайн-файл появляется только после сборки; на сайте он доступен лишь после публикации
+    var offline = isFile
+      ? '<span>Офлайн-версия: после сборки откройте файл <b>_site/yulia-offline.html</b> (после публикации сайта его можно скачать и оттуда).</span>' +
+        '<code>npm run build</code>' +
+        '<span>Или запустите локальный сервер в папке проекта:</span>'
+      : '<span>Если проблема остаётся — запустите локальный сервер в папке проекта:</span>';
     box.innerHTML =
       '<strong>' + (isFile ? 'Страница открыта как файл — часть функций отключена браузером' : 'Не удалось загрузить скрипты приложения') + '</strong>' +
       '<span>' + (isFile
-        ? 'Браузер блокирует модули и чтение данных при открытии двойным кликом. Откройте офлайн-версию <b>yulia-offline.html</b> (скачивается с сайта) или запустите в папке проекта команду:'
-        : 'Проверьте интернет и обновите страницу. Если проблема остаётся — откройте офлайн-версию или запустите в папке проекта:') + '</span>' +
+        ? 'Браузер блокирует модули и чтение данных при открытии двойным кликом.'
+        : 'Проверьте интернет и обновите страницу.') + '</span>' +
+      offline +
       '<code>' + cmd + '</code>' +
       '<span class="bn-actions"><button type="button" class="btn small secondary" id="bootCopy">Скопировать команду</button>' +
       '<button type="button" class="btn small secondary" id="bootClose">Закрыть</button></span>';
@@ -173,8 +180,17 @@
   // Ошибка загрузки/парсинга модуля — не ждём таймера, если уже ясно, что приложение не стартует
   window.addEventListener('error', function (e) {
     var t = e && e.target;
-    if (t && t.tagName === 'SCRIPT' && /js\/app\.js/.test(t.src || '')) showBootNotice();
+    if (t && t.tagName === 'SCRIPT' && /(?:js|assets)\/app\.js/.test(t.src || '')) showBootNotice();
   }, true);
+
+  // Самоподключаемые модули (динамический импорт работает и из классического скрипта):
+  // notes — заметки Юлии с автосейвом в IndexedDB; afford — аффорданс кнопок («пальчик»);
+  // preset-cards — кейс-карточки «Рассчитай за 5 секунд» с FLIP-раскрытием
+  import('./notes.js').catch(function () {});
+  import('./afford.js').catch(function () {});
+  import('./preset-cards.js').catch(function () {});
+  import('./live-data.js').catch(function () {});
+  import('./premises.js').catch(function () {});
 
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else init();
 })();

@@ -20,26 +20,28 @@
 <link rel="stylesheet" href="css/themes.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/today.css">
 <link rel="stylesheet" href="css/splash.css">
 <link rel="stylesheet" href="css/calc.css">
 <link rel="stylesheet" href="css/market.css">
 <link rel="stylesheet" href="css/guide.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
-<script defer src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/news.css">
+<link rel="stylesheet" href="css/afford.css">
+<link rel="stylesheet" href="css/preset-cards.css">
+<link rel="stylesheet" href="css/premises.css">
+<!-- Leaflet, Chart.js и Lucide здесь не подключаются: js/ui/helpers.js подгружает их лениво (карта/графики — за ~600px до блока, иконки — в простое) -->
 <style>
 /* Печать / PDF: только активный калькулятор и результат, всегда светлая палитра независимо от темы экрана */
 @media print{
   @page{margin:14mm}
-  :root,:root[data-theme="dark"]{--bg:#fff;--card:#fff;--card2:#F5F5F7;--text:#0A0A0A;--text2:#1C1C1E;--mutedS:#2C2C2E;--muted:#2C2C2E;--line:#BDBDC2;--chip:#F5F5F7;--seg:#E5E5EA;--track:#E5E5EA;--solid:#1C1C1E;--on-solid:#fff;--shadow:none;--shadow-lg:none;color-scheme:light}
+  :root,:root[data-theme="dark"]{--bg:var(--white);--card:var(--white);--card2:var(--paper);--text:var(--void);--text2:var(--ink);--mutedS:var(--graphite);--muted:var(--graphite);--line:var(--silver);--chip:var(--paper);--seg:var(--hair);--track:var(--hair);--solid:var(--ink);--on-solid:var(--white);--shadow:none;--shadow-lg:none;color-scheme:light}
   #veil,.skip,.top,#mobnav,.toast,.databanner,#overview,.section:not(#calc),.footin,.hero-cta,#calcnav,.toolrow,.filters,.periods,details,.analytics,.noscript{display:none!important}
-  html,body{background:#fff!important;color:#000!important}
+  html,body{background:var(--white)!important;color:var(--void)!important}
   *,*::before,*::after{animation:none!important;transition:none!important}
   .rv,.js-ready .rv{opacity:1!important;transform:none!important}
   .lift::after,.btn::after,.mode::after{display:none}
   .section{padding-top:0}
-  .card{box-shadow:none;border:1px solid #999;break-inside:avoid}
+  .card{box-shadow:none;border:1px solid var(--silver);break-inside:avoid}
   #calcpanels>div[hidden]{display:none!important}
   #calcpanels>div:not([hidden]){display:block!important}
   .calcgrid{grid-template-columns:1fr 1fr}
@@ -59,7 +61,7 @@
       <!-- Вектор-логотип: сердце из детских символов и солнце. Воспроизводит анимацию из видео (линия → иконки → искра) -->
       <svg id="logo" class="logo" viewBox="0 0 320 300" fill="none" aria-hidden="true" focusable="false">
         <defs>
-          <radialGradient id="lg-glow" cx="50%" cy="48%" r="55%"><stop offset="0" stop-color="#F5F5F7" stop-opacity=".22"/><stop offset="1" stop-color="#F5F5F7" stop-opacity="0"/></radialGradient>
+          <radialGradient id="lg-glow" cx="50%" cy="48%" r="55%"><stop offset="0" stop-color="currentColor" stop-opacity=".22"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient>
         </defs>
         <ellipse class="glow" cx="160" cy="150" rx="170" ry="150" fill="url(#lg-glow)" stroke="none"/>
         <path class="heart" pathLength="1" d="M160 262C124 238 28 180 28 100C28 58 60 30 98 30C126 30 148 46 160 70C172 46 194 30 222 30C260 30 292 58 292 100C292 180 196 238 160 262Z"/>
@@ -101,7 +103,7 @@
         <path class="sp" style="--s:3" d="M18 146l1.8 4.8 4.8 1.8-4.8 1.8-1.8 4.8-1.8-4.8-4.8-1.8 4.8-1.8z"/>
         <path class="sp" style="--s:4" d="M160 14l1.8 4.8 4.8 1.8-4.8 1.8-1.8 4.8-1.8-4.8-4.8-1.8 4.8-1.8z"/>
       </svg>
-      <!-- Название и слоган из логотипа (текст прочитан с кадров видео; подтвердить у владельца — см. HANDOFF.md) -->
+      <!-- Название и слоган из логотипа (текст прочитан с кадров видео; подтвердить у владельца) -->
       <div class="logo-word"><b>Лаборатория волшебных событий</b><i>нескучные уроки</i></div>
 
       <h2 id="veilTitle" class="veil-title" aria-label="Юлия, приветствую Вас">
@@ -183,6 +185,8 @@
   </div>
   <p class="datastat" id="dataStatus"></p>
   </div>
+  <!-- Дайджест «Сегодня»: дата открытия, ближайшие сроки, новости отрасли (js/today.js; место зарезервировано в css/today.css) -->
+  <section id="today" class="today" aria-labelledby="todayTitle" aria-busy="true"><h2 class="sr-only" id="todayTitle">Сегодня</h2></section>
   <div id="kpis" class="kpis cascade"></div>
 
   <div class="analytics">
@@ -225,8 +229,9 @@
       <span class="badge"><span class="dotp"></span>Калькуляторы бизнеса Юлии · живой расчёт</span>
       <h2>Просчитай любой сценарий за 5 секунд</h2>
     </div>
-    <p class="tiny">Все ставки — из data/*.json с источниками. Пересчёт мгновенный, сценарии сохраняются в браузере.</p>
+    <p class="tiny">Ставки — из data/*.json с источником и датой. Сценарии можно сохранять, сравнивать и печатать.</p>
   </div>
+  <div id="presetCards" aria-label="Кейсы «Рассчитай за 5 секунд»"></div>
   <div class="modes" id="calcnav" role="tablist" aria-label="Калькуляторы"></div>
   <div id="calcpanels"></div>
 </section>
@@ -306,7 +311,7 @@
     <article class="card mk-panel rv">
       <div class="rowline"><h3>Цены билетов</h3><span class="tiny">₽ за человека</span></div>
       <div id="priceChart"></div>
-      <p class="chartmeta" id="priceMeta"></p>
+      <div class="chartmeta" id="priceMeta"></div>
     </article>
     <article class="card mk-panel rv">
       <div class="rowline"><h3>Спрос по запросам</h3><span class="badge" id="demandBadge">нет источника</span></div>
@@ -317,7 +322,7 @@
     <article class="card mk-panel rv">
       <div class="rowline"><h3>Сезонность выездов</h3><span class="tiny">показов в месяц</span></div>
       <div class="seas" id="seasonStrip" role="img" aria-label="График сезонности выездов по месяцам"></div>
-      <p class="chartmeta" id="chartMeta"></p>
+      <div class="chartmeta" id="chartMeta"></div>
     </article>
     <article class="card mk-panel rv">
       <div class="rowline"><h3>Каникулы</h3><span class="tiny">приблизительно</span></div>
@@ -398,7 +403,7 @@
       <p id="saved" class="tiny"></p>
       <div class="advice" style="margin-top:16px">
         <strong>Юлии, перед премьерой</strong>
-        Начните с одного зала. Первый показ проверит то, чего не скажет ни один прогноз: слышно ли героя с последнего ряда и готов ли педагог пригласить труппу снова.
+        Начните с одного зала. Первый показ проверит то, что не покажет прогноз: слышно ли героя с последнего ряда.
       </div>
     </article>
   </div>

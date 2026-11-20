@@ -10,7 +10,8 @@
     "build": "node scripts/build.mjs",
     "build:offline": "node scripts/build.mjs --offline-only",
     "fetch:cbr": "node scripts/fetch-cbr.mjs",
-    "fetch:wordstat": "node scripts/fetch-wordstat.mjs"
+    "fetch:wordstat": "node scripts/fetch-wordstat.mjs",
+    "audit:empty": "node scripts/audit-empty.mjs"
   },
   "devDependencies": {
     "esbuild": "0.28.2"

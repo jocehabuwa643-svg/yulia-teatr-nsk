@@ -5,9 +5,11 @@
 export const meta = {
   id: 'grants',
   icon: 'award',
+  headline: 'count',            // тип главной цифры: result — со знаком, amount — сумма/цена без плюса, count — целое число
   title: 'Гранты и срок запуска',
-  what: 'Считает: какие конкурсы закрываются до вашей даты запуска и что можно подать',
-  when: 'Когда: решаете, закладывать ли грант в финансирование февраля'
+  what: 'Считает: какие конкурсы закрываются до вашей даты запуска',
+  when: 'Когда: решаете, закладывать ли грант',
+  more: 'Считает: какие конкурсы закрываются до вашей даты запуска и что можно подать. Когда это нужно: решаете, закладывать ли грант в финансирование февраля.'
 };
 
 export const controls = cfg => [
@@ -45,7 +47,7 @@ export function calc(input, cfg, marketData, now) {
   return {
     launchDate: opts[idx].date,
     launchLabel: opts[idx].label,
-    today: today.toISOString().slice(0, 10),
+    today: today.toISOString().split('T')[0],
     programs, usable,
     openNow: programs.filter(p => p.canApply).length,
     conclusion: usable.length

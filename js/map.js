@@ -5,7 +5,7 @@
    «API KEY REQUIRED» (ETag wm-*), а ключ в статическом сайте был бы публичным. Поэтому берём стандартные тайлы
    OpenStreetMap (ключ не нужен) и делаем их монохромными CSS-фильтром: светлая тема — grayscale, тёмная — инверсия
    (css/market.css, .mapstage .leaflet-tile-pane). Смена темы работает чисто на CSS по [data-theme] — без JS. */
-import { $, $$, fmt, signed, ic, icons, toast, store, reduced, enter } from './ui/helpers.js';
+import { $, $$, fmt, signed, ic, icons, toast, store, reduced, enter, ensureLeaflet } from './ui/helpers.js';
 import { travelCalc } from './calculators/travel.js';
 import { state } from './state.js';
 import { freshBadge } from './market.js';
@@ -86,7 +86,8 @@ export function initMap(regionsData, calcConfig) {
   setMode(false, 'home', false);
 
   // Карта создаётся лениво — когда блок попал в зону видимости
-  enter($('map'), buildMap);
+  // Leaflet (css+js) подгружается за ~600px до блока карты; при сбое CDN buildMap покажет плашку-запасной путь
+  enter($('map'), () => ensureLeaflet().catch(() => null).then(buildMap), '600px');
 }
 
 /* Переключатель режимов: подгоняет карту, выбирает локацию (заданную или первую в режиме) */
@@ -151,8 +152,21 @@ function buildMap() {
       icon: L.divIcon({ className: 'mk-pinwrap', html: `<span class="pinhit"><span class="pin ${PIN[p.g] || 'pin-city'}"></span></span>`, iconSize: [44, 44], iconAnchor: [22, 22] })
     }).addTo(mapObj).bindTooltip(p.n, { direction: 'top', offset: [0, -10] });
     marker.on('click', () => showLocation(p.id, { fromMap: true }));
-    const el = marker.getElement();
-    if (el) { el.setAttribute('role', 'button'); el.setAttribute('aria-label', `${p.n} — ${TYPES[p.g] || 'локация'}. Открыть карточку`); }
+    // Элемент маркера создаётся при добавлении на карту — атрибуты ставим на 'add' (и сразу, если уже добавлен)
+    const label = `${p.n} — ${TYPES[p.g] || 'локация'}. Открыть карточку`;
+    const a11y = () => {
+      const el = marker.getElement();
+      if (!el) return;
+      el.setAttribute('role', 'button'); el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-label', label); el.setAttribute('title', p.n);
+      el.setAttribute('aria-current', String(p.id === selected));
+      if (!el.dataset.kb) { // Enter/Space открывают карточку; preventDefault на keydown гасит keypress, поэтому Leaflet не дублирует click
+        el.dataset.kb = '1';
+        el.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); showLocation(p.id, { fromMap: true }); } });
+      }
+    };
+    marker.on('add', a11y);
+    a11y();
     marks[p.id] = marker;
   });
 

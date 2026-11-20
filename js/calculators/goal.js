@@ -2,17 +2,21 @@
    Решается прямым перебором целых показов на точной модели business() —
    это обратная задача на монотонной функции, а не подгонка. */
 import { baseMonth, business } from './basecamp.js';
-import { nonNeg, rangeField } from './util.js';
+import { nonNeg, rangeField, yearField } from './util.js';
 
 export const meta = {
   id: 'goal',
+  sources: ['vat_threshold*', 'vat_rate_special_low'],
   icon: 'target',
+  headline: 'result',            // тип главной цифры: result — со знаком, amount — сумма/цена без плюса, count — целое число
   title: 'Сколько нужно для моей цели',
-  what: 'Считает: минимальное число показов, учеников и трупп под желаемую чистую прибыль',
-  when: 'Когда: планируете целевой доход и решаете, чем его закрывать'
+  what: 'Считает: минимум показов, учеников и трупп под целевую прибыль',
+  when: 'Когда: планируете целевой доход',
+  more: 'Считает: минимальное число показов, учеников и трупп под желаемую чистую прибыль. Когда это нужно: планируете целевой доход и решаете, чем его закрывать.'
 };
 
 export const controls = cfg => [
+  yearField(cfg, { wide: true }),
   rangeField(cfg, 'goal', 'goal', 'Желаемая чистая прибыль в месяц', { wide: true }),
   { type: 'select', id: 'stageSel', label: 'Стадия проекта', options: [[0, 'До февраля · без базы'], ...cfg.stages.map((s, i) => [i + 1, `${s.name} · ${cfg.calc.base_area_default} м²`])], wide: true }
 ];

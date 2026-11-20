@@ -1,134 +1,310 @@
-/* calc-panel.js — раздел «Калькуляторы»: вкладки, поля ввода, пресеты, сценарии, печать. */
-import { $, $$, rub, ic, icons, toast, store } from './ui/helpers.js';
-import { fieldHTML, readInputs, rangeValues, renderResult } from './ui/calc-ui.js';
+/* calc-panel.js — раздел «Калькуляторы»: вкладки, поля ввода, пресеты, именованные сценарии со сравнением,
+   ручной ввод через <dialog>, допущения проекта, печать. Расчётов здесь нет: calc() — в js/calculators/*,
+   отрисовка результата — в js/ui/calc-ui.js. Числовых констант тоже нет — всё из cfg (data/*.json). */
+import { $, $$, ic, icons, toast, store, popNumber } from './ui/helpers.js';
+import { fieldHTML, readInputs, rangeValues, writeInputs, renderResult, bindNumberSync, sourcesHTML, methodHTML } from './ui/calc-ui.js';
+import { askDialog } from './ui/calc-dialog.js';
 import { registry } from './calculators/index.js';
+import { runCalc } from './calculators/run.js';
+import { defaultsOf } from './calculators/util.js';
+import { loadScenarios, saveScenarios, addScenario, removeScenario, buildComparison } from './calculators/scenarios.js';
+import { readOverrides, setOverride, clearOverrides, hasOverrides } from './calculators/overrides.js';
+import { buildCalcConfig } from './calculators/config.js';
 import { state } from './state.js';
 
-const lastHeadline = {};
+const lastHeadline = {};            // текст большой цифры по калькуляторам — «поп» только при изменении
+const picked = {};                  // выбранные для сравнения сценарии: { calcId: Set(id) }
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-/* ==== Тексты допущений (провенанс) по калькуляторам ==== */
-const METHOD = {
-  travel: 'Число зрителей задано на один показ. В городе команда получает 5 000 ₽ за одиночный показ или 4 300 ₽ за каждый в кластере; в ДК 6 500 ₽ за показ. При гастролях гарантированный гонорар дня 15 500 ₽ (два актёра по 6 000 ₽ и техник 3 500 ₽). ГСМ делятся на весь день; для ДК в городе добавлена доставка 200 ₽. Износ 400 ₽/показ, в ДК 600 ₽. Полиграфия 10 ₽/зритель. Наём: модельная надбавка 30,2%. Комиссия площадки и УСН — с валовой кассы. Личные взносы ИП и постоянные расходы здесь не списываются. Ставки — из data/config.json (предположения проекта) и data/rates.json.',
-  basecamp: 'Фикс: площадь × (ставка + 200 ₽ КУ) + 35 000 ₽ администрирования + 20 000 ₽ рекламы. Группа до 10 учеников: 8 уроков × 1 200 ₽ × 1,302. Выходной: билет 350 ₽, гонорар 3 500 ₽ × 1,302 + 300 ₽ реквизита + 3% кассы. Праздник: переменные 2 953 ₽. УСН 6%, льготы и вычеты не заложены. До 55 выездов: 50 × 325 ₽ и 7 550 ₽ вклада с показа. С 56-го: модель гастролей с 55 зрителями, 17 875 ₽ выручки, 7 965,12 ₽ вклада до поправки на НДС (≈7 165 ₽ после неё). Мощность 55 показов/труппа. НДС в цене по 5/105 и штаб 150 000 ₽ при темпе выше 20 млн ₽/год (228-ФЗ). Цена воспроизводства доп. комплекта 180–220 тыс. ₽.',
-  goal: 'Обратная задача решается прямым перебором целых показов на точной модели базы+выездов (функция монотонна по числу показов). Ученики и загрузка выходных зафиксированы стадией. До февраля — одна труппа до 55 показов, после открытия — до 200.',
-  taxes: 'Ставки и пороги — только из data/rates.json с источниками и датами. Отсутствующие значения (патент, фиксированные взносы ИП) честно показываются как «нет данных» и вводятся вручную. НДС 5% — только при годовой выручке сверх порога 20 млн ₽ (228-ФЗ). Вычет взносов из УСН, НДФЛ и региональные нюансы — консультация со специалистом.',
-  payroll: 'Считаются взносы заказчика по модельной ставке 30,2% (rates.json). НПД: исполнитель платит налог сам, заказчик взносов не платит — но схема законна только при реальной самостоятельности подрядчика. НДФЛ сознательно не считается: проверенной ставки в data/ нет.',
-  pricing: 'Цена из маржи: P = прямые расходы ÷ (зрители × (1 − доля переменных − маржа)). Тепловая карта считается тем же калькулятором выезда по сетке «цена × аудитория».',
-  parties: 'Переменные праздника 2 953 ₽ и ФОТ по формуле выходного показания — из модели проекта. Ориентир рынка: PlayPanda, 5 000 ₽/час, пакеты 21 000–26 000 ₽ (data/competitors.json).',
-  cashflow: 'Декабрь–август — базовый прогноз модели (9 месяцев). Сентябрь–ноябрь — проекция для 12-месячного графика, помечена звёздочкой. Вклад выездов: базовый прогноз месяца + правка показов × вклад показа из config (7 550 ₽).',
-  grants: 'Только конкурсы с проверенными окнами из data/market.json (срез 18.11.2026). Даты парсятся из строк окна и итогов.'
-};
+/* Группы допущений проекта в диалоге: по первому сегменту пути в config.json */
+const GROUPS = { ticket: 'Цена билета', venue_share: 'Доли площадок', travel_costs: 'Выезд: расходы', base_costs: 'База и студия', tour_unit: 'Модель выездов', phases_budget: 'Бюджет запуска' };
 
 function presetChips(mod, cfg) {
-  if (mod.meta.id === 'travel') return `<div class="chips" id="quick" role="group" aria-label="Пресеты выезда">${cfg.presets_travel.map((s, i) => `<button class="chip" data-preset="${i}">${s.name}</button>`).join('')}</div>`;
-  if (mod.meta.id === 'basecamp') return `<div class="chips" id="basePresets" role="group" aria-label="Стадии базы">${cfg.stages.map((s, i) => `<button class="chip" data-stage="${i}">${i === 1 ? s.name + ' · база на Богдашке' : s.name}</button>`).join('')}</div>`;
+  if (mod.meta.id === 'travel') return `<div class="chips" id="quick" role="group" aria-label="Пресеты выезда">${cfg.presets_travel.map((s, i) => `<button type="button" class="chip" data-preset="${i}">${s.name}</button>`).join('')}</div>`;
+  if (mod.meta.id === 'basecamp') return `<div class="chips" id="basePresets" role="group" aria-label="Стадии базы">${cfg.stages.map((s, i) => `<button type="button" class="chip" data-stage="${i}">${i === 1 ? s.name + ' · база на Богдашке' : s.name}</button>`).join('')}</div>`;
   return '';
 }
 
-export function initCalc(cfg) {
-  $('calcnav').innerHTML = registry.map((m, i) => `<button class="mode ${i ? '' : 'on'}" role="tab" aria-selected="${i === 0}" aria-pressed="${i === 0}">${ic(m.meta.icon)}${m.meta.title}<small>${m.meta.when}</small></button>`).join('');
-  $('calcnav').onclick = e => {
-    const b = e.target.closest('button'); if (!b) return;
-    const i = [...$('calcnav').children].indexOf(b);
-    $$('#calcpanels > div').forEach((p, j) => p.hidden = j !== i);
-    $$('#calcnav .mode').forEach((m, j) => { m.classList.toggle('on', i === j); m.setAttribute('aria-pressed', String(i === j)); m.setAttribute('aria-selected', String(i === j)); });
-  };
-  $('calcpanels').innerHTML = registry.map((m, i) => {
-    const fields = m.controls(cfg);
-    return `<div id="calc-${m.meta.id}" class="calcgrid" role="tabpanel" ${i ? 'hidden' : ''}>
-      <article class="card rv">
-        <div class="calcdesc"><b>Что считает:</b> ${m.meta.what}</div>
-        <div class="calcdesc"><b>Когда использовать:</b> ${m.meta.when}</div>
-        ${presetChips(m, cfg)}
-        <div class="controls">${fields.map(fieldHTML).join('')}</div>
-        <div class="toolrow">
-          <button class="btn small secondary" data-act="reset">${ic('rotate-ccw')}<span>Сбросить</span></button>
-          <button class="btn small secondary" data-act="save">${ic('bookmark')}<span>Сохранить сценарий</span></button>
-          <button class="btn small secondary" data-act="compare">${ic('git-compare-arrows')}<span>Сравнить с сохранённым</span></button>
-          <button class="btn small secondary" data-act="print">${ic('printer')}<span>Печать / PDF</span></button>
-        </div>
-        <details><summary>Допущения и источники данных</summary><p>${METHOD[m.meta.id] || ''}</p></details>
-      </article>
-      <article class="card result rv" id="res-${m.meta.id}" aria-live="polite"></article>
-    </div>`;
-  }).join('');
+const calcCtx = () => ({ market: state.DATA && state.DATA.market, now: Date.now() });   // «сегодня» — только здесь, в слое UI
+const uid = () => `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
-  // Пресеты
-  const travelPanel = $('calc-travel');
-  travelPanel.querySelector('#quick').onclick = e => {
-    const b = e.target.closest('[data-preset]'); if (!b) return;
-    const s = cfg.presets_travel[+b.dataset.preset];
-    Object.entries({ kids: s.n, ticket: s.p, cluster: s.k, route: s.r, venue: s.dk, cast: s.own }).forEach(([k, v]) => { const el = $(k); if (el) el.value = v; });
-    rerender('travel');
-  };
-  const basePanel = $('calc-basecamp');
-  basePanel.querySelector('#basePresets').onclick = e => {
-    const b = e.target.closest('[data-stage]'); if (!b) return;
-    const m = cfg.stages[+b.dataset.stage];
-    Object.entries({ area: 130, rent: 1000, students: m.students, sub: m.subscription, week: m.weekend_shows, party: m.parties, attendance: m.weekend_audience, eventprice: m.party_check }).forEach(([k, v]) => { const el = $(k); if (el) el.value = v; });
-    rerender('basecamp');
-  };
+/* Поля калькулятора с DOM-id вида «калькулятор__поле» (имена полей у разных калькуляторов совпадают) */
+const fieldsOf = m => m.controls(state.CFG).map(f => ({ ...f, dom: `${m.meta.id}__${f.id}` }));
 
-  // Ввод
-  $('calcpanels').addEventListener('input', e => { if (e.target.matches('input,select')) rerender(activeCalcId()); });
-  $('calcpanels').addEventListener('change', e => { if (e.target.matches('select')) rerender(activeCalcId()); });
-
-  // Тулбар
-  $('calcpanels').addEventListener('click', e => {
-    const b = e.target.closest('[data-act]'); if (!b) return;
-    const id = activeCalcId();
-    if (b.dataset.act === 'reset') {
-      const mod = registry.find(m => m.meta.id === id);
-      mod.controls(state.CFG).forEach(f => { const el = $(f.id); if (el) el.value = f.def != null ? f.def : (f.options ? f.options[0][0] : ''); });
-      rerender(id);
-    }
-    if (b.dataset.act === 'save') {
-      store.set('scen.' + id, { inputs: currentInputs(id), headline: lastHeadline[id], at: new Date().toISOString() });
-      toast('Сценарий сохранён в этом браузере');
-    }
-    if (b.dataset.act === 'compare') {
-      const saved = store.get('scen.' + id, null);
-      const cur = lastHeadline[id];
-      if (!saved || !saved.headline) { toast('Сначала сохраните сценарий'); return; }
-      const el = $('res-' + id);
-      el.insertAdjacentHTML('afterbegin', `<div class="advice warn"><strong>Сравнение с сохранённым (${new Date(saved.at).toLocaleDateString('ru-RU')})</strong>Сохранённый: <b>${saved.headline}</b> · Текущий: <b>${cur || '—'}</b></div>`);
-    }
-    if (b.dataset.act === 'print') window.print();
-    // «Ввести вручную» для no_data
-    if (b.dataset.fill) {
-      const v = prompt('Введите проверенное значение (₽/год):');
-      if (v != null && !isNaN(+v) && +v >= 0) {
-        store.set('ovr.' + b.dataset.fill, +v);
-        applyOverrides(); rerender(id); toast('Значение сохранено (переопределение в этом браузере)');
-      }
-    }
-  });
-
-  registry.forEach(m => rerender(m.meta.id));
-}
-
-function activeCalcId() { return registry[[...$('calcpanels').children].findIndex(p => !p.hidden)].meta.id; }
+/* Текущее значение полей калькулятора */
 function currentInputs(id) {
   const mod = registry.find(m => m.meta.id === id);
-  return readInputs(mod.controls(state.CFG));
+  return readInputs(fieldsOf(mod));
 }
-export function rerender(id) {
-  const mod = registry.find(m => m.meta.id === id);
-  const fields = mod.controls(state.CFG);
-  rangeValues(fields);
-  const inputs = readInputs(fields);
-  // travel читает n/p/k/r/dk/own, а поля формы называются kids/ticket/… — маппинг в fromForm модуля
-  const calcInput = mod.fromForm ? mod.fromForm(inputs) : inputs;
-  const result = mod.calc(calcInput, state.CFG, state.DATA.market);
-  const el = $('res-' + id);
-  el.innerHTML = renderResult(mod, inputs, state.CFG, result, state.DATA);
-  const big = el.querySelector('.big-num');
-  lastHeadline[id] = big ? big.textContent.trim() : rub(result.profit ?? 0);
+const activeCalcId = () => registry[Math.max(0, [...$('calcpanels').children].findIndex(p => !p.hidden))].meta.id;
+
+/* ==== Сценарии ==== */
+function scenDate(at) { const d = new Date(at); return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('ru-RU'); }
+
+function renderScenList(id) {
+  const list = loadScenarios(store, id);
+  const sel = picked[id] || (picked[id] = new Set(list.map(s => s.id)));
+  const box = $('scen-' + id);
+  if (!box) return;
+  box.innerHTML = list.length
+    ? `<h4 class="subh">Мои сценарии <span class="tiny">отметьте, что сравнивать</span></h4><ul class="scenul">${list.map(s => `<li>
+        <label class="scen-check"><input type="checkbox" data-scen-sel="${s.id}" ${sel.has(s.id) ? 'checked' : ''}><span>${esc(s.name)}</span></label>
+        <small class="tiny">${scenDate(s.at)}</small>
+        <button type="button" class="btn small secondary" data-scen-open="${s.id}">Открыть</button>
+        <button type="button" class="btn small secondary" data-scen-del="${s.id}" aria-label="Удалить сценарий «${esc(s.name)}»">${ic('trash-2')}</button>
+      </li>`).join('')}</ul>`
+    : '<p class="tiny">Сохранённых сценариев нет: подберите значения и нажмите «Сохранить сценарий» — их можно сравнить таблицей рядом.</p>';
   icons();
 }
 
-/* Ручные переопределения «нет данных» (только в этом браузере) */
+/* Таблица сравнения: текущий + отмеченные сценарии; итоги пересчитываются по текущим данным */
+function renderCompare(id) {
+  const mod = registry.find(m => m.meta.id === id);
+  const box = $('cmp-' + id);
+  if (!box || box.hidden) return;
+  const sel = picked[id] || new Set();
+  const scenarios = loadScenarios(store, id).filter(s => sel.has(s.id));
+  const cmp = buildComparison({ mod, cfg: state.CFG, ctx: calcCtx(), scenarios, currentInputs: currentInputs(id) });
+  const head = cmp.cols.map(c => `<th scope="col">${esc(c.name)}${c.at ? `<small>${scenDate(c.at)}</small>` : ''}</th>`).join('');
+  const rows = cmp.rows.map(r => `<tr><th scope="row">${esc(r.label)}</th>${r.cells.map(c => `<td>${esc(c.text)}${c.delta ? `<small>${esc(c.delta)}</small>` : ''}</td>`).join('')}</tr>`).join('');
+  const inRows = cmp.inputRows.map(r => `<tr class="${r.differs ? 'differs' : ''}"><th scope="row">${esc(r.label)}</th>${r.cells.map(t => `<td>${esc(t)}</td>`).join('')}</tr>`).join('');
+  box.innerHTML = `<div class="cmphead"><h3>Сравнение сценариев · ${esc(mod.meta.title)}</h3>
+      <div class="toolrow"><button type="button" class="btn small secondary" data-act="print">${ic('printer')}<span>Печать / PDF</span></button><button type="button" class="btn small secondary" data-act="compare">${ic('x')}<span>Скрыть</span></button></div></div>
+    ${scenarios.length ? '' : '<p class="tiny">Отметьте сохранённые сценарии выше — они появятся рядом с текущим.</p>'}
+    <div class="tablebox"><table class="cmp"><caption class="sr">Показатели сценариев; под значением — разница с текущим</caption><thead><tr><th scope="col">Показатель</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    <details><summary>Входные данные сценариев</summary><div class="tablebox"><table class="cmp"><thead><tr><th scope="col">Поле</th>${head}</tr></thead><tbody>${inRows}</tbody></table></div></details>`;
+  icons();
+}
+
+async function saveScenario(id) {
+  const mod = registry.find(m => m.meta.id === id);
+  const cfg = state.CFG;
+  const list = loadScenarios(store, id);
+  const res = await askDialog({
+    title: 'Сохранить сценарий',
+    lead: `Калькулятор «${esc(mod.meta.title)}». Сохраняются текущие значения полей; итоги при сравнении пересчитываются по актуальным данным.`,
+    fields: [{ id: 'name', type: 'text', label: 'Название сценария', value: `Сценарий ${list.length + 1}`, maxLength: cfg.calc.scenarios.max_name_len, hint: 'Одинаковое имя обновляет уже сохранённый сценарий.' }],
+    ok: 'Сохранить'
+  });
+  if (!res || !res.values) return;
+  const next = addScenario(list, { name: res.values.name, inputs: currentInputs(id), at: new Date().toISOString(), uid: uid() }, cfg.calc.scenarios.max_saved, cfg.calc.scenarios.max_name_len);
+  saveScenarios(store, id, next);
+  const added = next.find(s => s.name.toLowerCase() === (res.values.name || '').trim().replace(/\s+/g, ' ').toLowerCase()) || next[next.length - 1];
+  (picked[id] || (picked[id] = new Set())).add(added.id);
+  renderScenList(id);
+  renderCompare(id);
+  toast(`Сценарий «${added.name}» сохранён в этом браузере`);
+}
+
+/* ==== Ручной ввод и допущения ==== */
+function rebuildConfig() { state.CFG = buildCalcConfig(state.DATA, readOverrides(store)); }
+
+async function manualFill(key) {
+  const cfg = state.CFG;
+  const m = cfg.rateMeta[key] || {};
+  const cur = readOverrides(store).rates[key];
+  const res = await askDialog({
+    title: m.label || key,
+    lead: `Значение хранится только в этом браузере и не меняет файлы данных. Источник: ${esc(m.source_name || 'не указан')}. Требует консультации со специалистом.`,
+    fields: [{ id: 'v', label: m.label || key, unit: m.unit || '', value: cur != null ? cur : '', hint: esc(m.note || '') }],
+    ok: 'Сохранить', extra: cur != null ? 'Убрать мой ввод' : null
+  });
+  if (!res) return;
+  setOverride(store, 'rates', key, res.extra ? null : res.values.v);
+  rebuildConfig();
+  registry.forEach(mod => rerender(mod.meta.id));
+  syncGlobalBar();
+  toast(res.extra ? 'Ручное значение убрано' : 'Значение сохранено в этом браузере');
+}
+
+async function editAssumptions() {
+  const cfg = state.CFG;
+  const ov = readOverrides(store);
+  const fields = cfg.assumptions.map(a => ({
+    id: a.path, type: 'number', label: a.label, unit: a.unit, value: a.value, group: GROUPS[a.path.split('.')[0]] || 'Прочее',
+    hint: a.overridden ? `Исходное значение: ${a.original}` : ''
+  }));
+  const res = await askDialog({
+    title: 'Допущения проекта',
+    lead: 'Это предположения (confidence: model), а не данные источника. Измените значение — расчёты и обзор пересчитаются после перезагрузки страницы. Хранится только в этом браузере.',
+    fields, ok: 'Сохранить и перезагрузить', extra: Object.keys(ov.cfg).length ? 'Вернуть исходные' : null
+  });
+  if (!res) return;
+  if (res.extra) clearOverrides(store, 'cfg');
+  else cfg.assumptions.forEach(a => { const v = res.values[a.path]; setOverride(store, 'cfg', a.path, v === a.original ? null : v); });
+  location.reload();
+}
+
+function syncGlobalBar() {
+  const n = Object.keys(readOverrides(store).rates).length;
+  const b = $('calcResetManual');
+  if (b) { b.hidden = n === 0; b.querySelector('span').textContent = `Сбросить ручной ввод (${n})`; }
+}
+
+/* ==== Сборка раздела ==== */
+export function initCalc(cfg) {
+  const nav = $('calcnav');
+  const panels = $('calcpanels');
+  nav.innerHTML = registry.map((m, i) => `<button type="button" id="tab-${m.meta.id}" class="mode ${i ? '' : 'on'}" role="tab" aria-controls="calc-${m.meta.id}" aria-selected="${i === 0}" aria-pressed="${i === 0}" tabindex="${i ? -1 : 0}">${ic(m.meta.icon)}${m.meta.title}<small>${m.meta.when}</small></button>`).join('');
+  nav.insertAdjacentHTML('beforebegin', `<div class="toolrow calcglobal" id="calcglobal">
+      <button type="button" class="btn small secondary" data-gact="assume">${ic('sliders-horizontal')}<span>Допущения проекта</span></button>
+      <button type="button" class="btn small secondary" id="calcResetManual" data-gact="resetmanual" hidden>${ic('rotate-ccw')}<span>Сбросить ручной ввод</span></button>
+    </div>`);
+
+  const activate = (i, focus) => {
+    $$('#calcpanels > div').forEach((p, j) => { p.hidden = j !== i; });
+    $$('#calcnav .mode').forEach((m, j) => { m.classList.toggle('on', i === j); m.setAttribute('aria-pressed', String(i === j)); m.setAttribute('aria-selected', String(i === j)); m.tabIndex = i === j ? 0 : -1; });
+    if (focus) $$('#calcnav .mode')[i].focus();
+    store.set('calc.tab', registry[i].meta.id);
+  };
+  nav.onclick = e => { const b = e.target.closest('button'); if (b) activate([...nav.children].indexOf(b)); };
+  nav.onkeydown = e => {           // стрелки/Home/End — переключение вкладок с клавиатуры
+    const i = [...nav.children].findIndex(b => b === document.activeElement);
+    if (i < 0) return;
+    const n = registry.length;
+    const next = { ArrowRight: (i + 1) % n, ArrowDown: (i + 1) % n, ArrowLeft: (i + n - 1) % n, ArrowUp: (i + n - 1) % n, Home: 0, End: n - 1 }[e.key];
+    if (next == null) return;
+    e.preventDefault(); activate(next, true);
+  };
+
+  panels.innerHTML = registry.map((m, i) => {
+    const fields = fieldsOf(m);
+    return `<div id="calc-${m.meta.id}" class="calcgrid" role="tabpanel" aria-labelledby="tab-${m.meta.id}" ${i ? 'hidden' : ''}>
+      <article class="card rv calc-in">
+        <div class="calcdesc"><span><b>Что считает:</b> ${m.meta.what.replace(/^Считает:\s*/, '')}</span><span><b>Когда:</b> ${m.meta.when.replace(/^Когда:\s*/, '')}</span></div>
+        ${m.meta.more ? `<details class="calcmore"><summary>Подробнее о расчёте</summary><p class="tiny">${m.meta.more}</p></details>` : ''}
+        ${presetChips(m, cfg)}
+        <div class="controls">${fields.map(fieldHTML).join('')}</div>
+        <div class="toolrow">
+          <button type="button" class="btn small secondary" data-act="reset">${ic('rotate-ccw')}<span>Сбросить</span></button>
+          <button type="button" class="btn small secondary" data-act="save">${ic('bookmark')}<span>Сохранить сценарий</span></button>
+          <button type="button" class="btn small secondary" data-act="compare" aria-expanded="false" aria-controls="cmp-${m.meta.id}">${ic('git-compare-arrows')}<span>Сравнить сценарии</span></button>
+          <button type="button" class="btn small secondary" data-act="print">${ic('printer')}<span>Печать / PDF</span></button>
+        </div>
+        <div class="scenlist" id="scen-${m.meta.id}"></div>
+        <details><summary>Допущения и источники данных</summary><div id="meth-${m.meta.id}"></div></details>
+      </article>
+      <article class="card result rv" id="res-${m.meta.id}" aria-live="polite"></article>
+      <section class="card compare" id="cmp-${m.meta.id}" aria-label="Сравнение сценариев" hidden></section>
+    </div>`;
+  }).join('');
+
+  // Восстановить последние значения полей (удобство; без них — значения по умолчанию)
+  registry.forEach(m => { const saved = store.get('calc.in.' + m.meta.id, null); if (saved && typeof saved === 'object') writeInputs(fieldsOf(m), saved); });
+  const tab = store.get('calc.tab', null);
+  const ti = registry.findIndex(m => m.meta.id === tab);
+  if (ti > 0) activate(ti);
+
+  // Пресеты
+  $('calc-travel').querySelector('#quick').onclick = e => {
+    const b = e.target.closest('[data-preset]'); if (!b) return;
+    const s = cfg.presets_travel[+b.dataset.preset];
+    writeInputs(fieldsOf(registry.find(m => m.meta.id === 'travel')), { kids: s.n, ticket: s.p, cluster: s.k, route: s.r, venue: s.dk, cast: s.own });
+    rerender('travel');
+  };
+  $('calc-basecamp').querySelector('#basePresets').onclick = e => {
+    const b = e.target.closest('[data-stage]'); if (!b) return;
+    const m = cfg.stages[+b.dataset.stage];
+    writeInputs(fieldsOf(registry.find(x => x.meta.id === 'basecamp')), { area: cfg.calc.base_area_default, rent: cfg.base_costs.rent_per_m2, students: m.students, sub: m.subscription, week: m.weekend_shows, party: m.parties, attendance: m.weekend_audience, eventprice: m.party_check });
+    rerender('basecamp');
+  };
+
+  // Ввод: ползунок и число — через синхронизацию; select — по change
+  bindNumberSync(panels, () => rerender(activeCalcId()));
+  panels.addEventListener('change', e => { if (e.target.matches('select')) rerender(activeCalcId()); });
+
+  // Кнопки панели (делегирование): сброс, сценарии, печать, ручной ввод
+  panels.addEventListener('click', e => {
+    const id = activeCalcId();
+    const fill = e.target.closest('[data-fill]');
+    if (fill) { manualFill(fill.dataset.fill); return; }
+    const so = e.target.closest('[data-scen-open]');
+    if (so) {
+      const s = loadScenarios(store, id).find(x => x.id === so.dataset.scenOpen);
+      if (s) { writeInputs(fieldsOf(registry.find(m => m.meta.id === id)), s.inputs); rerender(id); toast(`Открыт сценарий «${s.name}»`); }
+      return;
+    }
+    const sd = e.target.closest('[data-scen-del]');
+    if (sd) {
+      saveScenarios(store, id, removeScenario(loadScenarios(store, id), sd.dataset.scenDel));
+      (picked[id] || new Set()).delete(sd.dataset.scenDel);
+      renderScenList(id); renderCompare(id); toast('Сценарий удалён');
+      return;
+    }
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const act = b.dataset.act;
+    if (act === 'reset') {
+      const mod = registry.find(m => m.meta.id === id);
+      writeInputs(fieldsOf(mod), defaultsOf(fieldsOf(mod)));
+      rerender(id);
+    }
+    if (act === 'save') saveScenario(id);
+    if (act === 'compare') {
+      const box = $('cmp-' + id);
+      const open = box.hidden;
+      box.hidden = !open;
+      panels.querySelectorAll(`#calc-${id} [data-act=compare][aria-expanded]`).forEach(x => x.setAttribute('aria-expanded', String(open)));
+      if (open) {
+        renderCompare(id);
+        if (!loadScenarios(store, id).length) toast('Сначала сохраните хотя бы один сценарий — текущий сравнится с ним');
+        box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+    if (act === 'print') window.print();
+  });
+  panels.addEventListener('change', e => {
+    const c = e.target.closest('[data-scen-sel]'); if (!c) return;
+    const id = activeCalcId();
+    const set = picked[id] || (picked[id] = new Set());
+    if (c.checked) set.add(c.dataset.scenSel); else set.delete(c.dataset.scenSel);
+    renderCompare(id);
+  });
+
+  // Глобальная полоса: допущения проекта и сброс ручного ввода
+  $('calcglobal').addEventListener('click', e => {
+    const b = e.target.closest('[data-gact]'); if (!b) return;
+    if (b.dataset.gact === 'assume') editAssumptions();
+    if (b.dataset.gact === 'resetmanual') {
+      clearOverrides(store, 'rates'); rebuildConfig();
+      registry.forEach(m => rerender(m.meta.id)); syncGlobalBar(); toast('Ручной ввод сброшен');
+    }
+  });
+  syncGlobalBar();
+  registry.forEach(m => { renderScenList(m.meta.id); rerender(m.meta.id); });
+}
+
+/* Пересчёт и перерисовка одного калькулятора */
+export function rerender(id) {
+  const mod = registry.find(m => m.meta.id === id);
+  const cfg = state.CFG;
+  const fields = fieldsOf(mod);
+  rangeValues(fields);
+  const inputs = readInputs(fields);
+  store.set('calc.in.' + id, inputs);
+  const el = $('res-' + id);
+  let result;
+  try {
+    result = runCalc(mod, inputs, cfg, calcCtx());
+    el.innerHTML = renderResult(mod, inputs, cfg, result, state.DATA);
+  } catch (e) {
+    console.error(`[калькулятор ${id}]`, e);
+    el.innerHTML = `<div class="nodata"><strong>Не удалось построить результат</strong><span>${esc(e && e.message || e)}. Нажмите «Сбросить» или проверьте значения полей.</span></div>`;
+    return;
+  }
+  const year = inputs.year != null ? inputs.year : cfg.year;
+  const meth = $('meth-' + id);
+  if (meth) meth.innerHTML = `<h4 class="subh">Как считается</h4>${methodHTML(id, cfg, year)}<h4 class="subh">Значения и источники</h4>${sourcesHTML(mod, cfg, year)}`;
+  // большая цифра: акцент «поп» (transform/opacity) только если значение реально изменилось
+  const big = el.querySelector('.big-num');
+  const text = big ? big.textContent.trim() : '';
+  if (big && lastHeadline[id] !== undefined && lastHeadline[id] !== text) popNumber(big);
+  lastHeadline[id] = text;
+  renderCompare(id);
+  icons();
+}
+
+/* Ручные значения и допущения: пересобрать конфиг до первого расчёта (вызывается из app.js до initCalc) */
 export function applyOverrides() {
-  const patent = store.get('ovr.patent', null);
-  if (patent != null) state.CFG.patentPotential = patent;
+  const ov = readOverrides(store);
+  if (hasOverrides(ov)) state.CFG = buildCalcConfig(state.DATA, ov);
 }

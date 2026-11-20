@@ -1,0 +1,91 @@
+/* preset-cards.css — кейс-карточки «Рассчитай за 5 секунд»: сетка, мерцание, FLIP-раскрытие. */
+
+#presetCards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:6px 0 18px}
+/* компактная лента, когда одна карточка раскрыта */
+#presetCards.compact{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+#presetCards.compact .pc-card:not(.expanded) .pc-params,
+#presetCards.compact .pc-card:not(.expanded) .pc-bar,
+#presetCards.compact .pc-card:not(.expanded) .pc-legend,
+#presetCards.compact .pc-card:not(.expanded) .pc-num small{display:none}
+#presetCards.compact .pc-card:not(.expanded) .pc-num{font-size:20px}
+#presetCards.compact .pc-card:not(.expanded) h3{font-size:13px}
+
+.pc-card{
+  position:relative;display:block;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px 18px;box-shadow:var(--shadow);cursor:pointer;
+  transition:transform .35s var(--ease),border-color .2s,box-shadow .35s var(--ease);
+}
+.pc-card:hover{transform:translateY(-3px);border-color:var(--silver);box-shadow:var(--shadow-lg)}
+.pc-card:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px}
+.pc-card.expanded{
+  grid-column:1/-1;cursor:default;
+  border-color:var(--silver);box-shadow:var(--shadow-lg);
+  transform:none;
+}
+.pc-card.expanded:hover{transform:none}
+
+.pc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.pc-top h3{font-size:16px;line-height:1.25}
+.pc-arrow{color:var(--silver);font-size:18px;transition:transform .3s var(--ease)}
+.pc-card:hover .pc-arrow{transform:translateX(4px)}
+.pc-card.expanded .pc-arrow{display:none}
+.pc-params{margin:6px 0 10px;font-size:12px;color:var(--mutedS);line-height:1.45}
+.pc-num{font-size:clamp(24px,2.6vw,34px);font-weight:800;letter-spacing:-.05em;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pc-num small{display:block;font-size:11px;font-weight:600;letter-spacing:0;color:var(--mutedS);margin-top:3px;white-space:normal}
+
+/* структура выручки (монохром) */
+.pc-bar{display:flex;height:8px;border-radius:5px;overflow:hidden;background:var(--track);margin:10px 0 6px}
+.pc-bar span{display:block;height:100%}
+.pc-s1{background:var(--ink)}
+.pc-s2{background:repeating-linear-gradient(-45deg,var(--graphite),var(--graphite) 3px,transparent 3px,transparent 6px)}
+.pc-s3{background:var(--silver)}
+.pc-s4{background:var(--hair)}
+:root[data-theme="dark"] .pc-s1{background:#F5F5F7}
+:root[data-theme="dark"] .pc-s2{background:repeating-linear-gradient(-45deg,#8E8E93,#8E8E93 3px,transparent 3px,transparent 6px)}
+:root[data-theme="dark"] .pc-s4{background:#2C2C2E}
+.pc-legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;color:var(--mutedS)}
+.pc-legend span{display:inline-flex;align-items:center;gap:5px}
+.pc-legend span::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--sw-b,var(--silver))}
+.pc-legend .pc-l1::before{background:var(--ink)}
+:root[data-theme="dark"] .pc-legend .pc-l1::before{background:#F5F5F7}
+.pc-legend .pc-l2::before{background:repeating-linear-gradient(-45deg,var(--graphite),var(--graphite) 2px,transparent 2px,transparent 4px)}
+.pc-legend .pc-l3::before{background:var(--silver)}
+.pc-legend .pc-l4::before{background:var(--hair)}
+:root[data-theme="dark"] .pc-legend .pc-l4::before{background:#2C2C2E}
+
+/* раскрытая панель */
+.pc-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:12px 0}
+.pc-kv{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--card2);font-size:13px}
+.pc-kv span{color:var(--mutedS)}
+.pc-kv b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pc-advice{border-radius:14px;border:1px solid var(--line);background:var(--card2);padding:12px 15px;font-size:13px;line-height:1.5;color:var(--text2)}
+.pc-advice b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS);margin-bottom:3px}
+.pc-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+
+/* каскадное мерцание: мягкий пульс, сдвиг фаз по карточкам; стоп по hover/focus/first-open */
+@keyframes pcShimmer{
+  0%,100%{opacity:1;transform:none}
+  50%{opacity:.72;transform:translateY(-2px) scale(1.008)}
+}
+#presetCards:not(.no-shimmer) .pc-card{animation:pcShimmer 3.2s var(--ease) infinite}
+#presetCards:not(.no-shimmer) .pc-card:nth-child(2){animation-delay:.4s}
+#presetCards:not(.no-shimmer) .pc-card:nth-child(3){animation-delay:.8s}
+#presetCards:not(.no-shimmer) .pc-card:nth-child(4){animation-delay:1.2s}
+#presetCards:not(.no-shimmer) .pc-card:nth-child(5){animation-delay:1.6s}
+#presetCards:not(.no-shimmer) .pc-card:nth-child(6){animation-delay:2s}
+#presetCards:not(.no-shimmer) .pc-card:nth-child(7){animation-delay:2.4s}
+#presetCards:not(.no-shimmer) .pc-card:nth-child(8){animation-delay:2.8s}
+#presetCards:not(.no-shimmer) .pc-card:hover,
+#presetCards:not(.no-shimmer) .pc-card:focus-visible,
+#presetCards:not(.no-shimmer) .pc-card.expanded{animation:none}
+@media (prefers-reduced-motion: reduce){
+  #presetCards:not(.no-shimmer) .pc-card{animation:none}
+  .pc-card,.pc-arrow{transition:none}
+}
+
+@media(max-width:640px){
+  #presetCards{grid-template-columns:1fr 1fr}
+  .pc-card{padding:13px 14px}
+  #presetCards.compact{grid-template-columns:1fr 1fr}
+}

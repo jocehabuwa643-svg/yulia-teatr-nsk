@@ -17,6 +17,20 @@
   --void:#0A0A0A;
   --silver-hi:#AEAEB2;          /* производная silver: AA на тёмных поверхностях */
 
+  /* производные прозрачности шкалы: суффикс — процент непрозрачности. Правила компонентов берут их,
+     а не rgba()/hex-литералы */
+  --silver-a12:color-mix(in srgb,var(--silver) 12%,transparent);
+  --silver-a22:color-mix(in srgb,var(--silver) 22%,transparent);
+  --ink-a35:color-mix(in srgb,var(--ink) 35%,transparent);
+  --paper-a10:color-mix(in srgb,var(--paper) 10%,transparent);
+  --paper-a14:color-mix(in srgb,var(--paper) 14%,transparent);
+  --paper-a16:color-mix(in srgb,var(--paper) 16%,transparent);
+  --paper-a22:color-mix(in srgb,var(--paper) 22%,transparent);
+  --void-a55:color-mix(in srgb,var(--void) 55%,transparent);
+  --white-a10:color-mix(in srgb,var(--white) 10%,transparent);
+  --white-a16:color-mix(in srgb,var(--white) 16%,transparent);
+  --scrim-top:color-mix(in srgb,var(--ink) 7%,transparent);   /* тень под шапкой */
+
   /* семантика (светлая тема по умолчанию) */
   --bg:var(--paper);
   --card:var(--white);

@@ -1,6 +1,6 @@
 /* guide.js — раздел «Справочник»: вкладки (role=tablist), чек-листы с прогрессом,
    карточки «риск → решение», шаблоны с копированием, словарь, поиск (ё = е), архив исследования.
-   Формат записей: {id, tab, category, title, text, details[], checklist[], risk, solution,
+   Формат записей: {id, tab, category, title, text, details[], checklist[], unverified[], glossary, risk, solution,
    template{fields[],body}, legal, source_name, source_url, verified_at, confidence}. */
 import { $, $$, icons, popNumber, toast } from './ui/helpers.js';
 import { state } from './state.js';
@@ -15,16 +15,25 @@ let checks = {};
 let fields = {};
 
 /* ---------- безопасное хранилище (localStorage может быть недоступен) ---------- */
+/* Единый формат: всё хранится как JSON (строки тоже). Старая запись без кавычек («docs»)
+   читается как есть, если fallback — строка, и при следующем сохранении станет JSON. */
 function load(key, fallback) {
-  try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return v ?? fallback; } catch (e) { return fallback; }
+  let raw = null;
+  try { raw = localStorage.getItem(key); } catch (e) { return fallback; }
+  if (raw === null) return fallback;
+  try { const v = JSON.parse(raw); return v ?? fallback; } catch (e) { return typeof fallback === 'string' ? raw : fallback; }
 }
 function save(key, value) {
-  try { localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value)); } catch (e) { /* хранилище недоступно: состояние живёт до перезагрузки */ }
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* хранилище недоступно: состояние живёт до перезагрузки */ }
 }
 
 /* ---------- утилиты ---------- */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const norm = s => String(s ?? '').toLocaleLowerCase('ru').replaceAll('ё', 'е');
+/* Простая морфология: у слов длиннее 5 букв отбрасываем до 3 последних (окончание), но оставляем ≥5 букв:
+   «самозанятый» → «самозаня» находит «самозанятые», «самозанятого». Короткие слова ищутся как есть. */
+const stem = w => (w.length > 5 ? w.slice(0, Math.max(5, w.length - 3)) : w);
+const queryStems = q => norm(q).split(/[^\p{L}\p{N}]+/u).filter(Boolean).map(stem);
 const fmtDate = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? `${m[3]}.${m[2]}.${m[1]}` : ''; };
 const checkKey = (id, i) => `${id}#${i}`;
 const entryById = id => state.DATA.guide.entries.find(e => e.id === id);
@@ -39,7 +48,7 @@ function progress(entries) {
 /* Текст для поиска: всё, что видит пользователь в карточке */
 function haystack(e) {
   const tpl = e.template ? e.template.fields.map(f => f.label).join(' ') : '';
-  return norm([e.title, e.text, e.category, e.risk, e.solution, (e.details || []).join(' '), (e.checklist || []).join(' '), tpl, e.source_name].join(' '));
+  return norm([e.title, e.text, e.category, e.risk, e.solution, (e.details || []).join(' '), (e.checklist || []).join(' '), (e.unverified || []).join(' '), tpl, e.source_name].join(' '));
 }
 
 /* ---------- пометка достоверности ---------- */
@@ -50,9 +59,10 @@ function note(e) {
       ? `<a href="${esc(e.source_url)}" target="_blank" rel="noopener noreferrer">${esc(e.source_name || 'Источник')}</a>`
       : esc(e.source_name || 'Источник не найден');
     const low = e.confidence === 'low' || e.confidence === 'no_data' || !e.verified_at;
-    return `<p class="g-note${low ? ' g-note--warn' : ''}"><span>${verified}</span><span>Источник: ${src}</span><span>Требует консультации со специалистом</span></p>`;
+    const unv = (e.unverified || []).length ? '<span>Часть утверждений не проверена: см. «Подробнее»</span>' : '';
+    return `<div class="g-note${low ? ' g-note--warn' : ''}"><span>${verified}</span><span>Источник: ${src}</span>${unv}<span>Требует консультации со специалистом</span></div>`;
   }
-  if (e.confidence === 'model' && e.tab !== 'glossary') return '<p class="g-note"><span>Предположение проекта</span><span>Можно менять под себя</span></p>';
+  if (e.confidence === 'model' && !e.glossary) return '<div class="g-note"><span>Предположение проекта</span><span>Можно менять под себя</span></div>';
   return '';
 }
 
@@ -66,8 +76,9 @@ function checklistHtml(e) {
 }
 
 function detailsHtml(e) {
-  if (!e.details || !e.details.length) return '';
-  return `<details class="g-more"><summary>Подробнее</summary>${e.details.map(d => `<p>${esc(d)}</p>`).join('')}</details>`;
+  const unv = (e.unverified || []).length ? `<p><b>Не проверено:</b> ${esc(e.unverified.join('; '))}.</p>` : '';
+  if (!(e.details && e.details.length) && !unv) return '';
+  return `<details class="g-more"><summary>Подробнее</summary>${(e.details || []).map(d => `<p>${esc(d)}</p>`).join('')}${unv}</details>`;
 }
 
 /* Подставляет значения полей в тело шаблона; пустое поле → [Название поля] */
@@ -97,7 +108,7 @@ function riskHtml(e) {
 function cardHtml(e, showTab) {
   const tabTitle = showTab ? (state.DATA.guide.tabs.find(t => t.id === e.tab) || {}).title : '';
   const head = `<div class="g-cat">${esc(tabTitle ? `${tabTitle} · ${e.category}` : e.category)}</div>`;
-  if (e.tab === 'glossary') return `<article class="g-card g-term" id="g-${esc(e.id)}">${head}<h3>${esc(e.title)}</h3><p>${esc(e.text)}</p></article>`;
+  if (e.glossary) return `<article class="g-card g-term" id="g-${esc(e.id)}">${head}<h3>${esc(e.title)}</h3><p>${esc(e.text)}</p></article>`;
   return `<article class="g-card" id="g-${esc(e.id)}">${head}<h3>${esc(e.title)}</h3>
     ${e.risk ? riskHtml(e) : ''}${e.text ? `<p class="g-text">${esc(e.text)}</p>` : ''}
     ${checklistHtml(e)}${detailsHtml(e)}${e.template ? templateHtml(e) : ''}${note(e)}</article>`;
@@ -108,7 +119,7 @@ function renderTabs() {
   const tabs = state.DATA.guide.tabs;
   $('guideTabs').innerHTML = tabs.map(t => {
     const [d, n] = progress(state.DATA.guide.entries.filter(e => e.tab === t.id));
-    const on = !ui.q && ui.tab === t.id;
+    const on = !queryStems(ui.q).length && ui.tab === t.id;
     return `<button type="button" class="tab${on ? ' on' : ''}" role="tab" id="gt-${t.id}" data-tab="${t.id}" aria-selected="${on}" aria-controls="entries" tabindex="${ui.tab === t.id ? 0 : -1}">${esc(t.title)}${n ? `<span class="g-count" data-count="${t.id}">${d}/${n}</span>` : ''}</button>`;
   }).join('');
 }
@@ -138,10 +149,13 @@ function view() {
   renderTabs();
   const box = $('entries');
   box.setAttribute('role', 'tabpanel');
-  box.setAttribute('aria-labelledby', `gt-${ui.tab}`);
-  const q = norm(ui.q.trim());
+  const stems = queryStems(ui.q);
+  const q = stems.length > 0;
   const tab = g.tabs.find(t => t.id === ui.tab) || g.tabs[0];
-  const rows = q ? g.entries.filter(e => haystack(e).includes(q)) : g.entries.filter(e => e.tab === tab.id);
+  /* При поиске панель — «Результаты поиска» (вкладки не выбраны); иначе — панель выбранной вкладки */
+  if (q) { box.removeAttribute('aria-labelledby'); box.setAttribute('aria-label', 'Результаты поиска по справочнику'); }
+  else { box.removeAttribute('aria-label'); box.setAttribute('aria-labelledby', `gt-${tab.id}`); }
+  const rows = q ? g.entries.filter(e => { const h = haystack(e); return stems.every(w => h.includes(w)); }) : g.entries.filter(e => e.tab === tab.id);
 
   if (q) $('found').textContent = `Поиск по всем разделам · найдено ${rows.length}`;
   else {
@@ -167,7 +181,7 @@ function progressBar(rows) {
 function refreshProgress() {
   const g = state.DATA.guide;
   const tab = g.tabs.find(t => t.id === ui.tab);
-  if (!ui.q && tab) {
+  if (!queryStems(ui.q).length && tab) {
     const rows = g.entries.filter(e => e.tab === tab.id);
     const [d, n] = progress(rows);
     const bar = $('gProgBar'), num = $('gProgNum');
@@ -231,6 +245,14 @@ async function onClick(ev) {
   }
 }
 
+/* Числовые ячейки архива (цифры, пробелы, знаки ₽ % – ,. и «руб.») получают класс num: выравнивание вправо в CSS */
+function markNumericCells(root) {
+  $$('td', root).forEach(td => {
+    const t = td.textContent.trim();
+    if (/\d/.test(t) && /^[\d\s .,%₽\-–—]+(руб[.]?)?$/u.test(t)) td.classList.add('num');
+  });
+}
+
 /* ---------- вход ---------- */
 export function initGuide(guide) {
   /* Без данных нового формата показываем понятное сообщение вместо пустого экрана */
@@ -260,6 +282,6 @@ export function initGuide(guide) {
   view();
 
   loadArchive()
-    .then(html => { $('archiveBody').innerHTML = html; })
+    .then(html => { $('archiveBody').innerHTML = html; markNumericCells($('archiveBody')); })
     .catch(() => { $('archiveBody').innerHTML = '<p class="hint">Архив недоступен без сети.</p>'; });
 }

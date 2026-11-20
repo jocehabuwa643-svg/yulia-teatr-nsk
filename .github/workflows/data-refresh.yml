@@ -38,6 +38,7 @@ jobs:
         continue-on-error: true
         run: node scripts/fetch-wordstat.mjs
 
+      # fetch-cbr.mjs не сдвигает fetched_at, если курс и дата ЦБ те же и stale нет — тогда diff пуст и коммита не будет
       - name: Проверить, изменились ли данные
         id: diff
         run: |

@@ -12,7 +12,8 @@ import { initMarket } from './market.js';
 import { initMap, setMapConfig } from './map.js';
 import { initGuide } from './guide.js';
 import { initChecklist } from './checklist.js';
-import { initReveal } from './ui/helpers.js';
+import { initReveal, enter, whenIdle } from './ui/helpers.js';
+import { lazyChartLib } from './charts.js';
 import { state, hasCoreData } from './state.js';
 
 /* Баннер ошибки данных: аккуратная плашка в начале <main>, с кнопкой «Повторить» */
@@ -40,6 +41,79 @@ function safe(name, fn) {
   }
 }
 
+/* ---------- Ленивая сборка тяжёлых разделов ----------
+   Калькуляторы, навигатор рынка, карта, справочник и чек-лист (≈5000 DOM-узлов) собираются не на старте, а когда нужны:
+   • раздел подошёл ближе чем на 1500px к вьюпорту (IntersectionObserver);
+   • переход по якорю/хэшу (собираются все ленивые разделы до цели включительно — чтобы позиции на странице сошлись);
+   • первое действие пользователя (клавиатура, колесо, касание, клик) — остальное достраивается в простое по одному;
+   • печать (калькулятор нужен в документе).
+   Первый экран (шапка, hero, KPI, графики) не ждёт эти разделы: меньше работы до первой отрисовки и интерактивности. */
+const LAZY_ORDER = ['calc', 'schemes', 'market', 'geo', 'guide', 'launch']; // порядок разделов на странице
+
+function lazySections(jobs) {
+  const done = new Set();
+  const build = id => {
+    if (done.has(id) || !jobs[id]) return;
+    done.add(id);
+    jobs[id]();
+    initReveal(); // .rv новых разделов (идемпотентно)
+    icons();
+  };
+  // до цели включительно: всё, что выше, тоже собрано, поэтому смещения при прокрутке по якорю не «уплывают»
+  const buildUpTo = id => {
+    const at = LAZY_ORDER.indexOf(id);
+    if (at < 0) return;
+    LAZY_ORDER.slice(0, at + 1).forEach(build);
+  };
+  Object.keys(jobs).forEach(id => { const el = $(id); if (el) enter(el, () => build(id), '1500px'); });
+
+  /* Реальные высоты вместо оценок: пока раздел пропущен (content-visibility), его высота — оценка из CSS, и прокрутка к далёкому
+     якорю промахнулась бы. Разделы от начала страницы до цели на время перехода «закрепляются» видимыми (.cv-vis), раскладка
+     выполняется сразу, потом они снова пропускаются — уже с запомненными настоящими высотами (contain-intrinsic-size: auto). */
+  const pinTo = id => {
+    const secs = [...document.querySelectorAll('.section')];
+    const at = secs.findIndex(s => s.id === id);
+    if (at < 0) return;
+    const pinned = secs.slice(0, at + 1);
+    pinned.forEach(s => s.classList.add('cv-vis'));
+    void document.body.offsetHeight; // принудительная раскладка с настоящими размерами
+    setTimeout(() => pinned.forEach(s => s.classList.remove('cv-vis')), 1800);
+  };
+  const goTo = id => { buildUpTo(id); pinTo(id); };
+
+  // якоря: capture-фаза — раздел готов до того, как браузер начнёт прокрутку к нему
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && a.hash.length > 1) goTo(a.hash.slice(1));
+  }, true);
+  addEventListener('hashchange', () => goTo(location.hash.slice(1)));
+  if (location.hash.length > 1) {
+    const id = location.hash.slice(1);
+    goTo(id);
+    const el = $(id);
+    if (el) requestAnimationFrame(() => el.scrollIntoView()); // браузер уже прокрутил по оценочной раскладке — уточняем
+  }
+  addEventListener('beforeprint', () => Object.keys(jobs).forEach(build));
+
+  // первое взаимодействие: достраиваем остальное в простое, по одному разделу за задачу
+  let armed = false;
+  const buildRest = () => {
+    if (armed) return;
+    armed = true;
+    ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(t => removeEventListener(t, buildRest, true));
+    const queue = Object.keys(jobs).filter(id => !done.has(id));
+    const next = () => { const id = queue.shift(); if (!id) return; build(id); whenIdle(next, 1500); };
+    whenIdle(next, 1500);
+  };
+  ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(t => addEventListener(t, buildRest, { capture: true, passive: true }));
+}
+
+/* Отдать управление браузеру между разделами: каждая инициализация — отдельная задача, а не одна длинная (меньше TBT, отзывчивый ввод) */
+const yieldToMain = () => new Promise(resolve => {
+  if (window.scheduler && typeof scheduler.yield === 'function') scheduler.yield().then(resolve);
+  else setTimeout(resolve, 0);
+});
+
 async function main() {
   // Тема и заставка уже работают благодаря boot.js; здесь только подписки модулей
   safe('Тема', initTheme);
@@ -62,17 +136,24 @@ async function main() {
   applyOverrides();
   const CFG = state.CFG;
 
+  // Первый экран — сразу: Обзор и ленивая подгрузка Chart.js
   safe('Обзор', () => initOverview(CFG));
-  safe('Калькуляторы', () => initCalc(CFG));
-  safe('Навигатор рынка', () => initMarket(CFG, DATA.competitors || { outbound_performers: [], studio_scene: [], party_venues: [], stationary_benchmarks: [] }, DATA.market || {}));
-  safe('Карта', () => {
-    setMapConfig(CFG);
-    initMap(DATA.regions || { points: [], region_routes: [], home_zone_radius_m: 1250 }, CFG);
-  });
-  safe('Справочник', () => initGuide(DATA.guide || { categories: [], entries: [] }));
-  safe('Чек-лист', () => initChecklist(CFG));
+  safe('Графики', () => lazyChartLib(document.querySelector('.analytics')));
   initReveal();
   icons();
+  await yieldToMain();
+
+  // Остальное — по требованию (см. lazySections)
+  lazySections({
+    calc: () => safe('Калькуляторы', () => initCalc(CFG)),
+    market: () => safe('Навигатор рынка', () => initMarket(CFG, DATA.competitors || { outbound_performers: [], studio_scene: [], party_venues: [], stationary_benchmarks: [] }, DATA.market || {})),
+    geo: () => safe('Карта', () => {
+      setMapConfig(CFG);
+      initMap(DATA.regions || { points: [], region_routes: [], home_zone_radius_m: 1250 }, CFG);
+    }),
+    guide: () => safe('Справочник', () => initGuide(DATA.guide || { categories: [], entries: [] })),
+    launch: () => safe('Чек-лист', () => initChecklist(CFG))
+  });
 }
 
 main();

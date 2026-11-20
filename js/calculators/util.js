@@ -31,9 +31,23 @@ export const ruRub = v => ruNum(v, 0) + '\u00a0₽';
 export function rangeField(cfg, calcId, id, label, extra = {}) {
   const s = (cfg.calc && cfg.calc.controls && cfg.calc.controls[calcId] && cfg.calc.controls[calcId][id]) || {};
   const def = s.def_from ? getPath(cfg, s.def_from) : s.def;
-  return { type: 'range', id, label, min: s.min ?? 0, max: s.max ?? 0, step: s.step ?? 1, def: def ?? s.min ?? 0, suffix: s.suffix ?? '', ...extra };
+  return { type: 'range', id, label, min: s.min ?? 0, max: s.max ?? 0, softMax: s.soft_max ?? null, step: s.step ?? 1, def: def ?? s.min ?? 0, suffix: s.suffix ?? '', ...extra };
 }
 /* Выбор года расчёта: годы — из config.calc.years */
 export function yearField(cfg, extra = {}) {
   return { type: 'select', id: 'year', label: 'Год расчёта', options: (cfg.calc.years || [cfg.year]).map(y => [y, String(y)]), def: cfg.year, ...extra };
+}
+
+/* Значения по умолчанию из спецификации полей: { id: def }. Для select — первый вариант, если def не задан */
+export function defaultsOf(fields) {
+  const out = {};
+  fields.forEach(f => { out[f.id] = f.def != null ? f.def : (f.options && f.options[0] ? (Array.isArray(f.options[0]) ? f.options[0][0] : f.options[0]) : 0); });
+  return out;
+}
+/* Глубокая проверка результата: все числа конечны (нет NaN/Infinity). Возвращает путь первого плохого числа или null */
+export function firstBadNumber(v, path = '') {
+  if (typeof v === 'number') return Number.isFinite(v) ? null : path || '(root)';
+  if (v == null || typeof v !== 'object' || v instanceof Date) return null;
+  for (const [k, x] of Object.entries(v)) { const bad = firstBadNumber(x, path ? path + '.' + k : k); if (bad) return bad; }
+  return null;
 }

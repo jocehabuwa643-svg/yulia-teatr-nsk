@@ -4,10 +4,13 @@ import { nonNeg, share, safeDiv, rangeField } from './util.js';
 
 export const meta = {
   id: 'parties',
+  sources: ['usn_income_rate', 'gph_contributions_rate'],
   icon: 'cake',
+  headline: 'result',            // тип главной цифры: result — со знаком, amount — сумма/цена без плюса, count — целое число
   title: 'Праздники и аренда',
   what: 'Считает: прибыль одного праздника и месяца при заданном пакете',
-  when: 'Когда: собираете пакет «День рождения в театре» или сдаёте зал'
+  when: 'Когда: собираете пакет для праздника',
+  more: 'Считает: прибыль одного праздника и месяца при заданном пакете. Когда это нужно: собираете пакет «День рождения в театре» или сдаёте зал.'
 };
 
 export const controls = cfg => [

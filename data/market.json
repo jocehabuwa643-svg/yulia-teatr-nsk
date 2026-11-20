@@ -162,7 +162,11 @@
         "window": "27.10–07.12.2026 (дедлайн 7 декабря, 23:30 МСК)",
         "results": "30.04.2027",
         "implementation": "с 01.06.2027",
-        "amount": "Диапазон сумм по положению этого конкурса не извлечён",
+        "amount": "Фонд не задаёт минимум и максимум: сумма идёт бюджетным коридором — до 700 тыс. ₽ / 700 тыс.–7 млн ₽ / 7–20 млн ₽ / свыше 20 млн ₽. Полное положение конкурса не открывалось: лимиты и софинансирование уточнить.",
+        "amount_source_url": "https://xn--80aeeqaabljrdbg6a3ahhcl4ay9hsa.xn--p1ai/knowledge-base/6479",
+        "amount_fetched_at": "2026-11-19",
+        "applicants": "НКО (кроме госучреждений), коммерческие организации, ИП, муниципальные учреждения (не казённые). Самозанятые не допускаются; ИП нельзя оплачивать собственное вознаграждение за счёт гранта.",
+        "applicants_source_url": "https://xn--80aeeqaabljrdbg6a3ahhcl4ay9hsa.xn--p1ai/grants",
         "status": "open",
         "url": "https://xn--80aeeqaabljrdbg6a3ahhcl4ay9hsa.xn--p1ai/grants",
         "confidence": "high"
@@ -172,6 +176,7 @@
         "window": "закрыт 09.11.2026 (9 323 проекта к 10.11)",
         "results": "—",
         "amount": "Не подтверждено по действующей редакции",
+        "applicants": "Только НКО (по проверке исследования 19.11.2026)",
         "status": "closed",
         "url": "https://xn--80afcdbalict6afooklqi5o.xn--p1ai/public/home/documents",
         "confidence": "high"

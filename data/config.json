@@ -1,5 +1,13 @@
 {
   "$schema_note": "Редактируемые предположения бизнес-модели проекта. Каждая константа — лист {value, unit, source_name, source_url, fetched_at, valid_from, confidence, note, legal_note}; confidence:\"model\" = «предположение проекта, требует подтверждения». Калькуляторы читают значения только отсюда и из rates.json — констант в js/calculators нет. Раздел ui и calc.controls — параметры интерфейса (диапазоны ползунков), не бизнес-данные.",
+  "$provenance": {
+    "confidence": "model",
+    "source_name": "Предположения бизнес-модели проекта «Бизнес-помощник Юлии»",
+    "fetched_at": "2026-11-19",
+    "applies_to": "все листья {value, …} этого файла (confidence:\"model\"), а также тексты calc.$method и calc.$legal и параметры интерфейса calc.controls, calc.chart_points, ui",
+    "note": "Это не данные источника, а допущения владельца проекта: они редактируются в интерфейсе («Допущения проекта») и хранятся в браузере. Законодательные ставки, пороги и взносы лежат в data/rates.json с первоисточником. Ссылки на закон в calc.$legal — только указатели на документ, значений там нет.",
+    "legal_note": "Предположение проекта — требует подтверждения; налоговые значения — только в rates.json и требуют консультации со специалистом"
+  },
   "as_of": "2026-11-19",
   "calendar": {
     "months_per_year": {
@@ -925,7 +933,7 @@
     "valid_from": null,
     "confidence": "model",
     "editable": false,
-    "note": "Дек–Авг — базовый прогноз модели (confidence:model); Сен–Ноя — проекция для 12-месячного графика (confidence:low, projected:true в строке)",
+    "note": "Дек–Авг — модель (confidence:model); Сен–Ноя — проекция (confidence:low)",
     "legal_note": "Предположение проекта — требует подтверждения; редактируется в интерфейсе калькуляторов"
   },
   "presets_travel": {
@@ -1074,8 +1082,10 @@
     },
     "years": [
       2026,
-      2027
+      2027,
+      2028
     ],
+    "chart_points": 24,
     "base_area_default": {
       "value": 130,
       "unit": "м²",
@@ -1169,7 +1179,8 @@
         "editable": false,
         "note": "Аудитории тепловой карты",
         "legal_note": "Предположение проекта — требует подтверждения; редактируется в интерфейсе калькуляторов"
-      }
+      },
+      "heat_light_text_alpha": 0.35
     },
     "advice": {
       "low_margin_pct": {
@@ -1218,18 +1229,25 @@
     "controls": {
       "travel": {
         "kids": {
-          "min": 20,
-          "max": 250,
+          "min": 1,
+          "max": 500,
           "step": 1,
           "def": 45,
           "suffix": "чел."
         },
         "ticket": {
-          "min": 250,
-          "max": 500,
-          "step": 5,
+          "min": 100,
+          "max": 1000,
+          "step": 10,
           "def_from": "tour_unit.ticket",
           "suffix": "₽"
+        },
+        "cluster": {
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "def": 1,
+          "suffix": "показов"
         }
       },
       "basecamp": {
@@ -1242,7 +1260,7 @@
         },
         "students": {
           "min": 0,
-          "max": 80,
+          "max": 200,
           "step": 1,
           "def": 40,
           "suffix": "чел."
@@ -1317,7 +1335,8 @@
           "max": 30000000,
           "step": 100000,
           "def": 3600000,
-          "suffix": "₽"
+          "suffix": "₽",
+          "soft_max": 600000000
         },
         "costShare": {
           "min": 10,
@@ -1426,10 +1445,118 @@
           "suffix": "₽/мес"
         }
       }
+    },
+    "scenarios": {
+      "max_saved": 8,
+      "max_name_len": 40
+    },
+    "threshold_probe_rub": 1,
+    "breakeven": {
+      "tolerance_rub": 0.5,
+      "search_max_multiple": 3,
+      "iterations": 80
+    },
+    "$legal": {
+      "patent_nodata": "Потенциальный доход по ОКВЭД 90.01 / 93.29 / 85.41 не внесён — берите из калькулятора патента ФНС.",
+      "patent_note": "Потенциальный доход × ставка; ограничения ПСН не проверены",
+      "social_note": "{x.rate|num}% «Доходы» / {x.rateDR|num}% «Д−Р» по 142-ОЗ; применимость проверить",
+      "social_missing": "На {x.year|txt} год ставка не опубликована.",
+      "social_reference": " Ориентир {x.refYear|txt}: {x.refRate|num}% «Доходы» — вводите после публикации.",
+      "social_need_status": "Ставка применяется только при подтверждённом статусе социального предприятия — включите статус."
+    },
+    "$method": {
+      "travel": [
+        "Число зрителей задано на один показ.",
+        "Город: {travel_costs.salary_city_single|rub} за одиночный показ.",
+        "Кластер в городе: {travel_costs.salary_city_cluster|rub} за каждый показ; ДК: {travel_costs.salary_dk|rub}.",
+        "Гастроли: гонорар дня {travel_costs.salary_gastro_day|rub} ({travel_costs.gastro_actors}).",
+        "ГСМ делятся на весь день по маршруту.",
+        "Доставка в ДК по городу: {travel_costs.delivery_dk_city|rub}.",
+        "Износ {travel_costs.wear_per_show|rub} за показ, в ДК {travel_costs.wear_dk|rub}.",
+        "Полиграфия: {travel_costs.print_per_viewer|rub} на зрителя.",
+        "Наём по ГПХ: надбавка взносов {d.gph|pct}; основатели играют без взносов.",
+        "Доля площадки: {venue_share.school_garden|num}% в саду и школе, {venue_share.dk|num}% в ДК.",
+        "УСН {d.usn|pct} — с валовой кассы.",
+        "Личные взносы ИП и постоянные расходы здесь не списываются.",
+        "Значения — из data/config.json и data/rates.json."
+      ],
+      "basecamp": [
+        "Фикс месяца: площадь × (аренда + {base_costs.utilities_per_m2|rub} КУ).",
+        "Администрирование {base_costs.admin_month|rub}, реклама {base_costs.marketing_month|rub} в месяц.",
+        "Группа до {base_costs.group_max_students|num} учеников: {base_costs.lessons_per_month|num} уроков × {base_costs.lesson_price|rub}, плюс взносы {d.gph|pct}.",
+        "Выходной день: билет {base_costs.weekend_ticket|rub}, гонорар {base_costs.weekend_fee|rub} с взносами.",
+        "Реквизит {base_costs.weekend_props|rub} и {base_costs.weekend_cash_share|num}% кассы на показ.",
+        "Праздник: переменные расходы {base_costs.party_variables|rub}. УСН {d.usn|pct}, льготы не заложены.",
+        "Выезды до {tour_unit.capacity_per_troupe|num} показов на труппу: {tour_unit.aud_small|num} зрителей × {tour_unit.ticket|rub}.",
+        "Вклад показа {tour_unit.unit_small|rub}.",
+        "Сверх мощности — гастроли: {tour_unit.aud_large|num} зрителей.",
+        "Выручка {d.tourLargeRevenue|rub}, вклад {tour_unit.unit_large|rub}.",
+        "Порог НДС {y.vatThreshold|mln} ({y.year|txt}): выше — НДС {y.vatLow|num}% в цене ({d.vatFrac}).",
+        "Выше порога добавляется штаб {phases_budget.hq_month_over_threshold|rub} в месяц.",
+        "Окупаемость = бюджет {phases_budget.total|rub} ÷ прибыль месяца.",
+        "Дополнительный комплект: {phases_budget.repro_kit_min|rub}–{phases_budget.repro_kit_max|rub}."
+      ],
+      "goal": [
+        "Задача решается перебором целых показов на модели базы и выездов.",
+        "Прибыль растёт с числом показов.",
+        "Ученики и загрузка выходных зафиксированы стадией проекта.",
+        "До открытия базы — одна труппа, до {tour_unit.capacity_per_troupe|num} показов.",
+        "После открытия — до {d.maxShows|num} показов в месяц.",
+        "Год влияет на порог НДС: {y.vatThreshold|mln} ({y.year|txt})."
+      ],
+      "taxes": [
+        "Ставки и пороги — из data/rates.json с источником, датой и надёжностью.",
+        "УСН «Доходы» {d.usn|pct}; «Доходы − расходы» {usnDR|pct}.",
+        "Минимальный налог {usnMinTax|pct} от доходов.",
+        "Порог НДС {y.vatThreshold|mln} ({y.year|txt}); выше — НДС {y.vatLow|num}% в цене ({d.vatFrac}) без вычетов.",
+        "НДС исключается из дохода УСН.",
+        "1% взносов считается от дохода УСН без НДС (допущение).",
+        "Взносы ИП: фиксированные {y.ipFixed|rub}.",
+        "Плюс {contrib1pctRate|pct} с дохода сверх {contrib1pctThreshold|rub}, потолок {y.extraCap|rub}.",
+        "Вычет взносов: до {deductNoStaff|pct} налога без работников.",
+        "С работниками — до {deductWithStaff|pct}; оценка, подтверждение низкое.",
+        "Нет проверенного источника — «нет данных» и ручной ввод.",
+        "НДФЛ и региональные нюансы — консультация со специалистом."
+      ],
+      "payroll": [
+        "Считаются взносы заказчика по модельной ставке {d.gph|pct}.",
+        "Сверх предельной базы года — сниженный тариф {gphAboveRate|pct}.",
+        "НПД: исполнитель платит налог сам ({d.npdCompanies|pct} с ИП и юрлиц).",
+        "Лимит дохода НПД: {npdLimit|rub} в год.",
+        "НПД — только при реальной самостоятельности подрядчика.",
+        "НДФЛ не считается: проверенной ставки в data/ нет."
+      ],
+      "pricing": [
+        "Цена = (прямые ÷ зрители + печать) ÷ (1 − площадка − УСН − маржа).",
+        "Знаменатель не меньше {calc.pricing.min_denominator|num}.",
+        "Цена округляется вверх до {calc.pricing.price_round_step|rub}.",
+        "Тепловая карта — тот же калькулятор выезда по сетке «цена × аудитория».",
+        "Гипотеза проекта по билету — {ticket.min|rub}–{ticket.max|rub}."
+      ],
+      "parties": [
+        "Переменные расходы праздника: {base_costs.party_variables|rub}.",
+        "ФОТ — по формуле выходного показа: гонорар {base_costs.weekend_fee|rub} с взносами {d.gph|pct}.",
+        "Реквизит {base_costs.weekend_props|rub}.",
+        "УСН {d.usn|pct} — с выручки пакета. Чек стадий — {d.partyCheckMin|rub}–{d.partyCheckMax|rub}.",
+        "Ориентиры рынка — из data/competitors.json."
+      ],
+      "cashflow": [
+        "{cashflow_12m.note}",
+        "Вклад выездов = прогноз месяца + правка × вклад показа ({tour_unit.unit_small|rub}).",
+        "Правка базы применяется только к месяцам, где база уже работает."
+      ],
+      "grants": [
+        "Только конкурсы с проверенными окнами из data/market.json.",
+        "Срез данных: {as_of}.",
+        "Даты — из окон и итогов; «сегодня» — на момент открытия.",
+        "Конкурсы без дат не учитываются — мониторьте вручную."
+      ]
     }
   },
   "ui": {
     "stale_badge_days_rates": 7,
-    "stale_badge_days_prices": 30
+    "stale_badge_days_prices": 30,
+    "source_value_max_chars": 90,
+    "calc_tip_chars": 90
   }
 }

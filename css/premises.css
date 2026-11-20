@@ -1,0 +1,17 @@
+/* premises.css — слой «Помещения»: ручной список + сохранённые поиски. */
+
+#premisesCard .pr-list{display:grid;gap:0}
+.pr-row{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.pr-row:last-child{border-bottom:0}
+.pr-main strong{font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pr-main small{display:block;color:var(--mutedS);font-size:12px;margin-top:2px}
+.pr-badge{display:inline-block;border:1px solid var(--silver);color:var(--text2);border-radius:999px;padding:1px 9px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.pr-row.refused .pr-main strong{opacity:.5;text-decoration:line-through}
+.pr-tools{display:flex;gap:8px;align-items:center}
+.pr-tools select{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:var(--card);color:var(--text);font-size:12px}
+.pr-tools .note-del{width:32px;height:32px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.pr-tools .note-del:hover{border-color:var(--silver)}
+.pr-searches{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pr-searches .chip{text-decoration:none}
+#liveDataBox{margin-top:6px}
+#liveDataBox .btn{min-height:34px}
