@@ -92,10 +92,13 @@
 @media (max-width:600px){
   .newsflash{
     left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:auto;
-    max-height:min(60vh,460px);transform-origin:bottom center;border-radius:20px;
+    max-height:min(45vh,340px);transform-origin:bottom center;border-radius:20px;padding:10px 10px 14px;
   }
+  /* на телефоне плашка компактная: news.js кладёт в неё две новости (TOAST_MAX_NARROW), подпись в одну строку */
   .newsflash .nf-title{font-size:14px;-webkit-line-clamp:2}
-  .newsflash .nf-item{padding-block:8px}
+  .newsflash .nf-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .newsflash .nf-item{padding-block:6px}
+  .newsflash .nf-all{margin-top:2px}
 }
 
 /* Без движения: появление и исчезновение — мгновенно, полоска времени скрыта */

@@ -211,3 +211,18 @@ test('форматирование: дата по-русски, склонени
   assert.equal(dayKey(at(2027, 1, 1, 0)), '2027-01-01');
   assert.equal(isoDayNum('мусор'), null);
 });
+
+test('налоговый режим «действуют до 31.12.2026» — дата окончания, а не срок подачи', () => {
+  const g = { entries: [
+    { tab: 'docs', category: 'Налоги', title: 'Налоговые каникулы', text: 'Налоговые каникулы 0% для впервые зарегистрированных ИП — по закону НСО действуют до 31.12.2026; после этой даты срок не подтверждён.' },
+    { tab: 'docs', category: 'Налоги', title: 'Страховые взносы ИП за себя', text: 'Фиксированные взносы платят до 28 декабря расчётного года.' }
+  ] };
+  const ev = upcomingEvents({ guide: g }, at(2026, 11, 20));
+  const regime = ev.find(e => e.title.startsWith('Налоговые каникулы'));
+  const fee = ev.find(e => e.title === 'Фиксированные взносы');
+  assert.equal(regime.ends, true);
+  assert.equal(fee.ends, false);
+  const html = digestHtml(buildDigest({ guide: g }, { now: at(2026, 11, 20) }));
+  assert.match(html, /действуют до 31 декабря/);
+  assert.match(html, />до 28 декабря</);
+});

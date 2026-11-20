@@ -109,9 +109,3 @@ export async function initPremises() {
   render();
   return items;
 }
-
-if (typeof document !== 'undefined') {
-  const start = () => initPremises().catch(() => {});
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
-  else start();
-}

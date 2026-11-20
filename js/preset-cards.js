@@ -2,7 +2,7 @@
    Каскадное мерцание (shimmer) привлекает внимание, останавливается при наведении/фокусе.
    Клик — карточка FLIP-раскрывается на том же месте в полную панель результата;
    остальные сжимаются в компактную ленту. Esc/клик-вне закрывают, фокус возвращается.
-   Самоподключаемый модуль (dynamic import из boot.js). prefers-reduced-motion — без анимаций. */
+   Запускается из js/app.js при сборке раздела калькуляторов (initPresetCards(CFG)). prefers-reduced-motion — без анимаций. */
 import { travelCalc } from './calculators/travel.js';
 import { calc as baseCalc, baseMonth } from './calculators/basecamp.js';
 import { calc as goalCalc } from './calculators/goal.js';
@@ -148,15 +148,19 @@ function stopShimmer() {
   if (c) c.classList.add('no-shimmer');
 }
 
-export async function initPresetCards() {
+export async function initPresetCards(cfg = null) {
   const mount = document.getElementById('presetCards');
   if (!mount || mount.children.length) return;
-  const [rates, config, competitors] = await Promise.all([
-    fetch('data/rates.json').then(r => r.json()),
-    fetch('data/config.json').then(r => r.json()),
-    fetch('data/competitors.json').then(r => r.json()).catch(() => ({}))
-  ]);
-  CFG = buildCalcConfig({ rates, config, competitors });
+  // Конфигурация приложения (с правками Юлии) — если передана; иначе собираем из файлов данных
+  if (cfg) CFG = cfg;
+  else {
+    const [rates, config, competitors] = await Promise.all([
+      fetch('data/rates.json').then(r => r.json()),
+      fetch('data/config.json').then(r => r.json()),
+      fetch('data/competitors.json').then(r => r.json()).catch(() => ({}))
+    ]);
+    CFG = buildCalcConfig({ rates, config, competitors });
+  }
   const list = cases(CFG);
   mount.innerHTML = list.map(c => `<button class="pc-card rv in" data-key="${c.key}" aria-expanded="false" aria-controls="pcPanel"></button>`).join('');
   [...mount.querySelectorAll('.pc-card')].forEach((card, i) => {
@@ -182,10 +186,4 @@ export async function initPresetCards() {
       if (card) collapse(card);
     }
   }, true);
-}
-
-if (typeof document !== 'undefined') {
-  const start = () => initPresetCards().catch(() => { /* данные не готовы — карточек не будет, калькуляторы работают */ });
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
-  else start();
 }

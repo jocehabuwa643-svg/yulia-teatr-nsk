@@ -3,7 +3,8 @@
    Размеры CHART — геометрия отрисовки, не бизнес-данные. */
 import { fmt } from './helpers.js';
 
-const CHART = { w: 320, h: 150, padL: 8, padR: 8, padT: 12, padB: 22 };
+const CHART = { w: 320, h: 150, padL: 8, padR: 8, padT: 12, padB: 22, charW: 3.5 + 3, gap: 12, tickGap: 8, topBase: 4 };
+// charW — средняя ширина знака подписи 11px в единицах viewBox (≈6,5), gap — поле слева от подписей оси Y, tickGap — зазор подписи до области графика
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const short = v => {                                   // подпись оси: 1 250 000 → «1,25 млн», 45 300 → «45 тыс.»
   const a = Math.abs(v), s = v < 0 ? '−' : '';
@@ -18,11 +19,15 @@ const short = v => {                                   // подпись оси:
 export function lineChart({ points, marks = [], hLines = [], aria, unitX = '', xLabels = null }) {
   const pts = points.filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
   if (pts.length < 2) return '';
-  const { w, h, padL, padR, padT, padB } = CHART;
+  const { w, h, padR, padT, padB } = CHART;
   const xs = pts.map(p => p.x), ys = pts.map(p => p.y).concat(hLines.map(l => l.y));
   const x0 = Math.min(...xs), x1 = Math.max(...xs);
   let y0 = Math.min(...ys, 0), y1 = Math.max(...ys, 0);
   if (y1 === y0) { y1 = y0 + 1; }
+  // Подписи оси Y — в отдельном левом поле, а не поверх области графика: иначе «−7,0 тыс.» налезает на начало линии.
+  // Ширина поля — по самой длинной подписи (≈6,2 единицы на знак при 11px), не меньше базового отступа
+  const yTop = short(y1), yBot = short(y0);
+  const padL = Math.max(CHART.padL, Math.ceil(Math.max(yTop.length, yBot.length) * CHART.charW) + CHART.gap);
   const X = x => padL + (x1 === x0 ? 0 : (x - x0) / (x1 - x0)) * (w - padL - padR);
   const Y = y => padT + (1 - (y - y0) / (y1 - y0)) * (h - padT - padB);
   const d = pts.map((p, i) => `${i ? 'L' : 'M'}${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join('');
@@ -36,7 +41,7 @@ export function lineChart({ points, marks = [], hLines = [], aria, unitX = '', x
   return `<figure class="chart"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(aria)}" preserveAspectRatio="xMidYMid meet">
     <path class="ch-area" d="${area}"/>${zero}${hl}<path class="ch-line" d="${d}"/>${vm}
     <circle class="ch-dot" cx="${X(lo.x).toFixed(1)}" cy="${Y(lo.y).toFixed(1)}" r="3.5"/>
-    <text class="ch-t" x="${padL}" y="${padT - 2}">${short(y1)}</text><text class="ch-t" x="${padL}" y="${h - padB - 3}">${short(y0)}</text>${axis}
+    <text class="ch-t" x="${padL - CHART.tickGap}" y="${padT + CHART.topBase}" text-anchor="end">${esc(yTop)}</text><text class="ch-t" x="${padL - CHART.tickGap}" y="${h - padB}" text-anchor="end">${esc(yBot)}</text>${axis}
   </svg></figure>`;
 }
 

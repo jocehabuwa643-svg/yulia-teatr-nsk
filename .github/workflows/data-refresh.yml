@@ -32,11 +32,23 @@ jobs:
         continue-on-error: true
         run: node scripts/fetch-cbr.mjs
 
+      # Новости отрасли (RSS: Минкультуры РФ и НСО, Правительство НСО, УФНС по НСО). Записи копятся 60 дней (не больше 40);
+      # сбой лент не валит джоб — прежние записи остаются, при полном сбое ставится stale:true. Файл не переписывается,
+      # если по существу ничего не изменилось, — пустых коммитов не будет. Коммит ниже берёт весь data/, news.json в том числе
+      - name: Новости отрасли
+        continue-on-error: true
+        timeout-minutes: 5
+        run: node scripts/fetch-news.mjs
+
       # Только если секрет задан
       - name: Спрос Wordstat
         if: ${{ env.WORDSTAT_TOKEN != '' }}
         continue-on-error: true
         run: node scripts/fetch-wordstat.mjs
+
+      # Каждый день: валидность JSON и напоминание (::warning) о незагруженном календаре каникул — прогон не падает
+      - name: Напоминание о календаре каникул
+        run: node scripts/touch-meta.mjs
 
       # fetch-cbr.mjs не сдвигает fetched_at, если курс и дата ЦБ те же и stale нет — тогда diff пуст и коммита не будет
       - name: Проверить, изменились ли данные

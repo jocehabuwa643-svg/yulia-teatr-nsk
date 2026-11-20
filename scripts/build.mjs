@@ -73,7 +73,8 @@ async function bundleApp(esbuild) {
    и блокирует отрисовку минимально. ОТЛОЖЕННАЯ (калькуляторы, рынок, справочник, карта, схемы) — assets/rest.css,
    подключается без блокировки отрисовки (media=print → all по загрузке).
    Отложены файлы целиком (DEFER_FILES) и блоки в остальных файлах между CSS-комментариями-маркерами «@defer» и «@end-defer» (см. components.css). */
-const DEFER_FILES = new Set(['css/calc.css', 'css/market.css', 'css/guide.css']);
+// preset-cards.css и premises.css — стили блоков, которые строятся лениво вместе с разделами калькуляторов и карты
+const DEFER_FILES = new Set(['css/calc.css', 'css/market.css', 'css/guide.css', 'css/preset-cards.css', 'css/premises.css']);
 
 /* Склеивает локальные таблицы стилей из index.html (в порядке подключения), делит на критические и отложенные,
    минифицирует. Возвращает { critical, rest, hrefs } */
@@ -203,9 +204,8 @@ async function main() {
 
   // Статика: данные, иконка, служебный .nojekyll (стили — ниже: склеенный assets/app.css или, без esbuild, копия css/)
   cpSync(join(ROOT, 'data'), join(OUT, 'data'), { recursive: true });
-  // Самоподключаемые модули boot.js (notes/afford/preset-cards/live-data/premises + их зависимости):
-  // бандл app.js их не содержит (dynamic import из инлайн-boot), поэтому js/ копируется целиком
-  cpSync(join(ROOT, 'js'), join(OUT, 'js'), { recursive: true });
+  // js/ в _site не копируется: заметки, кейс-карточки, помещения и «Обновить данные» входят в бандл assets/app.js,
+  // boot.js встраивается в <head> (без esbuild js/ копируется ниже, в запасной ветке)
   for (const f of ['favicon.svg', '.nojekyll']) {
     if (existsSync(join(ROOT, f))) cpSync(join(ROOT, f), join(OUT, f));
     else if (f === 'favicon.svg') console.warn('! нет favicon.svg — пропущено');

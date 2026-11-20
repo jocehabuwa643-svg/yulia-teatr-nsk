@@ -270,12 +270,22 @@ const TOPIC_RULES = [
   ['grants', ['грант', 'субсид', 'президентск', 'фонд культурных', 'конкурсн отбор', 'конкурс проектов']],
   ['industry', ['детский театр', 'детского театра', 'детских театр', 'кукольн', 'театр кукол', 'театр для детей', 'для детей', 'детский спектакл', 'детских спектакл', 'юного зрителя', '=тюз', 'детские праздник', 'аниматор']]
 ];
+/* Гранты по тексту анонса — только по фразам о самом конкурсе. Упоминание «грант/фонд» в теле новости о фестивале
+   («проходит при поддержке Президентского фонда…») ещё не делает её новостью о грантах — такая метка вводила бы в заблуждение */
+const GRANT_BODY = ['приём заявок', 'прием заявок', 'заявки принимаются', 'конкурсн отбор', 'конкурс проектов', 'получение грант', 'на соискание грант', 'итоги конкурса'];
 
-/* Тема записи: налоговая лента — всегда taxes; иначе гранты/индустрия по словам, по умолчанию — тема источника */
+/* Совпадение со списком слов; «=слово» — целое слово (как в фильтре лент) */
+const hasAny = (text, words) => words.some(w => (w.startsWith('=') ? new RegExp(`(^|[^а-яёa-z0-9])${w.slice(1)}($|[^а-яёa-z0-9])`, 'i').test(text) : text.includes(w)));
+
+/* Тема записи: налоговая лента — всегда taxes; гранты — по заголовку или по фразам о конкурсе в анонсе;
+   индустрия — по словам в заголовке и анонсе; по умолчанию — тема источника */
 export function classify(item, source) {
   if (source.topic === 'taxes') return 'taxes';
-  const text = `${item.title} ${item.description || ''}`.toLowerCase();
-  for (const [topic, words] of TOPIC_RULES) if (words.some(w => text.includes(w))) return topic;
+  const title = String(item.title || '').toLowerCase();
+  const body = String(item.description || '').toLowerCase();
+  const [, grantWords] = TOPIC_RULES[0], [, industryWords] = TOPIC_RULES[1];
+  if (hasAny(title, grantWords) || hasAny(body, GRANT_BODY)) return 'grants';
+  if (hasAny(`${title} ${body}`, industryWords)) return 'industry';
   return source.topic || 'industry';
 }
 

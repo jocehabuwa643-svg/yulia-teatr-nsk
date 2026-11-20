@@ -157,11 +157,8 @@ function view() {
   else { box.removeAttribute('aria-label'); box.setAttribute('aria-labelledby', `gt-${tab.id}`); }
   const rows = q ? g.entries.filter(e => { const h = haystack(e); return stems.every(w => h.includes(w)); }) : g.entries.filter(e => e.tab === tab.id);
 
-  if (q) $('found').textContent = `Поиск по всем разделам · найдено ${rows.length}`;
-  else {
-    const [d, n] = progress(rows);
-    $('found').textContent = `${tab.title} · карточек: ${rows.length}${n ? ` · выполнено ${d} из ${n}` : ''}`;
-  }
+  // строка-статус нужна только при поиске; у вкладки прогресс уже показывает полоса «N/M» — без дубля
+  $('found').textContent = q ? `Поиск по всем разделам · найдено ${rows.length}` : '';
 
   if (!rows.length) { box.innerHTML = '<p class="hint">Ничего не найдено. Попробуйте «лицензия», «касса», «НДС» или «грант».</p>'; return; }
 
@@ -187,7 +184,6 @@ function refreshProgress() {
     const bar = $('gProgBar'), num = $('gProgNum');
     if (bar) { bar.style.transform = `scaleX(${n ? d / n : 0})`; bar.parentElement.setAttribute('aria-valuenow', String(d)); }
     if (num) popNumber(num, `${d}/${n}`);
-    $('found').textContent = `${tab.title} · карточек: ${rows.length} · выполнено ${d} из ${n}`;
   }
   for (const t of g.tabs) {
     const el = document.querySelector(`[data-count="${t.id}"]`);

@@ -12,6 +12,12 @@ import { initMarket } from './market.js';
 import { initMap, setMapConfig } from './map.js';
 import { initGuide } from './guide.js';
 import { initChecklist } from './checklist.js';
+import { initToday } from './today.js';
+import { initNews } from './news.js';
+import { initNotes } from './notes.js';
+import { initPresetCards } from './preset-cards.js';
+import { initPremises } from './premises.js';
+import { initLiveData } from './live-data.js';
 import { initReveal, enter, whenIdle } from './ui/helpers.js';
 import { lazyChartLib } from './charts.js';
 import { state, hasCoreData } from './state.js';
@@ -39,6 +45,12 @@ function safe(name, fn) {
     console.error(`[${name}]`, e);
     dataBanner('Часть интерфейса не запустилась', `Раздел «${name}» недоступен: ${String(e && e.message || e)}. Остальное работает.`);
   }
+}
+
+/* Асинхронный модуль (заметки, помещения, кейс-карточки читают IndexedDB/данные): ошибка — в консоль, без плашки;
+   блок просто не появляется, остальное работает */
+function asyncSafe(name, fn) {
+  try { Promise.resolve(fn()).catch(e => console.error(`[${name}]`, e)); } catch (e) { console.error(`[${name}]`, e); }
 }
 
 /* ---------- Ленивая сборка тяжёлых разделов ----------
@@ -114,6 +126,19 @@ const yieldToMain = () => new Promise(resolve => {
   else setTimeout(resolve, 0);
 });
 
+/* Дайджест «Сегодня» и плашка новостей отрасли. Дата берётся в момент открытия (и обновляется через полночь внутри
+   initToday); рисуется синхронно из уже загруженных данных — место под блок зарезервировано в CSS (без сдвига макета).
+   Плашка новостей сама ждёт закрытия заставки и первого действия Юлии; ссылка «Все новости» ведёт к #today */
+function startToday(DATA, steps) {
+  safe('Сегодня', () => initToday(DATA, { steps, onRender: () => icons() }));
+  safe('Новости отрасли', () => initNews(DATA.news || null, { now: Date.now() }));
+  // кнопка «Обновить данные» в hero — в простое, после первой отрисовки
+  whenIdle(() => safe('Обновить данные', initLiveData), 2000);
+  // если дайджест не собрался (ошибка выше уже в плашке) — снимаем резерв высоты, чтобы не осталось пустого места
+  const box = $('today');
+  if (box && !box.classList.contains('ready')) { box.classList.add('ready'); box.hidden = true; }
+}
+
 async function main() {
   // Тема и заставка уже работают благодаря boot.js; здесь только подписки модулей
   safe('Тема', initTheme);
@@ -127,6 +152,8 @@ async function main() {
     dataBanner('Данные не загрузились', 'Не удалось прочитать data/config.json и data/rates.json. Если страница открыта двойным кликом, браузер блокирует чтение файлов: откройте офлайн-версию (yulia-offline.html) или запустите «npx serve .». Заставка, справочник-архив и чек-лист продолжают работать.');
     ['kpis', 'calcpanels', 'cashTable', 'budget', 'stages'].forEach(id => sectionNoData(id, 'расчёты и обзор'));
     safe('Чек-лист', () => initChecklist({ checklist_30d: [] }));
+    asyncSafe('Заметки', initNotes);
+    startToday(DATA, []);
     initReveal();
     icons();
     return;
@@ -136,7 +163,8 @@ async function main() {
   applyOverrides();
   const CFG = state.CFG;
 
-  // Первый экран — сразу: Обзор и ленивая подгрузка Chart.js
+  // Первый экран — сразу: «Сегодня», Обзор и ленивая подгрузка Chart.js
+  startToday(DATA, CFG.checklist_30d || []);
   safe('Обзор', () => initOverview(CFG));
   safe('Графики', () => lazyChartLib(document.querySelector('.analytics')));
   initReveal();
@@ -145,14 +173,23 @@ async function main() {
 
   // Остальное — по требованию (см. lazySections)
   lazySections({
-    calc: () => safe('Калькуляторы', () => initCalc(CFG)),
+    calc: () => {
+      safe('Калькуляторы', () => initCalc(CFG));
+      asyncSafe('Кейс-карточки', () => initPresetCards(CFG));
+    },
     market: () => safe('Навигатор рынка', () => initMarket(CFG, DATA.competitors || { outbound_performers: [], studio_scene: [], party_venues: [], stationary_benchmarks: [] }, DATA.market || {})),
-    geo: () => safe('Карта', () => {
-      setMapConfig(CFG);
-      initMap(DATA.regions || { points: [], region_routes: [], home_zone_radius_m: 1250 }, CFG);
-    }),
+    geo: () => {
+      safe('Карта', () => {
+        setMapConfig(CFG);
+        initMap(DATA.regions || { points: [], region_routes: [], home_zone_radius_m: 1250 }, CFG);
+      });
+      asyncSafe('Помещения', initPremises);
+    },
     guide: () => safe('Справочник', () => initGuide(DATA.guide || { categories: [], entries: [] })),
-    launch: () => safe('Чек-лист', () => initChecklist(CFG))
+    launch: () => {
+      safe('Чек-лист', () => initChecklist(CFG));
+      asyncSafe('Заметки', initNotes);
+    }
   });
 }
 

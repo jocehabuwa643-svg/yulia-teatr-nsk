@@ -183,17 +183,8 @@
     if (t && t.tagName === 'SCRIPT' && /(?:js|assets)\/app\.js/.test(t.src || '')) showBootNotice();
   }, true);
 
-  // Самоподключаемые модули (динамический импорт работает и из классического скрипта):
-  // notes — заметки Юлии с автосейвом в IndexedDB; afford — аффорданс кнопок («пальчик»);
-  // preset-cards — кейс-карточки «Рассчитай за 5 секунд» с FLIP-раскрытием;
-  // live-data — «Обновить сейчас»; premises — ручной слой помещений.
-  // Пути от корня сайта: boot инлайнится в прод-сборке в корень страницы, а в дев-режиме лежит в /js/
-  // (относительный './notes.js' в проде бил бы в /notes.js — 404)
-  import('/js/notes.js').catch(function () {});
-  import('/js/afford.js').catch(function () {});
-  import('/js/preset-cards.js').catch(function () {});
-  import('/js/live-data.js').catch(function () {});
-  import('/js/premises.js').catch(function () {});
+  // Модули заметок, кейс-карточек, помещений и «Обновить сейчас» входят в бандл приложения (js/app.js) и стартуют
+  // вместе со своими ленивыми разделами — отдельные запросы на старте страницы не нужны
 
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else init();
 })();

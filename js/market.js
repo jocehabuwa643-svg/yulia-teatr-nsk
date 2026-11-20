@@ -4,6 +4,7 @@
    Анимации — только transform/opacity (появление, рост столбцов); reduced-motion оставляет конечное состояние. */
 import { $, $$, fmt, ic, icons, toast, store, isStale, enter, counter } from './ui/helpers.js';
 import { state } from './state.js';
+import { monthWindow, windowTitle, holidayStatus, holidayEndedInMonth } from './calendar.js';
 
 /* ---------- Общие утилиты ---------- */
 
@@ -134,6 +135,7 @@ function renderFilters() {
   $('marketFilters').onclick = e => {
     const b = e.target.closest('[data-type]'); if (!b) return;
     activeType = b.dataset.type;
+    cardsShown = CARDS_STEP;
     $$('#marketFilters .chip').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
     renderCards(false);
   };
@@ -147,7 +149,8 @@ function priceBlock(c) {
   const src = safeUrl(p && p.manual ? p.url : (p && p.source_url) || c.source_url);
   const a = src ? `<a href="${esc(src)}" target="_blank" rel="noopener noreferrer">источник ${ic('external-link')}</a>` : '';
   if (!p) {
-    return `<div class="pbox none"><span class="pv">Цена: нет данных</span><span class="ps">${c.price_note && String(c.price_note).length <= 70 ? esc(c.price_note) : 'Проверенного значения нет — детали в «Подробнее» или введите вручную'}</span></div>`;
+    // нет цены — компактная строка без плитки; ввести значение можно в «Ввести цену вручную» ниже
+    return `<p class="pnone"><b>Цена: нет данных</b>${c.price_note && String(c.price_note).length <= 70 ? ` · ${esc(c.price_note)}` : ''}</p>`;
   }
   const q = p.qualifier ? esc(p.qualifier) + ' ' : '';
   if (p.manual) {
@@ -196,15 +199,22 @@ function cardHtml(c) {
         <div class="toolrow"><button type="submit" class="btn small primary">Сохранить</button>${manual ? '<button type="button" class="btn small secondary" data-clear>Убрать</button>' : ''}</div>
       </form>
     </details>
-    ${link ? `<a class="chip tag rv-src" target="_blank" rel="noopener noreferrer" href="${esc(link)}">Источник ${ic('external-link')}</a>` : '<span class="tiny rv-src">Ссылки на источник нет</span>'}
+    ${link ? `<a class="btn small secondary rv-src" target="_blank" rel="noopener noreferrer" href="${esc(link)}">Источник ${ic('external-link')}</a>` : ''}
   </article>`;
 }
 
+/* Компактность: сначала первые CARDS_STEP карточек, остальные — по кнопке «Показать ещё» (раскрытие сбрасывается при смене фильтра) */
+const CARDS_STEP = 6;
+let cardsShown = CARDS_STEP;
+
 function renderCards(first) {
-  const list = ALL.filter(c => activeType === 'all' || c.type === activeType);
+  const all = ALL.filter(c => activeType === 'all' || c.type === activeType);
+  const list = all.slice(0, cardsShown);
+  const rest = all.length - list.length;
   const box = $('marketCards');
-  box.innerHTML = list.map(cardHtml).join('') || '<div class="nodata"><strong>Нет данных</strong><span>В этой группе пока нет записей.</span></div>';
-  $('rivalsMeta').textContent = `Показано ${list.length} из ${ALL.length} · «нет данных» — не бесплатно`;
+  box.innerHTML = (list.map(cardHtml).join('') || '<div class="nodata"><strong>Нет данных</strong><span>В этой группе пока нет записей.</span></div>') +
+    (rest > 0 ? `<button type="button" class="btn secondary rv-more" data-more>Показать ещё ${rest} ${ic('chevron-right')}</button>` : '');
+  $('rivalsMeta').textContent = `Показано ${list.length} из ${all.length} · «нет данных» — не бесплатно`;
   icons();
   // при смене фильтра карточки уже на экране — каскад сразу; при первой загрузке — по мере прокрутки
   if (first) armReveal(box, '.rival');
@@ -240,6 +250,16 @@ function bindCards() {
     refreshAfterManual(f.dataset.id);
   });
   box.addEventListener('click', e => {
+    // «Показать ещё»: дорисовать остальные карточки, фокус — на первую новую (клавиатура не теряет место)
+    const more = e.target.closest('[data-more]');
+    if (more) {
+      const from = cardsShown;
+      cardsShown = Infinity;
+      renderCards(false);
+      const next = $$('#marketCards .rival')[from];
+      if (next) { next.setAttribute('tabindex', '-1'); next.focus({ preventScroll: true }); }
+      return;
+    }
     const b = e.target.closest('[data-clear]'); if (!b) return;
     const id = b.closest('.mform').dataset.id;
     const all = manualAll(); delete all[id]; store.set(MANUAL_KEY, all);
@@ -278,9 +298,11 @@ function renderPriceChart() {
   const mine = t && t.min && t.max
     ? li({ name: 'Ваш билет', sub: 'предположение проекта' }, 'mine', `${fmt(t.min)}–${fmt(t.max)} ₽<small>предположение</small>`, `<span class="pw" style="width:${t.max / max * 100}%"><span class="pfill assume"></span></span>`) : '';
   const rows = priced.map(r => li(r, r.tag, `${r.q ? esc(r.q) + ' ' : ''}${fmt(r.value)} ₽${r.tag === 'manual' ? '<small>вручную</small>' : r.tag === 'low' ? '<small>не подтверждено</small>' : ''}${r.stale ? '<small class="stl">устарело</small>' : ''}`, `<span class="pw" style="width:${r.value / max * 100}%"><span class="pfill"></span></span>`));
-  const nod = empty.map(r => li(r, 'nod', '<span class="muted">нет данных</span>', '<span class="pw dash"></span>'));
+  // строки без цены не рисуют пустые дорожки: одна компактная строка-перечень под графиком
+  const nod = empty.length
+    ? `<p class="pnod"><b>Нет данных о цене (${empty.length}):</b> ${empty.map(r => esc(r.name)).join(', ')}</p>` : '';
   const box = $('priceChart');
-  box.innerHTML = `<ul class="pbars" aria-label="Цены билетов у конкурентов в рублях">${mine}${rows.join('')}${nod.join('')}</ul>`;
+  box.innerHTML = `<ul class="pbars" aria-label="Цены билетов у конкурентов в рублях">${mine}${rows.join('')}</ul>${nod}`;
   const stale = COMP.fetched_at && isStale(COMP.fetched_at, thresholdDays('prices'));
   $('priceMeta').innerHTML = `${freshBadge({ fetched_at: COMP.fetched_at, confidence: 'medium', source_name: 'Исследование рынка (срез 18.11.2026)', stale })}<span>«Нет данных» — не 0 ₽.</span>`;
   growOnEnter(box);
@@ -319,8 +341,8 @@ function initDemand(d) {
             <div class="ptrack" aria-hidden="true"><span class="pw" style="width:${r.shows / max * 100}%"><span class="pfill"></span></span></div>
             <div class="pval">${fmt(r.shows)}<small>${r.auto ? 'за 30 дн.' : 'показов/мес'}</small>${r.auto ? '' : `<button type="button" class="iconbtn" data-del="${esc(r.id)}" aria-label="Удалить запись «${esc(r.q)}»">${ic('trash-2')}</button>`}</div></li>`;
         }).join('')}</ul>${autoMeta}${mine.length ? '<div class="chartmeta"><span>Строки с кнопкой удаления введены вручную.</span></div>' : ''}`
-      : `<div class="nodata"><strong>Нет данных — подключите источник</strong><span>Wordstat и 2ГИС дают спрос только через официальный API с ключом.</span><span>Без ключа график не строится и не имитируется.</span><ul class="srclist">${sources}</ul></div>`;
-    box.innerHTML = chart + `<details class="mk-more" ${rows.length ? '' : 'open'}><summary>Добавить значение вручную</summary>
+      : `<div class="nodata nodata-line"><strong>Нет данных: источник спроса не подключён</strong><span>График не строится и не имитируется.</span></div>${sources ? `<details class="mk-more"><summary>Какие источники и как подключить</summary><ul class="srclist">${sources}</ul></details>` : ''}`;
+    box.innerHTML = chart + `<details class="mk-more"><summary>Добавить значение вручную</summary>
       <form class="mform" id="demandForm" novalidate>
         <label class="mf"><span>Запрос</span><input name="q" type="text" maxlength="80" placeholder="например, выездной театр" required list="demandQueries"></label>
         <datalist id="demandQueries">${(d.queries || []).filter(x => typeof x === 'string').map(q => `<option value="${esc(q)}"></option>`).join('')}</datalist>
@@ -361,31 +383,67 @@ function initDemand(d) {
 
 /* ---------- Сезонность и каникулы (модель проекта) ---------- */
 
+/* Номер месяца (1-12) по подписи модели «Янв»/«Январь»; не распознан — 0 */
+const MON3 = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const monthNo = label => MON3.indexOf(String(label || '').trim().slice(0, 3).toLowerCase()) + 1;
+const dm = d => `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+
 function renderSeason(s) {
-  const months = s.months || [];
+  const raw = s.months || [];
   const box = $('seasonStrip');
-  if (!months.length) { box.innerHTML = '<div class="nodata"><strong>Нет данных</strong><span>Сезонность не загружена.</span></div>'; return; }
-  const max = Math.max(...months.map(m => m.shows), 1);
-  const peaks = new Set((s.peaks || []).map(p => String(p.m).slice(0, 3).toLowerCase()));
-  box.innerHTML = months.map(m => `<div class="seas-m${peaks.has(String(m.m).slice(0, 3).toLowerCase()) ? ' peak' : ''}">
-    <span class="seas-v">${m.shows}</span><span class="seas-t" aria-hidden="true"><span class="seas-f" style="height:${m.shows / max * 100}%"></span></span><b>${esc(m.m)}</b></div>`).join('');
+  if (!raw.length) { box.innerHTML = '<div class="nodata"><strong>Нет данных</strong><span>Сезонность не загружена.</span></div>'; return; }
+  // Ряд начинается с текущего месяца дня открытия: впереди — ближайшие 12 месяцев, текущий выделен
+  const now = new Date();
+  const byNo = new Map(raw.map(m => [monthNo(m.m), m]));
+  const win = monthWindow(now, 0, 12);
+  const months = win.map(w => ({ w, row: byNo.get(w.m) })).filter(x => x.row);
+  const max = Math.max(...months.map(x => x.row.shows), 1);
+  const peaks = new Set((s.peaks || []).map(p => monthNo(p.m)));
+  box.innerHTML = months.map(({ w, row }) => {
+    const cls = (peaks.has(w.m) ? ' peak' : '') + (w.current ? ' now' : '');
+    return `<div class="seas-m${cls}"${w.current ? ' aria-current="date"' : ''}>
+    <span class="seas-v">${row.shows}</span><span class="seas-t" aria-hidden="true"><span class="seas-f" style="height:${row.shows / max * 100}%"></span></span><b>${esc(row.m)}</b></div>`;
+  }).join('');
+  const cur = months.find(x => x.w.current);
+  box.setAttribute('aria-label', `Сезонность выездов, ${windowTitle(win)}${cur ? `; сейчас ${cur.w.name.toLowerCase()} — ${cur.row.shows} показов по модели` : ''}`);
   const peakList = (s.peaks || []).map(p => `<li><span>${esc(p.m)}</span><b>${esc(p.why)}</b></li>`).join('');
   // Бейдж уже говорит «предположение проекта» — дублирующую плашку не рисуем; пояснения — в <details>
-  $('chartMeta').innerHTML = `${freshBadge({ ...s, confidence: 'model' })}<span>Прогноз модели, не статистика рынка.</span>` +
+  $('chartMeta').innerHTML = `${freshBadge({ ...s, confidence: 'model' })}<span>${esc(windowTitle(win))} · текущий месяц обведён. Прогноз модели, не статистика рынка.</span>` +
     `<details class="mk-more wide"><summary>Как читать и ключевые месяцы</summary><p>${esc(s.note || 'Показы — из базового прогноза модели.')}. Тёмные столбцы — ключевые месяцы.</p>${peakList ? `<ul class="plist">${peakList}</ul>` : ''}</details>`;
   growOnEnter(box);
 }
 
+/* Подпись статуса каникул на день открытия: точные даты из seasonality.json, иначе — ориентир модели */
+function holidayLine(h, st) {
+  if (!st) return `${esc(h.approx)}${h.peak ? ' · ' + esc(h.peak) : ''}`;
+  const span = `${dm(st.from)}–${dm(st.to)}`;
+  if (st.state === 'now') return `идут сейчас, ${span} · ещё ${st.days} дн.`;
+  if (st.state === 'next') return `через ${st.days} дн. · ${span}${h.peak ? ' · ' + esc(h.peak) : ''}`;
+  return `прошли ${dm(st.to)}.${st.to.getFullYear()} · следующие: ${esc(h.approx)}, даты ещё не загружены`;
+}
+
 function renderHolidays(cal) {
-  const names = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
   const hs = cal.holidays || [];
+  const seas = state.DATA && state.DATA.seasonality;
+  const now = new Date();
   const short = n => n.startsWith('Осен') ? 'осень' : n.startsWith('Зим') ? 'зима' : n.startsWith('Вес') ? 'весна' : n.startsWith('Лет') ? 'лето' : n.slice(0, 5).toLowerCase();
-  $('holidayCal').innerHTML = names.map((n, i) => {
-    const hit = hs.filter(h => (h.months || []).includes(i + 1));
-    return `<div class="hc${hit.length ? ' on' : ''}" ${hit.length ? `title="${esc(hit.map(h => h.name + ' — ' + h.approx).join('; '))}"` : ''}><b>${n}</b><small>${hit.map(h => short(h.name)).join(' · ') || '·'}</small></div>`;
+  // Сетка месяцев — от текущего: прошедшие в этом месяце каникулы зачёркнуты, текущий месяц подчёркнут
+  const win = monthWindow(now, 0, 12);
+  $('holidayCal').innerHTML = win.map(w => {
+    const hit = hs.filter(h => (h.months || []).includes(w.m));
+    const tags = hit.map(h => {
+      const gone = holidayEndedInMonth(seas, h.name, w.y, w.m, now);
+      return `<span${gone ? ' class="gone"' : ''}>${short(h.name)}${gone ? '<span class="sr-only"> (прошли)</span>' : ''}</span>`;
+    }).join(' · ');
+    const title = hit.length ? ` title="${esc(hit.map(h => h.name + ' — ' + h.approx).join('; '))}"` : '';
+    return `<div class="hc${hit.length ? ' on' : ''}${w.current ? ' now' : ''}"${w.current ? ' aria-current="date"' : ''}${title}><b>${w.short[0].toUpperCase() + w.short.slice(1)}</b><small>${tags || '·'}</small></div>`;
   }).join('');
-  // чип праздника: название и сроки отдельными короткими строками (метка, не абзац)
-  $('holidayList').innerHTML = hs.map(h => `<span class="chip hol"><b>${esc(h.name)}</b><span>${esc(h.approx)}${h.peak ? ' · ' + esc(h.peak) : ''}${h.verified === false ? ' · не проверено' : ''}</span></span>`).join('') +
+  // Список: сначала идущие, затем ближайшие по дате, прошедшие — в конце и приглушены
+  const rank = st => !st ? 2 : st.state === 'now' ? 0 : st.state === 'next' ? 1 : 3;
+  const rows = hs.map(h => ({ h, st: holidayStatus(seas, h.name, now) }))
+    .sort((a, b) => rank(a.st) - rank(b.st) || (a.st && b.st && a.st.state === 'next' && b.st.state === 'next' ? a.st.days - b.st.days : 0));
+  $('holidayList').innerHTML = rows.map(({ h, st }) => `<span class="hol${st ? ' ' + st.state : ''}"><b>${esc(h.name)}</b><span>${holidayLine(h, st)}${h.verified === false ? ' · не проверено' : ''}</span></span>`).join('') +
+    `<p class="hcal-cap">${esc(windowTitle(win))} · на ${dm(now)}.${now.getFullYear()}</p>` +
     `<details class="mk-more wide"><summary>Откуда даты</summary><div class="chartmeta">${freshBadge({ ...cal, confidence: 'model' })}</div><p>${esc(cal.note || '')} <a href="https://do.nios.ru" target="_blank" rel="noopener noreferrer">do.nios.ru</a></p></details>`;
   growOnEnter($('holidayCal'));
 }

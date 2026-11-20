@@ -145,7 +145,7 @@ function syncGlobalBar() {
 export function initCalc(cfg) {
   const nav = $('calcnav');
   const panels = $('calcpanels');
-  nav.innerHTML = registry.map((m, i) => `<button type="button" id="tab-${m.meta.id}" class="mode ${i ? '' : 'on'}" role="tab" aria-controls="calc-${m.meta.id}" aria-selected="${i === 0}" aria-pressed="${i === 0}" tabindex="${i ? -1 : 0}">${ic(m.meta.icon)}${m.meta.title}<small>${m.meta.when}</small></button>`).join('');
+  nav.innerHTML = registry.map((m, i) => `<button type="button" id="tab-${m.meta.id}" class="mode ${i ? '' : 'on'}" role="tab" aria-controls="calc-${m.meta.id}" aria-selected="${i === 0}" aria-pressed="${i === 0}" tabindex="${i ? -1 : 0}">${ic(m.meta.icon)}${m.meta.title}<small>${m.meta.when}</small><span class="mode-go" aria-hidden="true">${ic('chevron-right')}</span></button>`).join('');
   nav.insertAdjacentHTML('beforebegin', `<div class="toolrow calcglobal" id="calcglobal">
       <button type="button" class="btn small secondary" data-gact="assume">${ic('sliders-horizontal')}<span>Допущения проекта</span></button>
       <button type="button" class="btn small secondary" id="calcResetManual" data-gact="resetmanual" hidden>${ic('rotate-ccw')}<span>Сбросить ручной ввод</span></button>

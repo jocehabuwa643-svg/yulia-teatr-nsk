@@ -12,38 +12,10 @@
 }
 .btn:active, .chip:active, .mode:active, .tab:active, .mmode:active { transform: translateY(1px) scale(.985); }
 
-/* 3) «Пальчик»-подсказка на главных действиях при первом входе: пульсирующее кольцо-касание */
-.touch-hint {
-  position: absolute;
-  width: 34px; height: 34px;
-  right: -8px; top: -8px;
-  pointer-events: none;
-  z-index: 5;
-}
-.touch-hint::before, .touch-hint::after {
-  content: "";
-  position: absolute; inset: 0;
-  border-radius: 50%;
-  border: 2px solid var(--silver);
-  animation: touchPulse 2.4s var(--ease) infinite;
-}
-.touch-hint::after { animation-delay: 1.2s; }
-.touch-hint i {
-  position: absolute; left: 50%; top: 50%;
-  width: 8px; height: 8px; margin: -4px 0 0 -4px;
-  border-radius: 50%;
-  background: var(--silver);
-}
-@keyframes touchPulse {
-  0%   { transform: scale(.35); opacity: 0; }
-  25%  { opacity: .95; }
-  70%  { transform: scale(1); opacity: 0; }
-  100% { transform: scale(1); opacity: 0; }
-}
+/* 3) «Пальчик»-подсказка — одна система на весь сайт: .taphint (js/ui/helpers.js → bindTapHints, стили в components.css) */
 
-/* reduced-motion: подсказку не показываем, нажатие без transform */
+/* reduced-motion: нажатие без transform */
 @media (prefers-reduced-motion: reduce) {
-  .touch-hint { display: none; }
   .btn:active, .chip:active, .mode:active, .tab:active, .mmode:active { transform: none; }
 }
 

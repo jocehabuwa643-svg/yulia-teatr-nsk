@@ -14,10 +14,13 @@
 .mk-bento{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:14px}
 .mk-bento-rev{grid-template-columns:1fr 1.25fr}
 .mk-bento>.mk-panel{margin-top:0}
+/* панели бенто не растягиваются до высоты соседа: короткая («Спрос по запросам») не получает пустой хвост */
+.mk-bento{align-items:start}
 
 /* ---------- KPI-плашки ---------- */
 .mk-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
-.mk-kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:grid;gap:4px;min-width:0;align-content:start}
+/* сводные цифры — справка, не кнопки: без тени и подъёма */
+.mk-kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:3px;min-width:0;align-content:start}
 .mk-kpi-ic{width:36px;height:36px;border-radius:12px;background:var(--chip);display:grid;place-items:center;margin-bottom:6px}
 .mk-kpi small{font-size:12px;font-weight:600;color:var(--mutedS)}
 .mk-kpi b{font-size:clamp(26px,3vw,36px);font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1.05}
@@ -29,9 +32,12 @@
 .chipn{font-weight:500;opacity:.75}
 
 /* ---------- Карточки конкурентов ---------- */
-.rivals{grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr))}
-.rival{padding:18px 20px;gap:12px;box-shadow:none;transition:transform var(--dur) var(--spring)}
-@media(hover:hover){.rival:hover{transform:translateY(-3px)}}
+/* карточки разной высоты не растягиваются по ряду — без пустых «хвостов» */
+.rivals{grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));align-items:start}
+/* карточка конкурента целиком не нажимается — без подъёма при наведении; нажимаются только её «Подробнее», ввод цены и «Источник» */
+.rival{padding:16px 18px;gap:10px;box-shadow:none}
+.rivals .rv-more{grid-column:1/-1;justify-self:center}
+.rival:focus{outline:none}
 .rv-top{display:flex;gap:12px;align-items:center;min-width:0}
 .rv-ic{width:40px;height:40px;border-radius:14px;background:var(--chip);display:grid;place-items:center;flex:none}
 .rv-t{min-width:0}
@@ -40,15 +46,23 @@
 .rv-st{display:flex;flex-wrap:wrap;gap:6px}
 .rv-addr{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--mutedS);overflow-wrap:anywhere}
 .rv-addr svg.lucide{width:16px;height:16px;margin-top:2px}
-.rival .rv-src{display:inline-flex;align-items:center;gap:6px;min-height:var(--tap);text-decoration:none}
+.rival .rv-src{justify-self:start;gap:6px}
 .rival .rv-src svg.lucide,.ps svg.lucide{width:13px;height:13px}
 span.rv-src{display:inline-flex;align-items:center;min-height:24px}
 
 /* Статусы: форма и штриховка, не цвет */
-.stat{display:inline-flex;align-items:center;font-size:11px;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:3px 9px;background:var(--chip);color:var(--text2)}
-.st-public{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
-.st-historical,.st-mixed,.st-model,.st-plan_benchmark{border-style:dashed;border-color:var(--silver)}
-.st-manual{border-color:var(--text2);font-weight:800}
+/* Статусы — метки, не кнопки: прямоугольник 6px, тихий фон без рамки; различие — тон и начертание, не цвет */
+.stat{display:inline-flex;align-items:center;font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px;background:var(--chip);color:var(--text2)}
+.st-public{background:color-mix(in srgb,var(--text) 14%,transparent);color:var(--text)}
+.st-historical,.st-mixed,.st-model,.st-plan_benchmark{font-weight:600;font-style:italic}
+.st-manual{color:var(--text);font-weight:800}
+/* цена не найдена — одна строка вместо пустой плитки */
+.pnone{font-size:12.5px;line-height:1.45;color:var(--mutedS);overflow-wrap:anywhere}
+.pnone b{color:var(--text2)}
+/* цены без данных под графиком — один перечень */
+.pnod{margin-top:12px;font-size:12px;line-height:1.5;color:var(--mutedS)}
+.pnod b{color:var(--text2)}
+.nodata-line+.mk-more{margin-top:6px}
 
 /* Блок цены */
 .pbox{border:1px solid var(--line);border-radius:var(--r-s);padding:11px 13px;display:grid;gap:4px;background:var(--card2);min-width:0}
@@ -61,7 +75,7 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
 
 /* Бейджи свежести */
 .fb{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
-.fbadge{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11px;line-height:1.5;background:var(--chip);color:var(--text2);cursor:help}
+.fbadge{display:inline-flex;align-items:center;gap:4px;border:1px solid transparent;border-radius:6px;padding:2px 8px;font-size:11px;line-height:1.5;background:var(--chip);color:var(--text2);cursor:help}
 .fbadge.stale{border-style:dashed;border-color:var(--text2);font-weight:700}
 
 /* Раскрывающиеся блоки внутри карточек */
@@ -131,14 +145,24 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
 .pre .seas-f{transform:scaleY(0)}
 .seas-m.peak .seas-f{background:var(--solid)}
 .seas-m b{font-size:12px;font-weight:700;color:var(--text2)}
+/* текущий месяц дня открытия: точка у подписи и обводка дорожки — метка «сегодня», не кнопка и не ссылка */
+.seas-m.now b{color:var(--text)}
+.seas-m.now b::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text);margin-right:3px;vertical-align:2px}
+.seas-m.now .seas-v{color:var(--text)}
+.seas-m.now .seas-t{box-shadow:inset 0 0 0 1.5px var(--text)}
 
 /* ---------- Календарь каникул ---------- */
 .hcal{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:14px 0 12px}
-.hc{border:1px solid var(--line);border-radius:12px;padding:9px 4px;text-align:center;font-size:12px;display:grid;gap:2px;color:var(--mutedS);transition:transform var(--dur) var(--spring),opacity var(--dur) var(--spring)}
+/* ячейки календаря — не кнопки: без рамки и сплошной заливки, каникулы отмечены тоном и жирным */
+.hc{border-radius:6px;padding:7px 4px;text-align:center;font-size:12px;display:grid;gap:1px;color:var(--mutedS);background:var(--chip);transition:transform var(--dur) var(--spring),opacity var(--dur) var(--spring)}
 .hc b{color:inherit;font-weight:700}
 .hc small{font-size:11px}
-.hc.on{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
+.hc.on{background:color-mix(in srgb,var(--text) 18%,transparent);color:var(--text)}
 .pre .hc{opacity:0;transform:scale(.92)}
+/* текущий месяц — полоса снизу; прошедшие в этом месяце каникулы зачёркнуты */
+.hc.now{box-shadow:inset 0 -3px 0 var(--text);color:var(--text)}
+.hc .gone{text-decoration:line-through;color:var(--mutedS)}
+.hcal-cap{flex:1 1 100%;margin:0;font-size:12px;color:var(--mutedS)}
 #holidayList{margin-bottom:0}
 #holidayList .mk-more{flex:1 1 100%;min-width:0}
 .mmode{min-height:var(--tap)}
@@ -160,12 +184,13 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
 .lt .lt-sub{font-size:12px;color:var(--mutedS);overflow-wrap:anywhere}
 .lt .lt-sub a{display:inline-flex;align-items:center;min-height:24px}
 .lt.nd b{font-size:14px;font-weight:700}
-.lt.profit{grid-column:1/-1;background:var(--solid);color:var(--on-solid)}
-.lt.profit small,.lt.profit .lt-sub{color:inherit;opacity:.82}
+/* прибыль дня — главный результат, но не кнопка: тон и крупная цифра вместо сплошной заливки */
+.lt.profit{grid-column:1/-1;background:color-mix(in srgb,var(--text) 12%,transparent);color:var(--text)}
+.lt.profit small,.lt.profit .lt-sub{color:var(--mutedS)}
 .lt.profit b{font-size:clamp(28px,4vw,38px);letter-spacing:-.04em}
 .lt.profit.nd{background:var(--chip);color:var(--text);border:1px dashed var(--silver)}
 .lt.profit.nd small,.lt.profit.nd .lt-sub{color:var(--mutedS);opacity:1}
-.lt.profit.neg{outline:2px dashed var(--on-solid);outline-offset:-7px}
+.lt.profit.neg{outline:2px dashed var(--text);outline-offset:-7px}
 .mapcardtext .loc-h{display:block;font-size:13px;margin:14px 0 4px}
 .loc-steps{margin:0;padding-left:20px}
 .loc-src{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px;font-size:13px}
@@ -219,7 +244,7 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
   .arm{opacity:1}
   .pre .pfill,.pre .seas-f{transform:none}
   .pre .hc{opacity:1;transform:none}
-  .rival:hover,.iconbtn:hover{transform:none}
+  .iconbtn:hover{transform:none}
   .mk-pinwrap .pin,.mk-pinwrap:hover .pin{transition:none}
 }
 
@@ -228,8 +253,14 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
 .lt:has(b .small){grid-column:1/-1}
 .netline+.netline{margin-top:2px}
 .tablebox table.net td:last-child{min-width:220px}
-.chip.hol{display:grid;gap:1px;border-radius:14px;padding:8px 14px;font-weight:500;line-height:1.35}
-.chip.hol b{font-weight:700;color:var(--text)}
+/* сроки каникул — справочные строки, а не чипы-фильтры */
+.hol{display:grid;gap:1px;border-left:2px solid var(--silver);padding:2px 0 2px 10px;font-size:12px;color:var(--mutedS);line-height:1.35}
+.hol b{font-weight:700;color:var(--text)}
+/* идущие каникулы — тёмная линия; прошедшие — приглушены текстом (контраст --mutedS ≥ AA), без прозрачности */
+.hol.now{border-left-color:var(--text)}
+.hol.past{border-left-style:dashed}
+.hol.past b{color:var(--mutedS);font-weight:600}
+#holidayList{gap:10px 18px}
 
 /* Узкий экран: таблица сети раскладывается карточками «территория → масштаб → источник»; шапка скрыта визуально, но остаётся для скринридеров */
 @media(max-width:640px){

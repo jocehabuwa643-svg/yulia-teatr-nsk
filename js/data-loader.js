@@ -2,7 +2,10 @@
    Никаких расчётов: только доставка данных и флаги свежести. */
 import { store, toast } from './ui/helpers.js';
 
-const FILES = ['rates', 'config', 'regions', 'competitors', 'market', 'meta', 'guide'];
+const FILES = ['rates', 'config', 'regions', 'competitors', 'market', 'meta', 'guide', 'seasonality', 'news'];
+/* Необязательные файлы (дайджест «Сегодня», новости): их отсутствие не повод для тоста «данные не загрузились» —
+   блоки, которым они нужны, просто не показываются. Ошибка всё равно попадает в health.optional для отладки */
+const OPTIONAL = new Set(['seasonality', 'news']);
 const DATA_VERSION = 2;
 const cacheKey = n => `data.v${DATA_VERSION}.${n}`;
 
@@ -25,13 +28,16 @@ async function fetchOne(name) {
   }
 }
 
-/* Возвращает { rates, config, regions, competitors, market, meta, guide, health } */
+/* Возвращает { rates, config, regions, competitors, market, meta, guide, seasonality, news, health } */
 export async function loadAll() {
   const entries = await Promise.all(FILES.map(fetchOne));
-  const out = { health: { errors: [], cached: [] } };
+  const out = { health: { errors: [], cached: [], optional: [] } };
   FILES.forEach((n, i) => {
     out[n] = entries[i].data;
-    if (entries[i].error) { out.health.errors.push(n + ': ' + entries[i].error); if (entries[i].fromCache) out.health.cached.push(n); }
+    if (!entries[i].error) return;
+    if (OPTIONAL.has(n)) { out.health.optional.push(n + ': ' + entries[i].error); return; }
+    out.health.errors.push(n + ': ' + entries[i].error);
+    if (entries[i].fromCache) out.health.cached.push(n);
   });
   if (out.health.errors.length && !out.health.cached.length) {
     toast('Данные не загрузились — проверьте соединение');

@@ -8,6 +8,7 @@
 
 export const FRESH_DAYS = 14;        // «свежая» новость для дайджеста и плашки
 export const TOAST_MAX = 3;          // сколько новостей в плашке
+export const TOAST_MAX_NARROW = 2;   // сколько новостей в плашке на телефоне (≤600px)
 export const TOAST_SHOW_MS = 9000;   // сколько висит плашка
 export const TOAST_DELAY_MS = 1500;  // пауза после первого действия
 const SEEN_KEY = 'yulia.v2.news.seen';
@@ -248,10 +249,14 @@ export function initNews(newsData, { now = Date.now(), doc = globalThis.document
     done = true;
     detachActivity();
     if (session) sessionFlag(session, true);
-    if (storage) writeSeen(storage, [...readSeen(storage), ...unseen.map(it => it.id)]);
+    // на телефоне (≤600px) плашка компактная — две новости; счётчик и «показанные» id считаются только по ним,
+    // чтобы невидимая третья не помечалась прочитанной и пришла в следующий раз
+    const narrow = !!(win.matchMedia && win.matchMedia('(max-width:600px)').matches);
+    const shown = narrow ? unseen.slice(0, TOAST_MAX_NARROW) : unseen;
+    if (storage) writeSeen(storage, [...readSeen(storage), ...shown.map(it => it.id)]);
 
     const allTarget = allId ? doc.getElementById(allId) : null;
-    toast = buildToast(doc, unseen, now, allTarget);
+    toast = buildToast(doc, shown, now, allTarget);
     const { box, close, all, bar } = toast;
     // длительность полоски = время показа; пауза останавливает анимацию классом .paused
     bar.style.animationDuration = TOAST_SHOW_MS + 'ms';
@@ -265,7 +270,9 @@ export function initNews(newsData, { now = Date.now(), doc = globalThis.document
     box.addEventListener('mouseleave', resumeTimer);
     box.addEventListener('focusin', pauseTimer);
     box.addEventListener('focusout', () => win.setTimeout(resumeTimer, 0));
-    box.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); hide(); } });
+    // Escape закрывает плашку, где бы ни был фокус (в том числе когда мышь держит таймер на паузе);
+    // слушатель на документе живёт только пока плашка на экране
+    doc.addEventListener('keydown', onEscape, true);
     if (all) all.addEventListener('click', e => {
       const target = doc.getElementById(allId);
       if (!target) return;
@@ -280,8 +287,16 @@ export function initNews(newsData, { now = Date.now(), doc = globalThis.document
     return true;
   }
 
+  function onEscape(e) {
+    if (e.key !== 'Escape' || !toast) return;
+    // фокус внутри плашки — Escape адресован ей, дальше по странице не идёт
+    if (toast.box.contains(doc.activeElement)) e.stopPropagation();
+    hide();
+  }
+
   function hide() {
     if (!toast) return;
+    doc.removeEventListener('keydown', onEscape, true);
     win.clearTimeout(hideTimer);
     const { box } = toast;
     // если фокус был внутри плашки — снимаем его, чтобы он не остался на удалённом элементе
@@ -299,6 +314,7 @@ export function initNews(newsData, { now = Date.now(), doc = globalThis.document
     win.clearTimeout(armTimer);
     win.clearTimeout(hideTimer);
     win.clearTimeout(removeTimer);
+    doc.removeEventListener('keydown', onEscape, true);
     if (toast) { toast.box.remove(); toast = null; }
     done = true;
   };

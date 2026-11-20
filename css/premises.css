@@ -14,4 +14,4 @@
 .pr-searches{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .pr-searches .chip{text-decoration:none}
 #liveDataBox{margin-top:6px}
-#liveDataBox .btn{min-height:34px}
+#liveDataBox .btn{min-height:var(--tap)}

@@ -51,3 +51,66 @@ export function factorFor(data, m) {
   const row = data && data.months && data.months.find(x => x.m === m);
   return row ? row.factor : null;
 }
+
+/* ---------- Каникулы относительно дня открытия (точные даты из seasonality.json) ---------- */
+
+/* Локальная дата из 'ГГГГ-ММ-ДД' (без сдвига часового пояса); иначе null */
+function localDay(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ''));
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+}
+
+/* Ключ каникул — первое слово названия в нижнем регистре: «Зимние (новогодние)» → «зимние» */
+export function holidayKey(name) {
+  return String(name || '').trim().split(/[\s(]/)[0].toLowerCase();
+}
+
+/* Все загруженные отрезки каникул с данным ключом по всем годам (повторы между годами убираются) */
+export function holidaySpans(data, name) {
+  const key = holidayKey(name);
+  const sh = data && data.school_holidays;
+  if (!key || !sh) return [];
+  const seen = new Set();
+  const out = [];
+  for (const y of Object.keys(sh)) {
+    const h = sh[y];
+    if (!h || h.loaded === false) continue;
+    for (const it of h.items || []) {
+      if (holidayKey(it.name) !== key) continue;
+      const from = localDay(it.from), to = localDay(it.to);
+      if (!from || !to || to < from) continue;
+      const id = it.from + '|' + it.to;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push({ from, to, verified: it.verified !== false });
+    }
+  }
+  return out.sort((a, b) => a.from - b.from);
+}
+
+/* Статус каникул на день now: идут сейчас / ближайшие впереди / последние прошедшие.
+   {state:'now'|'next'|'past', from, to, days} — days: для now — осталось дней (включая сегодня), для next — дней до начала,
+   для past — дней с окончания. null — точных дат нет (тогда показываем только ориентир из модели). */
+export function holidayStatus(data, name, now = new Date()) {
+  const spans = holidaySpans(data, name);
+  if (!spans.length) return null;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const DAY = 86400000;
+  const diff = (a, b) => Math.round((a - b) / DAY);
+  const cur = spans.find(s => s.from <= today && today <= s.to);
+  if (cur) return { state: 'now', from: cur.from, to: cur.to, days: diff(cur.to, today) + 1 };
+  const next = spans.find(s => s.from > today);
+  if (next) return { state: 'next', from: next.from, to: next.to, days: diff(next.from, today) };
+  const past = spans.filter(s => s.to < today).pop();
+  return { state: 'past', from: past.from, to: past.to, days: diff(today, past.to) };
+}
+
+/* Закончились ли уже все известные каникулы с этим ключом, пересекающие месяц (y, m 1-12), к дню now.
+   Нет точных дат на этот месяц → false (ориентир модели остаётся без пометки). */
+export function holidayEndedInMonth(data, name, y, m, now = new Date()) {
+  const ms = new Date(y, m - 1, 1), me = new Date(y, m, 0);
+  const inMonth = holidaySpans(data, name).filter(s => s.from <= me && s.to >= ms);
+  if (!inMonth.length) return false;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return inMonth.every(s => s.to < today);
+}

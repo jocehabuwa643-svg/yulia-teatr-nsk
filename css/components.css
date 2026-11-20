@@ -69,7 +69,8 @@
 .hero h1{margin:16px 0 14px;max-width:17ch;font-family:var(--font-serif);font-weight:600;font-size:clamp(34px,6.2vw,76px);letter-spacing:-.025em;line-height:1.02;text-wrap:balance}
 .hero .lead{font-size:clamp(15px,1.6vw,19px);color:var(--mutedS);max-width:44ch;line-height:1.5;text-wrap:pretty}
 .hero-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
-.datastat{display:inline-flex;align-items:center;gap:8px;margin-top:24px;font-size:12px;color:var(--mutedS);border:1px solid var(--line);border-radius:999px;padding:6px 13px 6px 11px;background:var(--card2)}
+/* статус данных — подпись, не кнопка: без рамки-пилюли */
+.datastat{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-size:12px;color:var(--mutedS)}
 .datastat svg.lucide,.datastat i{width:14px;height:14px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:var(--tap);padding:11px 20px;border-radius:999px;font-weight:600;font-size:14px;text-decoration:none}
 .btn.primary{background:var(--solid);color:var(--on-solid);box-shadow:var(--shadow)}
@@ -80,22 +81,27 @@
 
 /* ===== Bento: KPI-плитки ===== */
 .kpis{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px;margin-top:12px}
-.kpi{grid-column:span 3;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;box-shadow:var(--shadow);min-width:0}
+/* KPI — справка, не кнопка: плоская плитка без тени, подъёма и сплошной заливки (заливка = главная кнопка) */
+.kpi{grid-column:span 3;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;min-width:0}
 .kpi:nth-child(1),.kpi:nth-child(6){grid-column:span 6}
-.kpi:nth-child(1){background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
-.kpi:nth-child(1) .kphead,.kpi:nth-child(1) .unit,.kpi:nth-child(1) p{color:color-mix(in srgb,var(--on-solid) 74%,transparent)}
-.kpi:nth-child(1) .kicon{background:color-mix(in srgb,var(--on-solid) 14%,transparent);color:var(--on-solid)}
+/* главная цифра выделена размером и чуть более заметной рамкой, а не заливкой */
+.kpi:nth-child(1){border-color:var(--silver)}
 .kphead{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:var(--mutedS);line-height:1.3}
 .kicon{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--chip);color:var(--text2);flex-shrink:0}
 .kicon svg.lucide{width:17px;height:17px}
-.kpi .num{display:block;font-size:clamp(28px,2.6vw,38px);font-weight:800;letter-spacing:-.05em;line-height:1.1;margin:auto 0 6px;padding-top:22px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi .num{display:block;font-size:clamp(28px,2.6vw,38px);font-weight:800;letter-spacing:-.05em;line-height:1.1;margin:auto 0 6px;padding-top:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .kpi:nth-child(1) .num,.kpi:nth-child(6) .num{font-size:clamp(34px,4.4vw,58px)}
 .kpi .unit{font-size:.45em;font-weight:600;letter-spacing:0;color:var(--mutedS)}
 .kpi p{font-size:12px;color:var(--mutedS);line-height:1.4}
 
 /* ===== Калькуляторы ===== */
 .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
-.mode{display:grid;gap:6px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;font-weight:600;font-size:14px;line-height:1.3}
+.mode{display:grid;gap:6px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 48px 14px 18px;font-weight:600;font-size:14px;line-height:1.3;box-shadow:var(--shadow-pill)}
+/* шеврон-«кнопка» справа: сразу видно, что плитку калькулятора можно нажать */
+.mode-go{position:absolute;right:12px;top:50%;width:28px;height:28px;margin-top:-14px;display:grid;place-items:center;border-radius:50%;background:var(--chip);color:var(--text2);transition:transform .35s var(--spring)}
+.mode .mode-go svg.lucide{width:16px;height:16px;color:currentColor}
+.mode.on .mode-go{background:color-mix(in srgb,var(--on-solid) 16%,transparent);color:var(--on-solid)}
+@media(hover:hover){.mode:hover .mode-go{transform:translateX(3px)}}
 .mode small{font-weight:500;font-size:12px;color:var(--mutedS)}
 .mode.on small{color:color-mix(in srgb,var(--on-solid) 76%,transparent)}
 .mode svg.lucide{width:20px;height:20px;color:var(--muted)}
@@ -132,8 +138,10 @@ input[type=range]:active::-moz-range-thumb{transform:scale(1.3)}
 details{border-top:1px solid var(--line);margin-top:14px}
 summary{cursor:pointer;font-weight:600;font-size:13px;padding:13px 0;min-height:var(--tap);color:var(--text2);list-style:none;display:flex;align-items:center;gap:8px}
 summary::-webkit-details-marker{display:none}
-summary::after{content:"+";margin-left:auto;font-size:18px;color:var(--mutedS);transition:transform .35s var(--spring)}
-details[open] summary::after{transform:rotate(45deg)}
+/* «+» в круглой кнопке: раскрывающиеся строки читаются как нажимаемые, текст при наведении темнеет */
+summary::after{content:"+";flex:none;display:grid;place-items:center;width:28px;height:28px;margin-left:auto;border:1px solid var(--line);border-radius:50%;background:var(--card);font-size:17px;line-height:1;color:var(--text2);transition:transform .35s var(--spring)}
+details[open]>summary::after{transform:rotate(45deg)}
+@media(hover:hover){summary:hover{color:var(--text)}summary:hover::after{transform:scale(1.1)}details[open]>summary:hover::after{transform:rotate(45deg) scale(1.1)}}
 details p,details li{font-size:13px;color:var(--mutedS);line-height:1.6;padding-bottom:12px}
 .big-num{font-size:clamp(38px,4.6vw,58px);font-weight:800;letter-spacing:-.055em;line-height:1.05;margin:8px 0 4px;font-variant-numeric:tabular-nums}
 .big-num.negative{opacity:.75}
@@ -179,9 +187,12 @@ details p,details li{font-size:13px;color:var(--mutedS);line-height:1.6;padding-
 .cmpcol .kv{font-size:12px}
 .cmpcol.best{border-color:var(--ink);box-shadow:var(--shadow)}
 :root[data-theme="dark"] .cmpcol.best{border-color:var(--silver-hi)}
-.nodata{border:1px dashed var(--silver);border-radius:var(--r-s);padding:14px;display:grid;gap:10px;font-size:13px;color:var(--mutedS);background:var(--card2)}
+/* «Нет данных» — компактная строка (не большая плитка): текст в одну-две строки, кнопка ручного ввода справа */
+.nodata{border:1px dashed var(--silver);border-radius:var(--r-s);padding:9px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;font-size:13px;line-height:1.4;color:var(--mutedS);background:transparent}
+.nodata strong{color:var(--text2);font-weight:700}
+.nodata .btn{margin-left:auto}
 .srcinfo{display:inline-flex;align-items:center;gap:4px}
-.srcinfo .sbadge{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:11px;color:var(--mutedS);background:var(--chip)}
+.srcinfo .sbadge{display:inline-flex;align-items:center;gap:4px;border:1px solid transparent;border-radius:6px;padding:2px 8px;font-size:11px;color:var(--mutedS);background:var(--chip)}
 .srcinfo .sbadge.stale{border-style:dashed;border-color:var(--silver)}
 .toolrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 
@@ -202,18 +213,19 @@ details p,details li{font-size:13px;color:var(--mutedS);line-height:1.6;padding-
 .flow .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS)}
 .flow .node b.nm{font-size:14px;line-height:1.3}
 .flow .link{display:grid;place-items:center;color:var(--muted)}
-.sumline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:var(--r-s);background:var(--solid);color:var(--on-solid);font-size:13px;font-weight:600}
+/* итоговая строка — подчёркнутый итог, а не кнопка-заливка */
+.sumline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 2px 0;border-top:2px solid var(--text);font-size:13px;font-weight:600}
 .sumline b{font-size:17px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 /* воронка */
 .funnel{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.funnel li{width:var(--w);margin-inline:auto;display:grid;gap:2px;padding:11px 16px;border-radius:var(--r-s);border:1px solid var(--line);text-align:center;background:var(--card)}
+/* ступени воронки — схема, не кнопки: без рамок и заливки «кнопочного» цвета, интенсивность фона убывает к низу */
+.funnel li{width:var(--w);margin-inline:auto;display:grid;gap:2px;padding:9px 14px;border-radius:6px;text-align:center;background:color-mix(in srgb,var(--text) var(--t,6%),transparent)}
 .funnel li b{font-size:13px;line-height:1.3}
 .funnel li span{font-size:12px;color:var(--mutedS);font-variant-numeric:tabular-nums}
-.funnel li:nth-child(1){background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
-.funnel li:nth-child(1) span{color:color-mix(in srgb,var(--on-solid) 76%,transparent)}
-.funnel li:nth-child(2){background:var(--seg)}
-.funnel li:nth-child(3){background:var(--card2)}
-.funnel li:nth-child(4){border-style:dashed;border-color:var(--silver)}
+.funnel li:nth-child(1){--t:16%}
+.funnel li:nth-child(2){--t:12%}
+.funnel li:nth-child(3){--t:8%}
+.funnel li:nth-child(4){--t:4%}
 /* три безналичные схемы */
 .routes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px}
 .route{display:grid;gap:6px;align-content:start;padding:14px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--card)}
@@ -223,14 +235,15 @@ details p,details li{font-size:13px;color:var(--mutedS);line-height:1.6;padding-
 .route:nth-child(3){border-style:dashed;border-color:var(--silver)}
 /* план зала */
 .hall{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;grid-template-areas:"stage stage stage studio studio foyer" "seat seat seat prop prop prop"}
-.hall>div{display:grid;gap:3px;align-content:center;min-height:76px;padding:12px;border:1px solid var(--line);border-radius:var(--r-s);font-size:13px;font-weight:600;line-height:1.3}
-.hall .stage{grid-area:stage;background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
+.hall>div{display:grid;gap:3px;align-content:center;min-height:64px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-weight:600;line-height:1.3}
+/* зоны плана — схема помещения: сцена выделена тоном, не «кнопочной» заливкой */
+.hall .stage{grid-area:stage;background:color-mix(in srgb,var(--text) 16%,transparent);border-color:transparent}
 .hall .seat{grid-area:seat;background:var(--seg)}
 .hall .studio{grid-area:studio}
 .hall .foyer{grid-area:foyer;border-style:dashed;border-color:var(--silver)}
 .hall .prop{grid-area:prop;background:var(--card2)}
 .hall small{font-weight:500}
-.hall .stage small{color:color-mix(in srgb,var(--on-solid) 76%,transparent)}
+.hall small{color:var(--mutedS)}
 
 /* @end-defer */
 /* ===== Аналитика (bento 8 + 4) ===== */
@@ -238,6 +251,9 @@ details p,details li{font-size:13px;color:var(--mutedS);line-height:1.6;padding-
 .analytics>.card:first-child{grid-column:span 8}
 .analytics>.card:last-child{grid-column:span 4}
 .analytics>.card{padding:clamp(18px,2vw,28px)}
+/* Две колонки: правая карточка («Как растёт база») короче левой — не растягиваем её пустым хвостом,
+   а держим у верха и «прилипаем» при прокрутке длинного денежного потока */
+@media(min-width:1061px){.analytics{align-items:start}.analytics>.card:last-child{position:sticky;top:80px}}
 .chartbox{height:250px;position:relative;margin:14px 0 4px}
 .chartbox.tall{height:300px}
 .chartbox.short{height:190px}
@@ -268,7 +284,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}
 td,th{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);min-width:0}
 th{background:var(--chip);font-size:12px;color:var(--mutedS);font-weight:600;white-space:nowrap}
 tr:last-child td{border-bottom:0}
-.note-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--mutedS);border:1px dashed var(--silver);border-radius:999px;padding:3px 10px}
+.note-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--mutedS);border:1px dashed var(--silver);border-radius:6px;padding:3px 8px}
 .legend-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 .growth-fig{margin-top:14px}
 .growth-fig svg{display:block;width:100%;height:auto;overflow:visible;color:var(--text)}
@@ -281,6 +297,13 @@ tr:last-child td{border-bottom:0}
 .mapmodes{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px}
 .mmode{flex:1 1 auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:14px;font-size:13px;border:1px solid var(--line);background:var(--card);font-weight:600;color:var(--text2)}
 .mapstage{height:400px;z-index:1;background:var(--chip)}
+/* Две колонки: карта тянется на высоту «Карточки локации», чтобы под ней не оставалось пустого фона
+   (Leaflet пересчитывает размер через ResizeObserver в map.js) */
+@media(min-width:1061px){
+  .mapgrid{align-items:stretch}
+  .mapcard{display:flex;flex-direction:column}
+  .mapcard .mapstage{flex:1 1 auto;height:auto;min-height:400px}
+}
 .mapwarning{padding:10px 16px;font-size:12px;color:var(--mutedS)}
 .mapkey{display:flex;gap:16px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--mutedS);align-items:center}
 .keyshape{display:inline-block;width:12px;height:12px;margin-right:7px;vertical-align:-2px}
@@ -354,7 +377,7 @@ tr:last-child td{border-bottom:0}
 .risk .rt svg.lucide{color:var(--muted);margin-top:1px}
 .risk .arrow{color:var(--muted);font-weight:700}
 .risk p{font-size:13px;color:var(--mutedS);line-height:1.55}
-.verify{display:inline-flex;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--mutedS);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--chip)}
+.verify{display:inline-flex;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--mutedS);border-radius:6px;padding:3px 8px;background:var(--chip)}
 .dict{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .dict div{display:flex;gap:8px;font-size:12.5px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
 .dict b{white-space:nowrap}
@@ -409,6 +432,26 @@ tr:last-child td{border-bottom:0}
 .noscript{padding:16px;background:var(--chip);border:1px solid var(--line);border-radius:var(--r-s);font-size:14px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px) scale(.96);opacity:0;background:var(--solid);color:var(--on-solid);border-radius:999px;padding:11px 22px;font-size:13px;font-weight:600;z-index:1500;transition:transform .5s var(--spring),opacity .4s var(--spring);pointer-events:none;max-width:calc(100% - 28px)}
 .toast.show{transform:translate(-50%,0) scale(1);opacity:1}
+
+/* Адаптив отложенных блоков. В сборке (_site) этот блок уходит в assets/rest.css, который подключается ПОСЛЕ критического CSS:
+   медиа-правила из общего «Адаптива» ниже оказываются раньше базовых правил схем/карты/чек-листа и проигрывают им
+   (на телефоне схемы оставались в 2 колонки, план зала вылезал за край). Поэтому для отложенных селекторов адаптив повторён здесь. */
+@media(max-width:1060px){
+  .mapgrid,.checklist-grid{grid-template-columns:1fr}
+  .schemes,.risk-grid,.items,.templates,.dict{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .routes,.flow{grid-template-columns:1fr}
+  .flow .link{transform:rotate(90deg);padding:2px 0}
+  .hall{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"stage stage" "seat seat" "studio foyer" "prop prop"}
+}
+@media(max-width:640px){
+  .mapstage{height:300px}
+  .locdata{grid-template-columns:1fr}
+  .footin{flex-direction:column;align-items:flex-start}
+  .calstrip{grid-template-columns:repeat(6,1fr)}
+  .checkrow{padding:16px 0}
+}
 
 /* @end-defer */
 /* ===== Адаптив ===== */
@@ -473,6 +516,32 @@ tr:last-child td{border-bottom:0}
   .heatmap .hm-cell{padding:6px 0;font-size:11px}
   .brand small{display:none}
 }
+
+/* ===== Единый язык «нажимается / не нажимается» =====
+   Нажимается: контур или заливка, курсор-рука, отклик на наведение и нажатие.
+   Не нажимается: метки (span.chip, .badge) — тихий фон без рамки, без hover и без курсора-руки. */
+span.chip{border-color:transparent;background:var(--chip);cursor:default}
+span.chip::before{display:none}
+.badge{border-color:transparent;background:transparent;padding-inline:0}
+button.chip,a.chip,.tab,.mmode,.periods button{cursor:pointer}
+
+/* Подсказка «пальчик / нажмите» (helpers.js → bindTapHints): иконка руки в углу главной кнопки раздела.
+   Жест — translate/scale + opacity по кривой --spring; в покое иконка скрыта (opacity:0) и не ловит клики */
+.has-tap{position:relative}
+/* иконка сидит на нижнем правом углу кнопки и выходит за него наполовину: внутри остаётся ≤13px — это поле отступа, подпись не перекрывается */
+.taphint{position:absolute;right:-13px;bottom:-13px;z-index:2;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--card);color:var(--text);border:1px solid var(--line);box-shadow:var(--shadow);opacity:0;pointer-events:none}
+.taphint svg.lucide{width:15px;height:15px;stroke-width:2}
+.taphint.play{animation:taptap 1.5s var(--spring) 2}
+@media(hover:hover){.has-tap:hover>.taphint{animation:taptap 1.5s var(--spring) 1}}
+@keyframes taptap{
+  0%{opacity:0;transform:translate(8px,8px) scale(.85)}
+  22%{opacity:1;transform:none}
+  42%{opacity:1;transform:translate(-2px,-2px) scale(.8)}
+  60%{opacity:1;transform:none}
+  85%{opacity:1;transform:none}
+  100%{opacity:0;transform:translate(4px,4px) scale(.9)}
+}
+@media print{.taphint{display:none}}
 
 /* тач-цели ≥44px на любой ширине: интерактивные чипы (кнопки и ссылки), вкладки, кнопки; неинтерактивные чипы-метки (span) остаются компактными */
 button.chip,a.chip,.tab,.mmode,.btn.small,.btn[type=submit]{min-height:var(--tap)}

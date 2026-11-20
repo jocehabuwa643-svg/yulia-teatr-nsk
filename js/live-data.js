@@ -1,9 +1,9 @@
 /* live-data.js — уровень B живых данных: индикатор «Обновлено», кнопка «Обновить сейчас»,
    cache-busting по meta.json, попытка живых значений Банка России напрямую из браузера
    (только если ЦБ отдаёт CORS — иначе тихий fallback на сохранённые data/*.json, как требует
-   правило «не выдумывать»). Самоподключаемый модуль. */
-(function () {
-  'use strict';
+   правило «не выдумывать»). Запускается из js/app.js (initLiveData) после первой отрисовки.
+   Строка живёт внутри p#dataStatus в hero: дата релиза данных показывается в блоке «Сегодня», здесь —
+   только кнопка и, после ручного обновления, время и живой курс (без повтора «Данные обновлены …»). */
   var PFX = 'yulia.v2.';
 
   function lsGet(k, f) { try { var v = localStorage.getItem(PFX + k); return v === null ? f : JSON.parse(v); } catch (e) { return f; } }
@@ -32,13 +32,14 @@
     box.innerHTML = text + (extra ? ' · <span class="tiny">' + extra + '</span>' : '');
   }
 
-  function init() {
+  export function initLiveData() {
     var anchor = document.getElementById('dataStatus');
     if (!anchor || document.getElementById('liveDataBtn')) return;
 
-    var box = document.createElement('div');
+    // span, а не div: контейнер — абзац p#dataStatus
+    var box = document.createElement('span');
     box.id = 'liveDataBox';
-    box.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px';
+    box.style.cssText = 'display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap';
     var info = document.createElement('span');
     info.className = 'tiny';
     info.id = 'liveDataInfo';
@@ -46,21 +47,26 @@
     btn.type = 'button';
     btn.className = 'btn small secondary';
     btn.id = 'liveDataBtn';
-    btn.innerHTML = '⟳ Обновить сейчас';
+    btn.innerHTML = '⟳ Обновить данные';
     btn.setAttribute('aria-label', 'Обновить данные сейчас');
     box.appendChild(info); box.appendChild(btn);
-    anchor.insertAdjacentElement('afterend', box);
+    anchor.textContent = '';
+    anchor.appendChild(box);
 
     function paint(staleReason) {
       var meta = lsGet('liveMeta', null);
-      var txt = meta ? 'Курсы и данные: сохранены ' + fmtDateTime(meta.savedAt) : 'Данные: из последнего релиза сайта';
+      // без ручного обновления строка пустая: дата данных уже есть в «Сегодня»
+      var txt = meta ? 'Обновлено вручную ' + fmtDateTime(meta.savedAt) : '';
       if (meta && meta.live) txt += ' · живой курс ЦБ: ' + meta.usd + ' ₽/$';
-      setLine(info, txt, staleReason || undefined);
+      if (!txt && !staleReason) { info.textContent = ''; info.hidden = true; return; }
+      info.hidden = false;
+      setLine(info, txt || staleReason, txt ? staleReason || undefined : undefined);
     }
     paint();
 
     btn.addEventListener('click', function () {
       btn.disabled = true;
+      info.hidden = false;
       setLine(info, 'Обновляю…');
       var bust = '?t=' + Date.now();
       Promise.all([
@@ -91,9 +97,3 @@
       }).then(function () { btn.disabled = false; });
     });
   }
-
-  if (typeof document !== 'undefined') {
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
-    else setTimeout(init, 400);
-  }
-})();

@@ -24,8 +24,8 @@
 .td-date::first-letter{text-transform:uppercase}
 .td-fresh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0;font-size:12px;color:var(--mutedS)}
 .td-fresh i[data-lucide],.td-fresh svg.lucide{width:14px;height:14px}
-/* бейдж «Данные устарели» — метка (контур, без заливки и hover), не кнопка */
-.td-stale{display:inline-flex;align-items:center;padding:2px 9px;border:1px solid var(--text);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--text)}
+/* метка «Данные устарели» — плоская: жирный текст с линией слева (как справочные строки), без контура-пилюли и hover — не кнопка */
+.td-stale{display:inline-flex;align-items:center;padding:0 0 0 7px;border-left:2px solid var(--text);font-size:12px;font-weight:700;line-height:1.3;color:var(--text);cursor:default}
 .td-why{flex-basis:100%;font-size:12px;color:var(--mutedS)}
 
 /* Бенто: телефон — одна колонка; планшет — две; десктоп — «Ближайшее» | «Новости» | сезон и чек-лист */

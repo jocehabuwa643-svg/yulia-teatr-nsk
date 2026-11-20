@@ -9,13 +9,15 @@
     "competitors.json",
     "market.json",
     "guide.json",
+    "news.json",
     "meta.json",
     "archive.html"
   ],
   "data_version": 2,
   "refresh_policy": {
     "automated": [
-      "data/rates.json → scripts/fetch-cbr.mjs (Банк России)"
+      "data/rates.json → scripts/fetch-cbr.mjs (Банк России)",
+      "data/news.json → scripts/fetch-news.mjs (RSS: Минкультуры РФ и НСО, Правительство НСО, УФНС по НСО; ежедневно, хранение 60 дней)"
     ],
     "manual": [
       "налоговые пороги и ставки (проверка по ссылкам в DATA_SOURCES.md)",
@@ -25,7 +27,8 @@
     "stale_after_days": {
       "rates": 7,
       "prices": 30,
-      "grants": 30
+      "grants": 30,
+      "news": 14
     }
   },
   "source_of_truth": "https://github.com/jocehabuwa643-svg/yulia-teatr-nsk"

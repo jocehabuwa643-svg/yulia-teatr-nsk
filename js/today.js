@@ -166,8 +166,10 @@ function taxEvents(guide, now) {
       if (day == null) continue;
       const title = subject(m[1]);
       if (title.length < 3) continue;
+      // «… действуют до 31.12.2026», «Каникулы 0% … до …» — это дата окончания режима, а не срок подачи/оплаты
+      const ends = /действу(ют|ет)|каникул/i.test(m[1]);
       // пояснение — заголовок карточки справочника («Страховые взносы ИП за себя»), чтобы короткая подпись не потеряла смысл
-      out.push({ kind: 'tax', title: title.length > 64 ? title.slice(0, 63) + '…' : title, from: day, to: day, deadline: true, note: e.title || '', url: e.source_url || null });
+      out.push({ kind: 'tax', title: title.length > 64 ? title.slice(0, 63) + '…' : title, from: day, to: day, deadline: true, ends, note: e.title || '', url: e.source_url || null });
     }
   }
   return out;
@@ -186,7 +188,7 @@ export function upcomingEvents(data, now, { limit = EVENTS_MAX, horizon = HORIZO
     .map(ev => {
       const now_ = ev.from <= today && !ev.deadline;
       return {
-        kind: ev.kind, title: ev.title, note: ev.note, url: ev.url, deadline: !!ev.deadline,
+        kind: ev.kind, title: ev.title, note: ev.note, url: ev.url, deadline: !!ev.deadline, ends: !!ev.ends,
         status: now_ ? 'now' : 'soon',
         days: now_ ? ev.to - today : ev.from - today,
         date: dayLabel(ev.from, now), endDate: ev.to !== ev.from ? dayLabel(ev.to, now) : ''
@@ -256,7 +258,7 @@ const KIND_LABEL = { holiday: 'Каникулы', grant: 'Грант', tax: 'Н�
 function eventRow(ev) {
   const when = ev.status === 'now'
     ? `<span class="td-when now">идёт сейчас</span><span class="td-sub">до ${esc(ev.endDate || ev.date)}, ещё ${ev.days} ${plural(ev.days, 'день', 'дня', 'дней')}</span>`
-    : `<span class="td-when">${esc(inDays(ev.days))}</span><span class="td-sub">${ev.deadline ? 'до ' : ''}${esc(ev.date)}${ev.endDate ? ' — ' + esc(ev.endDate) : ''}</span>`;
+    : `<span class="td-when">${esc(inDays(ev.days))}</span><span class="td-sub">${ev.ends ? 'действуют до ' : ev.deadline ? 'до ' : ''}${esc(ev.date)}${ev.endDate ? ' — ' + esc(ev.endDate) : ''}</span>`;
   const url = safeUrl(ev.url);
   const title = url
     ? `<a class="td-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(ev.title)}<span class="sr-only"> (источник, откроется в новой вкладке)</span></a>`

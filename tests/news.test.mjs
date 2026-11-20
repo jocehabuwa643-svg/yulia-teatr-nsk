@@ -341,3 +341,12 @@ test('initNews без DOM или без свежих новостей — нич
   const r2 = initNews(data([mk(1, 40)]), { now: NOW, doc: null, win: null });
   assert.deepEqual(r2.items, []);
 });
+
+test('classify: «грант/фонд» в тексте новости о фестивале не делает её новостью о грантах', () => {
+  const festival = {
+    title: 'Мероприятия IX Большого Детского фестиваля собрали более 30 тысяч зрителей',
+    description: 'Фестиваль проходил при поддержке Президентского фонда культурных инициатив и получил грант.'
+  };
+  assert.equal(classify(festival, SRC), 'culture');
+  assert.equal(classify({ title: 'Конкурс', description: 'Открыт приём заявок на получение гранта' }, SRC), 'grants');
+});

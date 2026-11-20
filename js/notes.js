@@ -1,6 +1,6 @@
 /* notes.js — «Заметки Юлии»: создание/правка/удаление/закрепление/поиск, привязка к разделу,
    автосейв 400 мс в IndexedDB (fallback localStorage), экспорт/импорт, напоминание о бэкапе.
-   Самоподключаемый модуль: строит свою карточку в секции #launch при загрузке. */
+   Карточку в секции #launch строит initNotes() — её вызывает js/app.js при сборке раздела плана запуска. */
 import { store2, autosave, requestPersistence, exportAll, importAll, downloadJSON } from './storage-idb.js';
 
 const KEY = 'notes';
@@ -165,11 +165,4 @@ export async function initNotes() {
   const lastBackup = await store2.get('lastBackupAt', null);
   if (backupDue(lastBackup)) ui.backup.hidden = false;
   return notes;
-}
-
-/* Автозапуск при подключении модуля (после DOM) */
-if (typeof document !== 'undefined') {
-  const start = () => initNotes().catch(() => {});
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
-  else start();
 }

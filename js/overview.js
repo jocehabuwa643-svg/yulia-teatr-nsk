@@ -32,12 +32,12 @@ export function initOverview(cfg) {
   ];
   $('kpis').innerHTML = metrics.map(([i, l, v, u, h]) => {
     const num = v == null ? '<span class="muted">нет данных</span>' : `<span data-target="${v}">${fmt(v)}</span> <small class="unit">${u}</small>`;
-    return `<article class="kpi lift rv"><div class="kphead"><span class="kicon">${ic(i)}</span>${l}</div><div class="num">${num}</div><p>${h}</p></article>`;
+    return `<article class="kpi rv"><div class="kphead"><span class="kicon">${ic(i)}</span>${l}</div><div class="num">${num}</div><p>${h}</p></article>`;
   }).join('');
   $$('[data-target]').forEach(e => enter(e, () => counter(e)));
 
-  const meta = state.DATA.meta || {};
-  $('dataStatus').innerHTML = `${ic('database')}Данные обновлены: ${meta.generated_at ? new Date(meta.generated_at).toLocaleDateString('ru-RU') : '—'} · схема v${meta.data_version || '?'}`;
+  /* Дата обновления данных показывается один раз — в блоке «Сегодня» (js/today.js); p#dataStatus в hero занимает
+     кнопка «Обновить данные» (js/live-data.js) — без повтора одной и той же информации трижды подряд */
 
   /* Короткий лид (≤2 строк) со значениями из данных */
   const t = flat(cfg.ticket);
