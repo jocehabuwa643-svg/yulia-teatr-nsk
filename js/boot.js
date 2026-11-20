@@ -185,12 +185,15 @@
 
   // Самоподключаемые модули (динамический импорт работает и из классического скрипта):
   // notes — заметки Юлии с автосейвом в IndexedDB; afford — аффорданс кнопок («пальчик»);
-  // preset-cards — кейс-карточки «Рассчитай за 5 секунд» с FLIP-раскрытием
-  import('./notes.js').catch(function () {});
-  import('./afford.js').catch(function () {});
-  import('./preset-cards.js').catch(function () {});
-  import('./live-data.js').catch(function () {});
-  import('./premises.js').catch(function () {});
+  // preset-cards — кейс-карточки «Рассчитай за 5 секунд» с FLIP-раскрытием;
+  // live-data — «Обновить сейчас»; premises — ручной слой помещений.
+  // Пути от корня сайта: boot инлайнится в прод-сборке в корень страницы, а в дев-режиме лежит в /js/
+  // (относительный './notes.js' в проде бил бы в /notes.js — 404)
+  import('/js/notes.js').catch(function () {});
+  import('/js/afford.js').catch(function () {});
+  import('/js/preset-cards.js').catch(function () {});
+  import('/js/live-data.js').catch(function () {});
+  import('/js/premises.js').catch(function () {});
 
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else init();
 })();

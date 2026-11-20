@@ -203,6 +203,9 @@ async function main() {
 
   // Статика: данные, иконка, служебный .nojekyll (стили — ниже: склеенный assets/app.css или, без esbuild, копия css/)
   cpSync(join(ROOT, 'data'), join(OUT, 'data'), { recursive: true });
+  // Самоподключаемые модули boot.js (notes/afford/preset-cards/live-data/premises + их зависимости):
+  // бандл app.js их не содержит (dynamic import из инлайн-boot), поэтому js/ копируется целиком
+  cpSync(join(ROOT, 'js'), join(OUT, 'js'), { recursive: true });
   for (const f of ['favicon.svg', '.nojekyll']) {
     if (existsSync(join(ROOT, f))) cpSync(join(ROOT, f), join(OUT, f));
     else if (f === 'favicon.svg') console.warn('! нет favicon.svg — пропущено');
