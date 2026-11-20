@@ -134,7 +134,7 @@
 /* ---------- Узкие экраны: строки «подпись — значение» с плашками переносятся, а не расширяют страницу ---------- */
 .result .kv,.compare .kv{flex-wrap:wrap;gap:2px 10px;min-width:0}
 .result .kv>span{min-width:0}
-.result .kv b{white-space:normal;text-align:right;min-width:0;overflow-wrap:anywhere;margin-left:auto}
+.result .kv b{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px 6px;white-space:normal;text-align:right;min-width:0;overflow-wrap:anywhere;margin-left:auto}
 .result .srcinfo .sbadge,.srclist .sbadge{white-space:normal;text-align:left}
 .srclist li{min-width:0;overflow-wrap:anywhere}
 

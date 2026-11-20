@@ -70,3 +70,9 @@
 @media (prefers-reduced-motion:reduce){
   .g-track>span,.g-box,.g-box::after{transition:none}
 }
+
+/* Ссылки «Источник» в плашках и в таблице архива: тач-цель ≥44px на узких и сенсорных экранах */
+@media(max-width:1024px),(pointer:coarse){
+  /* ссылка остаётся строчной (текст течёт как раньше); вертикальный padding расширяет область касания до ≥44px, не двигая строки */
+  .g-note a,.archive td a{padding-block:15px}
+}

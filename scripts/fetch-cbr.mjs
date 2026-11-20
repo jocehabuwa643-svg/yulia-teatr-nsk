@@ -57,6 +57,9 @@ async function main() {
         source_name: 'Банк России, XML_daily', source_url: 'https://www.cbr.ru/scripts/XML_daily.asp'
       });
       delete block.status;
+      // legal_note и note согласуем с источником, который скрипт записал в блок, чтобы прежнее название источника не оставалось
+      block.legal_note = `Проверено: ${block.fetched_at} · ${block.source_name} · официальный курс, не налоговая ставка`;
+      block.note = 'Обновляется scripts/fetch-cbr.mjs по XML_daily.asp (курс на дату valid_from).';
       clearStale(block);
       console.log(`${code}/RUB = ${v} на ${parsed.validFrom}`);
     } else if (block.value !== null && block.value !== undefined) {

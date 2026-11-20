@@ -172,6 +172,7 @@ export function initCalc(cfg) {
     return `<div id="calc-${m.meta.id}" class="calcgrid" role="tabpanel" aria-labelledby="tab-${m.meta.id}" ${i ? 'hidden' : ''}>
       <article class="card rv calc-in">
         <div class="calcdesc"><span><b>Что считает:</b> ${m.meta.what.replace(/^Считает:\s*/, '')}</span><span><b>Когда:</b> ${m.meta.when.replace(/^Когда:\s*/, '')}</span></div>
+        ${m.meta.more ? `<details class="calcmore"><summary>Подробнее о расчёте</summary><p class="tiny">${m.meta.more}</p></details>` : ''}
         ${presetChips(m, cfg)}
         <div class="controls">${fields.map(fieldHTML).join('')}</div>
         <div class="toolrow">

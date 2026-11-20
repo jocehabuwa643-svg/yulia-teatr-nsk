@@ -147,7 +147,7 @@ function priceBlock(c) {
   const src = safeUrl(p && p.manual ? p.url : (p && p.source_url) || c.source_url);
   const a = src ? `<a href="${esc(src)}" target="_blank" rel="noopener noreferrer">источник ${ic('external-link')}</a>` : '';
   if (!p) {
-    return `<div class="pbox none"><span class="pv">Цена: нет данных</span><span class="ps">${c.price_note && String(c.price_note).length <= 90 ? esc(c.price_note) : 'Проверенного значения нет — детали в «Подробнее» или введите вручную'}</span></div>`;
+    return `<div class="pbox none"><span class="pv">Цена: нет данных</span><span class="ps">${c.price_note && String(c.price_note).length <= 70 ? esc(c.price_note) : 'Проверенного значения нет — детали в «Подробнее» или введите вручную'}</span></div>`;
   }
   const q = p.qualifier ? esc(p.qualifier) + ' ' : '';
   if (p.manual) {
@@ -160,7 +160,7 @@ function priceBlock(c) {
 /* Абзац карточки: короткий — как есть, длинный — вложенный <details>, чтобы не раздувать карточку */
 function longP(label, text) {
   if (!text) return '';
-  if (String(text).length <= 90) return `<p><b>${label}:</b> ${esc(text)}</p>`;
+  if (String(text).length <= 60) return `<p><b>${label}:</b> ${esc(text)}</p>`;
   return `<details class="mk-more mk-sub"><summary>${label}</summary><p>${esc(text)}</p></details>`;
 }
 
@@ -319,7 +319,7 @@ function initDemand(d) {
             <div class="ptrack" aria-hidden="true"><span class="pw" style="width:${r.shows / max * 100}%"><span class="pfill"></span></span></div>
             <div class="pval">${fmt(r.shows)}<small>${r.auto ? 'за 30 дн.' : 'показов/мес'}</small>${r.auto ? '' : `<button type="button" class="iconbtn" data-del="${esc(r.id)}" aria-label="Удалить запись «${esc(r.q)}»">${ic('trash-2')}</button>`}</div></li>`;
         }).join('')}</ul>${autoMeta}${mine.length ? '<div class="chartmeta"><span>Строки с кнопкой удаления введены вручную.</span></div>' : ''}`
-      : `<div class="nodata"><strong>Нет данных — подключите источник</strong><span>Wordstat и 2ГИС дают спрос только через официальный API с ключом. Без ключа график не строится и не имитируется.</span><ul class="srclist">${sources}</ul></div>`;
+      : `<div class="nodata"><strong>Нет данных — подключите источник</strong><span>Wordstat и 2ГИС дают спрос только через официальный API с ключом.</span><span>Без ключа график не строится и не имитируется.</span><ul class="srclist">${sources}</ul></div>`;
     box.innerHTML = chart + `<details class="mk-more" ${rows.length ? '' : 'open'}><summary>Добавить значение вручную</summary>
       <form class="mform" id="demandForm" novalidate>
         <label class="mf"><span>Запрос</span><input name="q" type="text" maxlength="80" placeholder="например, выездной театр" required list="demandQueries"></label>
@@ -384,7 +384,8 @@ function renderHolidays(cal) {
     const hit = hs.filter(h => (h.months || []).includes(i + 1));
     return `<div class="hc${hit.length ? ' on' : ''}" ${hit.length ? `title="${esc(hit.map(h => h.name + ' — ' + h.approx).join('; '))}"` : ''}><b>${n}</b><small>${hit.map(h => short(h.name)).join(' · ') || '·'}</small></div>`;
   }).join('');
-  $('holidayList').innerHTML = hs.map(h => `<span class="chip">${esc(h.name)} — ${esc(h.approx)}${h.peak ? ' · ' + esc(h.peak) : ''}${h.verified === false ? ' · не проверено' : ''}</span>`).join('') +
+  // чип праздника: название и сроки отдельными короткими строками (метка, не абзац)
+  $('holidayList').innerHTML = hs.map(h => `<span class="chip hol"><b>${esc(h.name)}</b><span>${esc(h.approx)}${h.peak ? ' · ' + esc(h.peak) : ''}${h.verified === false ? ' · не проверено' : ''}</span></span>`).join('') +
     `<details class="mk-more wide"><summary>Откуда даты</summary><div class="chartmeta">${freshBadge({ ...cal, confidence: 'model' })}</div><p>${esc(cal.note || '')} <a href="https://do.nios.ru" target="_blank" rel="noopener noreferrer">do.nios.ru</a></p></details>`;
   growOnEnter($('holidayCal'));
 }
@@ -394,9 +395,11 @@ function renderHolidays(cal) {
 function renderNetwork(rows) {
   const body = rows.map(n => {
     const u = safeUrl(n.url);
-    return `<tr><td>${esc(n.area)}</td><td>${n.confidence === 'no_data' ? '<span class="muted">Нет данных.</span> ' : ''}${esc(n.stat)}</td><td>${freshBadge({ confidence: n.confidence, fetched_at: COMP.fetched_at, source_url: n.url, source_name: n.area })}${u ? ` <a href="${esc(u)}" target="_blank" rel="noopener noreferrer">источник ${ic('external-link')}</a>` : ''}</td></tr>`;
+    // длинная сводка (>60 знаков) делится по «;» на короткие строки: каждая — отдельный блок, а не абзац из 5–8 строк
+    const stat = (String(n.stat).length <= 60 ? [String(n.stat)] : String(n.stat).split(/;\s*/)).filter(Boolean).map(t => `<span class="netline">${esc(t)}</span>`).join('');
+    return `<tr role="row"><td role="cell">${esc(n.area)}</td><td role="cell">${n.confidence === 'no_data' ? '<span class="netline muted">Нет данных.</span>' : ''}${stat}</td><td role="cell">${freshBadge({ confidence: n.confidence, fetched_at: COMP.fetched_at, source_url: n.url, source_name: n.area })}${u ? ` <a href="${esc(u)}" target="_blank" rel="noopener noreferrer">источник ${ic('external-link')}</a>` : ''}</td></tr>`;
   }).join('');
   $('networkStats').innerHTML = rows.length
-    ? `<div class="tablebox"><table><thead><tr><th scope="col">Территория</th><th scope="col">Подтверждённый масштаб</th><th scope="col">Источник</th></tr></thead><tbody>${body}</tbody></table></div>`
+    ? `<div class="tablebox"><table class="net" role="table"><thead><tr role="row"><th scope="col" role="columnheader">Территория</th><th scope="col" role="columnheader">Подтверждённый масштаб</th><th scope="col" role="columnheader">Источник</th></tr></thead><tbody role="rowgroup">${body}</tbody></table></div>`
     : '<div class="nodata"><strong>Нет данных</strong><span>Сеть учреждений не загружена.</span></div>';
 }

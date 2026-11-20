@@ -222,3 +222,33 @@ span.rv-src{display:inline-flex;align-items:center;min-height:24px}
   .rival:hover,.iconbtn:hover{transform:none}
   .mk-pinwrap .pin,.mk-pinwrap:hover .pin{transition:none}
 }
+
+/* ---------- Сеть образовательных организаций, чипы каникул, ссылки-источники (проверка 360px/1280px) ---------- */
+.netline{display:block}
+.lt:has(b .small){grid-column:1/-1}
+.netline+.netline{margin-top:2px}
+.tablebox table.net td:last-child{min-width:220px}
+.chip.hol{display:grid;gap:1px;border-radius:14px;padding:8px 14px;font-weight:500;line-height:1.35}
+.chip.hol b{font-weight:700;color:var(--text)}
+
+/* Узкий экран: таблица сети раскладывается карточками «территория → масштаб → источник»; шапка скрыта визуально, но остаётся для скринридеров */
+@media(max-width:640px){
+  table.net,table.net tbody,table.net tr,table.net td{display:block}
+  table.net{width:100%}
+  table.net thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  table.net tr{padding:8px 0;border-bottom:1px solid var(--line)}
+  table.net tr:last-child{border-bottom:0}
+  table.net td{border:0;padding:3px 12px}
+  table.net td:first-child{font-weight:700;color:var(--text)}
+  table.net td:last-child{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px}
+}
+
+/* Ссылки-источники внутри таблиц и «Подробнее»: тач-цель ≥44px на узких и сенсорных экранах */
+@media(max-width:1024px),(pointer:coarse){
+  .tablebox td a,.mk-more p a{padding-block:15px}
+}
+
+/* Кнопки масштаба Leaflet (штатные 30×30): на узких и сенсорных экранах — 44×44 */
+@media(max-width:1024px),(pointer:coarse){
+  .leaflet-container .leaflet-bar a.leaflet-control-zoom-in,.leaflet-container .leaflet-bar a.leaflet-control-zoom-out{width:var(--tap);height:var(--tap);line-height:var(--tap)}
+}

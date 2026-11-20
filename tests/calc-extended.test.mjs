@@ -652,8 +652,9 @@ test('ставки 1% и ПСН читаются из rates.json: смена з�
   near(taxes({ year: 2027, revenue: 3.6e6, costShare: 55, social: 0, employees: 0 }, hi).ip.extra, 66000, 1e-6);   // 2% × 3 300 000
   const pat = build({ rates: { patent_potential_nsk: 1000000, patent_tax_rate: 4 }, cfg: {} });
   near(taxes({ year: 2027, revenue: 3.6e6, costShare: 55, social: 0, employees: 0 }, pat).regimes.find(g => g.id === 'patent').tax, 40000, 1e-6);
-  // ставка ПСН без источника не выдаётся за надёжную: низкая надёжность видна в метаданных
-  assert.equal(cfg.rateMeta.patent_tax_rate.confidence, 'low');
+  // ставка ПСН 6% сверена с первоисточником (НК РФ ст. 346.50 п.1, 2026-11-20): надёжность high, ссылка прямая на статью
+  assert.equal(cfg.rateMeta.patent_tax_rate.confidence, 'high');
+  assert.match(cfg.rateMeta.patent_tax_rate.source_url, /nalog\.garant\.ru\/fns\/nk\//);
   assert.match(cfg.rateMeta.contributions_1pct_threshold.note, /без НДС/);
 });
 
