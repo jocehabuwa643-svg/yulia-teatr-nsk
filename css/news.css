@@ -1,0 +1,111 @@
+/* @defer news.css целиком уходит в отложенный CSS сборки (плашка появляется не раньше первого действия пользователя) */
+/* ============================================================
+   news.css — выезжающая плашка «Новости отрасли» (js/news.js).
+   Только семантические токены (обе темы), анимируются transform/opacity с кривой var(--spring),
+   reduced-motion — без движения. Тач-цели ≥ 44px. На узких экранах — внизу на всю ширину с отступами 16px.
+   ============================================================ */
+
+/* Контейнер: справа снизу, над контентом, ниже системного тоста (.toast — 1500) */
+.newsflash{
+  position:fixed;right:24px;bottom:24px;z-index:1400;
+  width:min(380px,calc(100vw - 48px));
+  max-height:min(70vh,520px);overflow:auto;overscroll-behavior:contain;
+  padding:14px 14px 16px;
+  background:var(--card);color:var(--text);
+  border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow-lg);
+  font-family:var(--font-text);
+  opacity:0;transform:translateY(24px) scale(.97);transform-origin:bottom right;
+  transition:opacity .35s var(--spring),transform .6s var(--spring);
+}
+.newsflash.show{opacity:1;transform:none}
+.newsflash.hiding{opacity:0;transform:translateY(16px) scale(.98);transition-duration:.25s,.4s}
+
+/* Шапка: подпись + кнопка закрытия */
+.newsflash .nf-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 4px 6px}
+.newsflash .nf-kicker{margin:0;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mutedS)}
+.newsflash .nf-close{
+  flex:none;display:inline-grid;place-items:center;
+  width:var(--tap);height:var(--tap);margin:-6px -4px -6px 0;padding:0;
+  border:0;border-radius:999px;background:var(--chip);color:var(--text);cursor:pointer;
+  transition:transform .35s var(--spring),opacity .2s var(--spring);
+}
+.newsflash .nf-close svg.lucide{width:18px;height:18px}
+.newsflash .nf-close:active{transform:scale(.92)}
+
+/* Список новостей: каждая строка — ссылка (явно нажимаемая: фон при наведении, стрелка «наружу») */
+.newsflash .nf-list{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.newsflash .nf-item{
+  position:relative;isolation:isolate;
+  display:grid;grid-template-columns:1fr auto;column-gap:10px;row-gap:3px;align-items:start;
+  min-height:var(--tap);padding:10px 10px 10px 8px;border-radius:var(--r-s);
+  color:inherit;text-decoration:none;cursor:pointer;
+  transition:transform .35s var(--spring);
+}
+.newsflash .nf-item::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;background:var(--solid);
+  opacity:0;transform:scale(.97);z-index:-1;pointer-events:none;
+  transition:opacity .15s var(--spring),transform .45s var(--spring);
+}
+.newsflash .nf-item:active{transform:scale(.985)}
+.newsflash .nf-title{
+  grid-column:1;font-size:15px;line-height:1.35;font-weight:600;color:var(--text);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.newsflash .nf-meta{grid-column:1;font-size:12px;line-height:1.4;color:var(--mutedS)}
+.newsflash .nf-ext{grid-column:2;grid-row:1 / span 2;align-self:center;color:var(--mutedS);transition:transform .35s var(--spring)}
+.newsflash .nf-ext svg.lucide{width:16px;height:16px;display:block}
+
+/* Текст только для скринридера: «откроется в новой вкладке» */
+.newsflash .nf-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+
+/* «Все новости» — вторичная кнопка-ссылка к дайджесту */
+.newsflash .nf-all{
+  display:inline-flex;align-items:center;gap:8px;min-height:var(--tap);margin:6px 0 0 8px;padding:0 14px;
+  border:1px solid var(--line);border-radius:999px;
+  font-size:14px;font-weight:600;color:var(--text);text-decoration:none;
+  transition:transform .35s var(--spring);
+}
+.newsflash .nf-all svg.lucide{width:16px;height:16px;transition:transform .35s var(--spring)}
+.newsflash .nf-all:active{transform:scale(.97)}
+
+/* Полоска оставшегося времени: сжимается по X; на паузе (наведение/фокус) — стоит */
+.newsflash .nf-timer{
+  position:absolute;left:18px;right:18px;bottom:7px;height:2px;border-radius:2px;
+  background:var(--track);transform-origin:left center;
+  animation:nf-time linear forwards;
+}
+.newsflash.paused .nf-timer{animation-play-state:paused}
+@keyframes nf-time{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+/* Наведение — только на устройствах с мышью, чтобы на телефоне не «залипало» */
+@media (hover:hover){
+  .newsflash .nf-item:hover::before{opacity:.06;transform:none}
+  .newsflash .nf-item:hover .nf-ext{transform:translate(2px,-2px)}
+  .newsflash .nf-close:hover{opacity:.8}
+  .newsflash .nf-all:hover svg.lucide{transform:translateX(3px)}
+}
+.newsflash .nf-item:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:-2px;border-radius:var(--r-s)}
+.newsflash .nf-close:focus-visible,.newsflash .nf-all:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px;border-radius:999px}
+
+/* Узкие экраны: внизу на всю ширину с отступами 16px, с учётом «чёлки»/жестовой панели */
+@media (max-width:600px){
+  .newsflash{
+    left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:auto;
+    max-height:min(60vh,460px);transform-origin:bottom center;border-radius:20px;
+  }
+  .newsflash .nf-title{font-size:14px;-webkit-line-clamp:2}
+  .newsflash .nf-item{padding-block:8px}
+}
+
+/* Без движения: появление и исчезновение — мгновенно, полоска времени скрыта */
+@media (prefers-reduced-motion:reduce){
+  .newsflash,.newsflash.hiding,.newsflash .nf-item,.newsflash .nf-ext,.newsflash .nf-all svg.lucide,.newsflash .nf-close{transition:none;transform:none}
+  .newsflash .nf-timer{display:none}
+}
+.newsflash.still{transition:none;transform:none}
+.newsflash.still .nf-timer{display:none}
+
+/* Печать — плашка не нужна */
+@media print{.newsflash{display:none!important}}
+/* @end-defer */
