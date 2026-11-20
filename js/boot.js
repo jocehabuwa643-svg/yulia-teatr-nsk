@@ -183,5 +183,10 @@
     if (t && t.tagName === 'SCRIPT' && /(?:js|assets)\/app\.js/.test(t.src || '')) showBootNotice();
   }, true);
 
+  // Самоподключаемые модули (динамический импорт работает и из классического скрипта):
+  // notes — заметки Юлии с автосейвом в IndexedDB; afford — аффорданс кнопок («пальчик»)
+  import('./notes.js').catch(function () {});
+  import('./afford.js').catch(function () {});
+
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else init();
 })();

@@ -20,10 +20,13 @@
 <link rel="stylesheet" href="css/themes.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/today.css">
 <link rel="stylesheet" href="css/splash.css">
 <link rel="stylesheet" href="css/calc.css">
 <link rel="stylesheet" href="css/market.css">
 <link rel="stylesheet" href="css/guide.css">
+<link rel="stylesheet" href="css/news.css">
+<link rel="stylesheet" href="css/afford.css">
 <!-- Leaflet, Chart.js и Lucide здесь не подключаются: js/ui/helpers.js подгружает их лениво (карта/графики — за ~600px до блока, иконки — в простое) -->
 <style>
 /* Печать / PDF: только активный калькулятор и результат, всегда светлая палитра независимо от темы экрана */
@@ -180,6 +183,8 @@
   </div>
   <p class="datastat" id="dataStatus"></p>
   </div>
+  <!-- Дайджест «Сегодня»: дата открытия, ближайшие сроки, новости отрасли (js/today.js; место зарезервировано в css/today.css) -->
+  <section id="today" class="today" aria-labelledby="todayTitle" aria-busy="true"><h2 class="sr-only" id="todayTitle">Сегодня</h2></section>
   <div id="kpis" class="kpis cascade"></div>
 
   <div class="analytics">

@@ -1,0 +1,60 @@
+/* afford.css — аффорданс: кнопки явно «нажимаемые», карточки-не-кнопки — нет. */
+
+/* 1) Некликабельные карточки: никакого курсора-руки и подъёма при наведении */
+.kpi, .rival, .scheme, .stage, .advice, .nodata, .verify, .legend, .mapkey, .chartmeta { cursor: default; }
+.kpi:hover { transform: none; border-color: var(--line); }
+.rival:hover, .scheme:hover { transform: none; }
+
+/* 2) Действующие кнопки: единый «нажимаемый» вид */
+.btn, .chip, .tab, .mode, .mmode, .ghostbtn, .periods button, #mobnav a, .theme-card, .btn-next, .note-tools button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(142, 142, 147, .25);
+}
+.btn:active, .chip:active, .mode:active, .tab:active, .mmode:active { transform: translateY(1px) scale(.985); }
+
+/* 3) «Пальчик»-подсказка на главных действиях при первом входе: пульсирующее кольцо-касание */
+.touch-hint {
+  position: absolute;
+  width: 34px; height: 34px;
+  right: -8px; top: -8px;
+  pointer-events: none;
+  z-index: 5;
+}
+.touch-hint::before, .touch-hint::after {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--silver);
+  animation: touchPulse 2.4s var(--ease) infinite;
+}
+.touch-hint::after { animation-delay: 1.2s; }
+.touch-hint i {
+  position: absolute; left: 50%; top: 50%;
+  width: 8px; height: 8px; margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--silver);
+}
+@keyframes touchPulse {
+  0%   { transform: scale(.35); opacity: 0; }
+  25%  { opacity: .95; }
+  70%  { transform: scale(1); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+/* reduced-motion: подсказку не показываем, нажатие без transform */
+@media (prefers-reduced-motion: reduce) {
+  .touch-hint { display: none; }
+  .btn:active, .chip:active, .mode:active, .tab:active, .mmode:active { transform: none; }
+}
+
+/* Заметки */
+.notes-list{display:grid;gap:8px}
+.note{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--card)}
+.note.pinned{border-color:var(--silver)}
+.note textarea{width:100%;border:0;background:transparent;color:var(--text);resize:vertical;font:inherit;padding:6px}
+.note textarea:focus{outline:none}
+.note-tools{display:grid;gap:6px}
+.note-tools button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:15px;line-height:1}
+.note-tools button:hover{border-color:var(--silver)}
+.saved-ind{min-height:16px;transition:opacity .3s var(--ease);opacity:.55}
+.saved-ind.saved{opacity:1;color:var(--text2)}
