@@ -189,6 +189,8 @@
   import('./notes.js').catch(function () {});
   import('./afford.js').catch(function () {});
   import('./preset-cards.js').catch(function () {});
+  import('./live-data.js').catch(function () {});
+  import('./premises.js').catch(function () {});
 
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else init();
 })();
