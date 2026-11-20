@@ -5,7 +5,7 @@
    «API KEY REQUIRED» (ETag wm-*), а ключ в статическом сайте был бы публичным. Поэтому берём стандартные тайлы
    OpenStreetMap (ключ не нужен) и делаем их монохромными CSS-фильтром: светлая тема — grayscale, тёмная — инверсия
    (css/market.css, .mapstage .leaflet-tile-pane). Смена темы работает чисто на CSS по [data-theme] — без JS. */
-import { $, $$, fmt, signed, ic, icons, toast, store, reduced, enter } from './ui/helpers.js';
+import { $, $$, fmt, signed, ic, icons, toast, store, reduced, enter, ensureLeaflet } from './ui/helpers.js';
 import { travelCalc } from './calculators/travel.js';
 import { state } from './state.js';
 import { freshBadge } from './market.js';
@@ -86,7 +86,8 @@ export function initMap(regionsData, calcConfig) {
   setMode(false, 'home', false);
 
   // Карта создаётся лениво — когда блок попал в зону видимости
-  enter($('map'), buildMap);
+  // Leaflet (css+js) подгружается за ~600px до блока карты; при сбое CDN buildMap покажет плашку-запасной путь
+  enter($('map'), () => ensureLeaflet().catch(() => null).then(buildMap), '600px');
 }
 
 /* Переключатель режимов: подгоняет карту, выбирает локацию (заданную или первую в режиме) */

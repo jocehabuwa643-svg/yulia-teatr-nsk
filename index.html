@@ -24,10 +24,7 @@
 <link rel="stylesheet" href="css/calc.css">
 <link rel="stylesheet" href="css/market.css">
 <link rel="stylesheet" href="css/guide.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
-<script defer src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<!-- Leaflet, Chart.js и Lucide здесь не подключаются: js/ui/helpers.js подгружает их лениво (карта/графики — за ~600px до блока, иконки — в простое) -->
 <style>
 /* Печать / PDF: только активный калькулятор и результат, всегда светлая палитра независимо от темы экрана */
 @media print{
@@ -101,7 +98,7 @@
         <path class="sp" style="--s:3" d="M18 146l1.8 4.8 4.8 1.8-4.8 1.8-1.8 4.8-1.8-4.8-4.8-1.8 4.8-1.8z"/>
         <path class="sp" style="--s:4" d="M160 14l1.8 4.8 4.8 1.8-4.8 1.8-1.8 4.8-1.8-4.8-4.8-1.8 4.8-1.8z"/>
       </svg>
-      <!-- Название и слоган из логотипа (текст прочитан с кадров видео; подтвердить у владельца — см. HANDOFF.md) -->
+      <!-- Название и слоган из логотипа (текст прочитан с кадров видео; подтвердить у владельца) -->
       <div class="logo-word"><b>Лаборатория волшебных событий</b><i>нескучные уроки</i></div>
 
       <h2 id="veilTitle" class="veil-title" aria-label="Юлия, приветствую Вас">

@@ -37,7 +37,7 @@ i[data-lucide]{display:inline-block}
 .hint{font-size:12px;color:var(--mutedS);line-height:1.5}
 .tnum{font-variant-numeric:tabular-nums}
 
-.section{padding:clamp(34px,4.4vw,56px) 0 0;scroll-margin-top:70px}
+.section{padding:clamp(34px,4.4vw,56px) 0 0;scroll-margin-top:60px} /* 60 + scroll-padding 84 = 144px < линии scroll-spy (шапка + 90) */
 .secthead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
 .secthead h2{margin-top:8px;text-wrap:balance}
 .secthead .tiny{max-width:52ch}
@@ -82,4 +82,18 @@ ol,ul{padding-left:20px}
   .js-ready .rv,.js-ready .rv.in{opacity:1;transform:none}
   .pop{opacity:1;transform:none}
   .badge .dotp{opacity:.6}
+}
+
+/* ---------- Подмена веб-шрифтов без сдвига макета ----------
+   Пока Inter / Playfair Display грузятся (font-display: swap), текст рисуется локальным шрифтом с подогнанными метриками:
+   size-adjust уравнивает ширину знаков, ascent/descent-override — высоту строки. Значения подобраны замером
+   (ширина кириллического абзаца и fontBoundingBox в Chrome). Шрифты в репозиторий не вкладываются. */
+@font-face{font-family:"Inter Fallback";src:local("Arial"),local("ArialMT"),local("Helvetica"),local("Liberation Sans");font-weight:100 599;size-adjust:106%;ascent-override:91.4%;descent-override:22.8%;line-gap-override:0%}
+@font-face{font-family:"Inter Fallback";src:local("Arial Bold"),local("Arial-BoldMT"),local("Helvetica Bold"),local("Liberation Sans Bold");font-weight:600 900;size-adjust:101.5%;ascent-override:95.4%;descent-override:23.8%;line-gap-override:0%}
+@font-face{font-family:"Playfair Fallback";src:local("Georgia");font-weight:100 649;size-adjust:102.9%;ascent-override:105.2%;descent-override:24.3%;line-gap-override:0%}
+@font-face{font-family:"Playfair Fallback";src:local("Georgia Bold"),local("Georgia-Bold");font-weight:650 900;size-adjust:91.2%;ascent-override:118.6%;descent-override:27.5%;line-gap-override:0%}
+:root{
+  --font-display:"Inter","Inter Fallback","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-text:"Inter","Inter Fallback","SF Pro Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-serif:"Playfair Display","Playfair Fallback","Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
 }

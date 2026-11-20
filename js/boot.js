@@ -180,7 +180,7 @@
   // Ошибка загрузки/парсинга модуля — не ждём таймера, если уже ясно, что приложение не стартует
   window.addEventListener('error', function (e) {
     var t = e && e.target;
-    if (t && t.tagName === 'SCRIPT' && /js\/app\.js/.test(t.src || '')) showBootNotice();
+    if (t && t.tagName === 'SCRIPT' && /(?:js|assets)\/app\.js/.test(t.src || '')) showBootNotice();
   }, true);
 
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else init();

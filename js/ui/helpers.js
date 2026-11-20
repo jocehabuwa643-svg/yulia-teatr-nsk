@@ -1,4 +1,5 @@
 /* helpers.js — форматирование и DOM-хелперы без бизнес-логики */
+import { ICON_DATA } from './icon-data.js';
 export const $ = id => document.getElementById(id);
 export const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 export const fmt = v => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(v)).replace(/-/g, '−');
@@ -7,7 +8,75 @@ export const signed = v => (Math.round(v) > 0 ? '+' : '') + rub(v);
 export const pct = v => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(v) + '%';
 export const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ic = n => `<i data-lucide="${n}" aria-hidden="true"></i>`;
-export function icons() { try { window.lucide && window.lucide.createIcons(); } catch (e) { /* CDN недоступен — иконки декоративны */ } }
+
+/* ---------- Ленивая подгрузка внешних библиотек (Leaflet, Chart.js, Lucide) ----------
+   Ничто из этого не блокирует первую отрисовку: скрипты вставляются динамически (async),
+   версии зафиксированы. При сбое CDN промис отклоняется, а приложение работает дальше (иконки декоративны). */
+const LIBS = {
+  leafletCss: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  leafletJs: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  chartJs: 'https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js',
+  lucideJs: 'https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js'
+};
+const libPromises = {};
+function loadOnce(key, make) {
+  if (!libPromises[key]) libPromises[key] = new Promise((resolve, reject) => {
+    const el = make();
+    el.onload = () => resolve();
+    el.onerror = () => { delete libPromises[key]; el.remove(); reject(new Error('не загрузилось: ' + LIBS[key])); };
+    document.head.appendChild(el);
+  });
+  return libPromises[key];
+}
+function loadScript(key) {
+  return loadOnce(key, () => { const s = document.createElement('script'); s.src = LIBS[key]; s.async = true; return s; });
+}
+function loadStyle(key) {
+  return loadOnce(key, () => { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = LIBS[key]; return l; });
+}
+export const ensureLeaflet = () => window.L ? Promise.resolve(window.L) : Promise.all([loadStyle('leafletCss'), loadScript('leafletJs')]).then(() => window.L);
+export const ensureChart = () => window.Chart ? Promise.resolve(window.Chart) : loadScript('chartJs').then(() => window.Chart);
+
+/* Выполнить в простое браузера (после первой отрисовки); запасной путь — setTimeout */
+export function whenIdle(fn, timeout = 1500) {
+  if (window.requestIdleCallback) requestIdleCallback(fn, { timeout });
+  else setTimeout(fn, 120);
+}
+
+/* ---------- Иконки ----------
+   <i data-lucide="имя"> заменяется встроенным SVG из js/ui/icon-data.js (геометрия Lucide, ISC) — синхронно, без внешней библиотеки:
+   нет запроса к CDN, нет ~100 мс выполнения Lucide на главном потоке, иконки появляются сразу и работают офлайн.
+   Запасной путь: если имени нет в наборе, полная Lucide подгружается лениво с CDN (иконки декоративны — без неё всё работает). */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const SVG_FRAME = { xmlns: SVG_NS, width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+
+function iconSvg(name, src) {
+  const parts = ICON_DATA[name];
+  if (!parts) return null;
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  for (const k in SVG_FRAME) svg.setAttribute(k, SVG_FRAME[k]);
+  // атрибуты исходного <i> (aria-hidden, style, data-*) переносятся; классы дополняются служебными
+  for (const a of src.attributes) if (a.name !== 'data-lucide' && a.name !== 'class') svg.setAttribute(a.name, a.value);
+  svg.setAttribute('class', ['lucide', 'lucide-' + name, src.getAttribute('class')].filter(Boolean).join(' '));
+  for (const [tag, attrs] of parts) {
+    const el = document.createElementNS(SVG_NS, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    svg.appendChild(el);
+  }
+  return svg;
+}
+
+let lucideAsked = false;
+export function icons() {
+  let unknown = false;
+  document.querySelectorAll('i[data-lucide]').forEach(el => {
+    const svg = iconSvg(el.getAttribute('data-lucide'), el);
+    if (svg) el.replaceWith(svg); else unknown = true;
+  });
+  if (!unknown || lucideAsked) return;
+  lucideAsked = true;
+  whenIdle(() => loadScript('lucideJs').then(() => { try { window.lucide.createIcons(); } catch (e) { /* иконки декоративны */ } }).catch(() => { /* CDN недоступен — иконки декоративны */ }), 2500);
+}
 
 export const kv = (label, v) => `<div class="kv"><span>${label}</span><b>${v}</b></div>`;
 export const minis = items => `<div class="ministats">${items.map(([s, v]) => `<div><small>${s}</small><b>${v}</b></div>`).join('')}</div>`;
@@ -87,13 +156,16 @@ export function popNumber(el, value) {
   el.addEventListener('animationend', () => el.classList.remove('pop'), { once: true });
   return changed;
 }
-export function enter(el, fn) {
+/* enter(el, fn[, margin]) — один раз вызвать fn, когда el попал в зону видимости; margin — упреждение («600px» = за 600px до вьюпорта) */
+export function enter(el, fn, margin = '0px') {
   if (!window.IntersectionObserver) { fn(); return; }
-  const ob = new IntersectionObserver(a => { if (a.some(x => x.isIntersecting)) { fn(); ob.disconnect(); } }, { threshold: .05 });
+  const ob = new IntersectionObserver(a => { if (a.some(x => x.isIntersecting)) { fn(); ob.disconnect(); } }, { threshold: margin === '0px' ? .05 : 0, rootMargin: margin });
   ob.observe(el);
 }
 export function initReveal(scope = document) {
-  const els = $$('.rv', scope);
+  // Идемпотентно: обработанные элементы помечены, повторный вызов (после отрисовки разделов) берёт только новые
+  const els = $$('.rv:not([data-rv])', scope);
+  els.forEach(e => e.setAttribute('data-rv', ''));
   if (!window.IntersectionObserver || !motionOK()) { els.forEach(e => e.classList.add('in', 'rv-done')); return; }
   // Скрывать .rv (opacity:0) можно только когда скрипт реально работает — иначе при сбое контент останется невидимым
   document.documentElement.classList.add('js-ready');
@@ -127,10 +199,14 @@ function bindSegment(group) {
     if (!placed) { placed = true; requestAnimationFrame(() => requestAnimationFrame(() => group.classList.add('seg-ready'))); }
   };
   group.classList.add('has-ind');
-  place();
-  new MutationObserver(place).observe(group, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-pressed', 'aria-selected'] });
-  if (window.ResizeObserver) new ResizeObserver(place).observe(group);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+  // Чтение геометрии (offsetLeft/offsetWidth) принудительно раскладывает страницу, поэтому все вызовы схлопываются в один на кадр:
+  // иначе каждая мутация DOM давала отдельную синхронную раскладку в микрозадаче
+  let queued = false;
+  const schedule = () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; place(); }); } };
+  schedule();
+  new MutationObserver(schedule).observe(group, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-pressed', 'aria-selected'] });
+  if (window.ResizeObserver) new ResizeObserver(schedule).observe(group);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
 }
 
 /* ---------- Заливка активной части ползунков (CSS-переменная --fill) ---------- */

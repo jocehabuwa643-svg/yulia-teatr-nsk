@@ -9,7 +9,7 @@
 /* Заставка всегда «ночная», независимо от выбранной темы приложения */
 #veil{
   --v-bg:var(--void);--v-text:var(--paper);--v-sub:var(--silver-hi);--v-line:var(--graphite);--v-card:var(--ink);
-  position:fixed;inset:0;z-index:1000;display:grid;place-items:center;
+  position:fixed;inset:0;z-index:1000;display:grid;place-items:start center; /* верх зафиксирован: подмена шрифта меняет высоту блока, а логотип не едет (CLS) */
   background:var(--v-bg);color:var(--v-text);overflow:auto;overscroll-behavior:contain;
   transition:transform .8s var(--spring),opacity .7s var(--spring),visibility 0s .8s;
 }
@@ -19,7 +19,7 @@
   content:"";position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(70% 55% at 50% 28%,var(--paper-a10),transparent 72%);
 }
-.veil-in{position:relative;width:min(760px,calc(100% - 36px));text-align:center;padding:clamp(20px,5vh,48px) 0}
+.veil-in{position:relative;width:min(760px,calc(100% - 36px));text-align:center;padding:clamp(24px,10vh,110px) 0 clamp(20px,5vh,48px)}
 .veil-screen[hidden]{display:none}
 .veil-screen.leaving{opacity:0;transform:translateY(-18px) scale(.985);transition:opacity .32s ease,transform .32s var(--spring)}
 
