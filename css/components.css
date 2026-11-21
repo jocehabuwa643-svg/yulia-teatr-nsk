@@ -525,23 +525,34 @@ span.chip::before{display:none}
 .badge{border-color:transparent;background:transparent;padding-inline:0}
 button.chip,a.chip,.tab,.mmode,.periods button{cursor:pointer}
 
-/* Подсказка «пальчик / нажмите» (helpers.js → bindTapHints): иконка руки в углу главной кнопки раздела.
-   Жест — translate/scale + opacity по кривой --spring; в покое иконка скрыта (opacity:0) и не ловит клики */
-.has-tap{position:relative}
-/* иконка сидит на нижнем правом углу кнопки и выходит за него наполовину: внутри остаётся ≤13px — это поле отступа, подпись не перекрывается */
-.taphint{position:absolute;right:-13px;bottom:-13px;z-index:2;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--card);color:var(--text);border:1px solid var(--line);box-shadow:var(--shadow);opacity:0;pointer-events:none}
-.taphint svg.lucide{width:15px;height:15px;stroke-width:2}
-.taphint.play{animation:taptap 1.5s var(--spring) 2}
-@media(hover:hover){.has-tap:hover>.taphint{animation:taptap 1.5s var(--spring) 1}}
-@keyframes taptap{
-  0%{opacity:0;transform:translate(8px,8px) scale(.85)}
-  22%{opacity:1;transform:none}
-  42%{opacity:1;transform:translate(-2px,-2px) scale(.8)}
-  60%{opacity:1;transform:none}
-  85%{opacity:1;transform:none}
-  100%{opacity:0;transform:translate(4px,4px) scale(.9)}
+/* Подсказка «пальчик / нажмите» (js/ui/tap-hints.js): рука поверх страницы у главной кнопки; двигается только transform/opacity.
+   Слой fixed + pointer-events:none — клики проходят насквозь, вёрстку не трогает. Цвета — токены обеих тем. */
+.tap-finger{position:fixed;left:0;top:0;z-index:1300;width:56px;height:56px;pointer-events:none;will-change:transform;
+  --tf-fill:var(--card);--tf-stroke:var(--text)}
+.tap-finger .tf-hand{position:relative;display:block;width:56px;height:56px;opacity:0;transform-origin:33% 8%;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.22));animation:tftap 2.4s var(--spring) 1 forwards}
+/* круг-«волна» от кончика пальца в момент касания */
+.tap-finger .tf-hand::after{content:"";position:absolute;left:33%;top:8%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;
+  border:2px solid var(--text);opacity:0;animation:tfring 2.4s ease-out 1 forwards}
+@keyframes tftap{
+  0%{opacity:0;transform:translateY(22px) scale(.92)}
+  16%{opacity:1;transform:translateY(8px) scale(1)}
+  30%{opacity:1;transform:translateY(-4px) scale(.92)}
+  42%{opacity:1;transform:translateY(8px) scale(1)}
+  56%{opacity:1;transform:translateY(-4px) scale(.92)}
+  68%{opacity:1;transform:translateY(8px) scale(1)}
+  88%{opacity:1;transform:translateY(8px) scale(1)}
+  100%{opacity:0;transform:translateY(16px) scale(.94)}
 }
-@media print{.taphint{display:none}}
+@keyframes tfring{
+  0%,28%{opacity:0;transform:scale(.4)}
+  32%{opacity:.45;transform:scale(.6)}
+  44%{opacity:0;transform:scale(1.5)}
+  54%{opacity:0;transform:scale(.4)}
+  58%{opacity:.45;transform:scale(.6)}
+  70%,100%{opacity:0;transform:scale(1.5)}
+}
+@media print,(prefers-reduced-motion:reduce){.tap-finger{display:none}}
 
 /* тач-цели ≥44px на любой ширине: интерактивные чипы (кнопки и ссылки), вкладки, кнопки; неинтерактивные чипы-метки (span) остаются компактными */
 button.chip,a.chip,.tab,.mmode,.btn.small,.btn[type=submit]{min-height:var(--tap)}

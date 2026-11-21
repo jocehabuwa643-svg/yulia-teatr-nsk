@@ -18,7 +18,6 @@ import { initNotes } from './notes.js';
 import { initPresetCards } from './preset-cards.js';
 import { initPremises } from './premises.js';
 import { initLiveData } from './live-data.js';
-import './afford.js'; // самоподключаемый: «пальчик»-пульс на главных кнопках при первом входе
 import { initReveal, enter, whenIdle } from './ui/helpers.js';
 import { lazyChartLib } from './charts.js';
 import { state, hasCoreData } from './state.js';
