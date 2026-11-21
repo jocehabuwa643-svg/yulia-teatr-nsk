@@ -152,3 +152,165 @@
   .sc-out{position:static}
   .sc-printin{display:block;list-style:none;padding:0;margin:0 0 12px;font-size:12px;columns:2}
 }
+
+/* ==========================================================================
+   Часть 1 «Посчитать»: новые поля формы, главная кнопка и отдельный экран итога (<dialog class="scr">).
+   Цвета — только токены; различие статей — штриховкой/точками и подписями, не одним цветом.
+   Анимации — только transform/opacity; при prefers-reduced-motion — итог сразу.
+   ========================================================================== */
+
+/* ---------- Поля формы: группы, текст, пара «число + единица», выбор периода ---------- */
+.sc-grouph{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS);font-family:var(--font-text);font-weight:700;margin:30px 0 14px;padding-top:20px;border-top:1px solid var(--line)}
+.sc-text{
+  width:100%;height:56px;min-height:56px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--text);
+  font-size:20px;font-weight:700;letter-spacing:-.02em;padding:0 16px;margin-top:4px;
+}
+.sc-text::placeholder{color:var(--mutedS);font-weight:600;opacity:1}
+.sc-text:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px}
+.sc-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:4px}
+.sc-pair .sc-selbox{margin-top:0}
+.sc-pair .sc-num{text-align:left}
+.sc-seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.sc-segb{
+  min-height:56px;border-radius:16px;border:1px solid var(--line);background:var(--card);color:var(--text);
+  font-size:16px;font-weight:700;transition:scale .3s var(--spring);
+}
+.sc-segb[aria-pressed="true"]{background:var(--solid);color:var(--on-solid);border-color:var(--solid)}
+.sc-segb:active{scale:.97}
+.sc-segb:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px}
+
+/* ---------- Главная кнопка «Посчитать» ---------- */
+.sc-calc{width:100%;min-height:64px;margin-top:30px;border-radius:20px;font-size:20px;font-weight:800;letter-spacing:-.02em}
+.sc-calc svg.lucide{width:26px;height:26px}
+.sc-calc:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:4px}
+.sc-calc-h{margin-top:8px;text-align:center}
+
+/* ---------- Экран итога ---------- */
+html.scr-lock{overflow:hidden}
+dialog.scr{padding:0;border:0;background:transparent;color:var(--text);width:min(780px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);margin:auto;overflow:visible}
+dialog.scr::backdrop{background:color-mix(in srgb,var(--void) 62%,transparent)}
+.scr-box{display:flex;flex-direction:column;max-height:calc(100dvh - 32px);background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-lg);overflow:hidden}
+dialog.scr[open] .scr-box{animation:scr-in .45s var(--spring)}
+@keyframes scr-in{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+.scr-head{display:flex;align-items:flex-start;gap:12px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.scr-hl{flex:1;min-width:0}
+.scr-kicker{margin:0 0 4px;font-size:13px;font-weight:600;color:var(--mutedS)}
+.scr-title{margin:0;font-size:clamp(22px,4.2vw,32px);line-height:1.15;letter-spacing:-.03em;overflow-wrap:anywhere;font-family:var(--font-display)}
+.scr-title:focus{outline:none}
+.scr-x{flex:none;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);background:var(--card);color:var(--text)}
+.scr-x svg{width:22px;height:22px}
+.scr-x:focus-visible,.scr .btn:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px}
+.scr-body{flex:1;overflow:auto;overscroll-behavior:contain;padding:16px 20px 24px;display:grid;gap:22px;align-content:start}
+.scr-body>*{min-width:0}
+.scr-approx{margin:0;font-size:14px;line-height:1.5;color:var(--text2)}
+.scr-tag{display:inline-block;margin-right:6px;padding:2px 10px;border-radius:999px;border:1.5px dashed var(--text);font-size:13px;font-weight:700;color:var(--text)}
+.scr-h{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS);font-family:var(--font-text);font-weight:700}
+.scr-hint{margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--mutedS)}
+
+/* бухгалтерия: пришло / ушло / осталось */
+.scr-book{display:grid;gap:10px;padding:16px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--card2)}
+.scr-line{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.scr-line>span:first-child{font-size:17px;font-weight:700;color:var(--text)}
+.scr-num{font-size:clamp(20px,4vw,26px);font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;text-align:right}
+.scr-exp{list-style:none;margin:0;padding:6px 0 10px 12px;border-left:2px solid var(--line);display:grid;gap:8px}
+.scr-exp li{display:grid;grid-template-columns:16px minmax(0,1fr) auto;column-gap:10px;row-gap:0;align-items:center;font-size:15px}
+.scr-exp small{grid-column:2/-1;font-size:13px;color:var(--mutedS);margin-top:-2px}
+.scr-amt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scr-none{font-size:14px;color:var(--mutedS)}
+.scr-net{margin-top:6px;padding-top:12px;border-top:1px solid var(--line)}
+.scr-hero{display:block;font-size:clamp(40px,10.5vw,76px);line-height:1.05;text-align:left;letter-spacing:-.04em;font-weight:800}
+.scr-st{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:999px;font-size:14px;font-weight:700;border:1.5px solid var(--text);color:var(--text)}
+.scr-st svg{width:18px;height:18px}
+.scr-st[data-s="plus"]{background:var(--solid);color:var(--on-solid);border-color:var(--solid)}
+.scr-st[data-s="minus"]{border-style:dashed}
+.scr-verdict{margin:2px 0 0;font-size:16px;line-height:1.5;font-weight:600;color:var(--text)}
+
+/* узоры статей: штриховка, серый, точки, полосы, сетка — различимы без цвета */
+.sw{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid var(--text2)}
+.pt1{background:repeating-linear-gradient(-45deg,var(--text2) 0 3px,transparent 3px 6px)}
+.pt2{background:var(--silver)}
+.pt3{background:radial-gradient(var(--text) 1.3px,transparent 1.8px) 0 0/6px 6px}
+.pt4{background:repeating-linear-gradient(0deg,var(--text2) 0 2px,transparent 2px 5px)}
+.pt5{background:repeating-linear-gradient(45deg,var(--text2) 0 3px,transparent 3px 6px),repeating-linear-gradient(-45deg,var(--text2) 0 3px,transparent 3px 6px)}
+.pt6{background:var(--track)}
+.pt7{background:repeating-linear-gradient(90deg,var(--text2) 0 2px,transparent 2px 5px)}
+.keep{background:var(--solid)}
+
+/* «каждая сотня»: полоса растёт слева направо, сегменты по очереди */
+.scr-hbar{display:flex;height:48px;border-radius:12px;overflow:hidden;background:var(--track);border:1px solid var(--text2)}
+.seg{flex:0 0 var(--w);display:grid;place-items:center;min-width:0;transform:scaleX(0);transform-origin:left;transition:transform .6s var(--spring) calc(var(--i) * 90ms);border-right:1px solid var(--card)}
+.seg i{font-style:normal;font-size:13px;font-weight:800;background:var(--card);color:var(--text);padding:1px 7px;border-radius:8px}
+.seg i:empty{display:none}
+.go .seg{transform:none}
+
+/* три столбика */
+.scr-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(6px,2vw,14px)}
+.scr-col{display:grid;gap:6px;text-align:center;min-width:0}
+.scr-col .cv{font-size:clamp(12px,3.5vw,15px);font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.scr-col .cn{font-size:13px;font-weight:600;color:var(--mutedS)}
+.scr-col .cb{height:132px;display:flex;align-items:flex-end;border-bottom:2px solid var(--text)}
+.scr-col .cb i{display:block;width:100%;height:var(--h);transform:scaleY(0);transform-origin:bottom;transition:transform .7s var(--spring) calc(var(--i) * 120ms);border:1px solid var(--text2);border-bottom:0;border-radius:6px 6px 0 0}
+.go .scr-col .cb i{transform:none}
+.scr-col.rev .cb i{background:var(--silver)}
+.scr-col.exp .cb i{background:repeating-linear-gradient(-45deg,var(--text2) 0 3px,transparent 3px 6px)}
+.scr-col.pro .cb i{background:var(--solid)}
+.scr-col.neg .cb i{background:repeating-linear-gradient(-45deg,var(--text2) 0 3px,transparent 3px 6px),repeating-linear-gradient(45deg,var(--text2) 0 3px,transparent 3px 6px);border-style:dashed}
+
+/* накопление по месяцам сезона */
+.scr-cum{position:relative;display:flex;gap:6px;height:200px;margin:30px 0 0 26px;padding-bottom:26px;box-sizing:content-box}
+.scr-cum .zl{position:absolute;left:-26px;right:0;top:var(--zero);border-top:2px solid var(--text);pointer-events:none}
+.scr-cum .zl b{position:absolute;left:0;top:-9px;font-size:12px;color:var(--mutedS)}
+.cm{position:relative;flex:1;min-width:0;height:100%}
+.cm i{position:absolute;left:8%;right:8%;border:1px solid var(--text2);transition:transform .6s var(--spring) calc(var(--i) * 70ms);transform:scaleY(0)}
+.cm i.up{background:var(--solid);transform-origin:bottom;border-radius:4px 4px 0 0}
+.cm i.dn{background:repeating-linear-gradient(-45deg,var(--text2) 0 3px,transparent 3px 6px);transform-origin:top;border-radius:0 0 4px 4px;border-style:dashed}
+.go .cm i{transform:none}
+.cm .mn{position:absolute;top:100%;left:0;right:0;margin-top:6px;text-align:center;font-size:12px;font-weight:600;color:var(--mutedS)}
+.cm .flag{position:absolute;bottom:calc(100% + 4px);left:50%;translate:-50% 0;white-space:nowrap;font-style:normal;font-size:12px;font-weight:800;background:var(--solid);color:var(--on-solid);padding:2px 8px;border-radius:999px;z-index:1}
+
+/* окупаемость и «в ноль» */
+.scr-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.scr-card{border:1px solid var(--line);border-radius:var(--r-s);background:var(--card2);padding:14px 16px;display:grid;gap:6px;align-content:start}
+.scr-card small{font-size:13px;font-weight:700;color:var(--mutedS)}
+.scr-card b{font-size:clamp(20px,3.6vw,24px);letter-spacing:-.03em;line-height:1.2;overflow-wrap:anywhere}
+.scr-card p,.scr-run{margin:0;font-size:13px;line-height:1.5;color:var(--text2)}
+.scr-run{grid-column:1/-1;font-size:14px}
+.scr-cav{margin:0;padding-left:18px;font-size:13px;line-height:1.5;color:var(--mutedS);display:grid;gap:4px}
+.scr-note{margin:0;padding:12px 14px;border:1.5px dashed var(--text2);border-radius:var(--r-s);font-size:14px;line-height:1.5;font-weight:600;color:var(--text)}
+.scr-foot{display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px;border-top:1px solid var(--line);background:var(--card)}
+.scr-foot .btn{min-height:48px;font-size:14px}
+.scr-back{margin-right:auto}
+
+/* телефон: экран на всю высоту */
+@media(max-width:640px){
+  dialog.scr{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh}
+  .scr-box{height:100dvh;max-height:none;border:0;border-radius:0}
+  .scr-head{padding:14px 16px 12px}
+  .scr-body{padding:14px 16px 20px}
+  .scr-foot{padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+  .scr-foot .btn{flex:1 1 calc(50% - 8px);min-height:46px}
+  .scr-foot .scr-back{flex:1 1 100%;margin-right:0;order:-1}
+  .scr-cards{grid-template-columns:1fr}
+  .sc-seg{gap:6px}
+  .sc-pair{grid-template-columns:1fr}
+}
+
+@media(prefers-reduced-motion:reduce){
+  dialog.scr[open] .scr-box{animation:none}
+  .seg,.scr-col .cb i,.cm i,.sc-segb{transition:none;transform:none}
+}
+/* то же при «still» (класс ставит скрипт, когда анимация выключена) */
+.scr.still .seg,.scr.still .scr-col .cb i,.scr.still .cm i{transition:none;transform:none}
+
+/* ---------- Печать: только плашка итога ---------- */
+@media print{
+  html.scr-lock{overflow:visible}
+  body.sc-printing>*:not(dialog.scr){display:none!important}
+  body.sc-printing dialog.scr{display:block!important;position:static!important;width:auto!important;max-width:none!important;height:auto!important;max-height:none!important;margin:0!important;overflow:visible!important}
+  body.sc-printing .scr-box{display:block;max-height:none;height:auto;border:0;box-shadow:none;overflow:visible;animation:none}
+  body.sc-printing .scr-body{overflow:visible;padding:0}
+  body.sc-printing .scr-foot,body.sc-printing .scr-x{display:none!important}
+  body.sc-printing .seg,body.sc-printing .scr-col .cb i,body.sc-printing .cm i{transform:none!important;transition:none!important}
+  .scr-hbar,.sw,.seg,.scr-col .cb i,.cm i{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  body.sc-printing .scr-sec,body.sc-printing .scr-card{break-inside:avoid}
+}

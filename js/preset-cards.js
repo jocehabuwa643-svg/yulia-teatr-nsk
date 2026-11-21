@@ -1,23 +1,23 @@
 /* preset-cards.js — «Рассчитай за 5 секунд»: карточки-кейсы в начале раздела калькуляторов.
    Каскадное мерцание (shimmer) привлекает внимание, останавливается при наведении/фокусе.
-   Клик — карточка FLIP-раскрывается на том же месте в полную панель результата;
-   остальные сжимаются в компактную ленту. Esc/клик-вне закрывают, фокус возвращается.
+   Быстрый расчёт — на самой карточке. Клик открывает отдельный экран шаблона (js/preset-detail.js):
+   «что будет при таком варианте», кнопка «← Назад в меню», Esc/клик вне/«назад» браузера, фокус возвращается на карточку.
    Запускается из js/app.js при сборке раздела калькуляторов (initPresetCards(CFG)). prefers-reduced-motion — без анимаций. */
 import { travelCalc } from './calculators/travel.js';
 import { calc as baseCalc, baseMonth } from './calculators/basecamp.js';
 import { calc as goalCalc } from './calculators/goal.js';
 import { buildCalcConfig } from './calculators/config.js';
+import { fmtN, rub, signed, esc, travelDetail, baseDetail, goalDetail, openPresetDetail } from './preset-detail.js';
 
-const fmtN = v => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(v)).replace(/-/g, '−');
-const rub = v => fmtN(v) + ' ₽';
-const signed = v => (Math.round(v) > 0 ? '+' : '') + rub(v);
-const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let CFG = null;
 
+/* Модель экрана шаблона; сбой расчёта не ломает карточку — экран честно скажет, что данных нет */
+const safeDetail = fn => { try { return fn(); } catch (e) { return null; } };
+
 /* Кейсы: пресет + как считать + что показать. Числа — только через calc() из конфигурации. */
-function cases(cfg) {
+export function cases(cfg) {
   const out = cfg.presets_travel.map((p, i) => {
     const r = travelCalc({ n: p.n, p: p.p, k: p.k, r: p.r, dk: p.dk, own: p.own }, cfg);
     return {
@@ -29,6 +29,7 @@ function cases(cfg) {
                <div class="pc-kv"><span>Прибыль дня</span><b>${signed(r.profit)}</b></div>
                <div class="pc-kv"><span>Маржа</span><b>${r.gross > 0 ? Math.round(100 * r.profit / r.gross) : 0}%</b></div>
                <div class="pc-kv"><span>Безубыточность</span><b>${r.be} зрит./день</b></div>`,
+      d: safeDetail(() => travelDetail(p, r, cfg)),
       advice: r.profit < 0 ? 'Убыточный сценарий: объедините группы или поднимите минимальную кассу.' : r.margin < 25 ? 'Запас небольшой: второй показ по тому же адресу снизит транспорт.' : 'Хороший запас — фиксируйте число детей письменно.'
     };
   });
@@ -45,10 +46,12 @@ function cases(cfg) {
              <div class="pc-kv"><span>Аренда и фикс</span><b>${rub(b.fixed)}</b></div>
              <div class="pc-kv"><span>ФОТ и праздники</span><b>${rub(b.teachers + b.week + b.party)}</b></div>
              <div class="pc-kv"><span>Рентабельность</span><b>${b.gross > 0 ? Math.round(100 * b.profit / b.gross) : 0}%</b></div>`,
-    advice: 'Стадия «Разгон»: выезды сверху добавляют ≈7 550 ₽ с показа до 55 в месяц.'
+    d: safeDetail(() => baseDetail(st, b, goalCalc({ goal: cfg.goals.short_target, stageSel: 2 }, cfg), cfg)),
+    advice: `Стадия «Разгон»: выезды сверху добавляют ≈${fmtN(cfg.tour_unit.unit_small)} ₽ с показа, до ${cfg.tour_unit.capacity_per_troupe} в месяц на труппу.`
   });
   // Цель
-  const g = goalCalc({ goal: cfg.goals.short_target, stageSel: 1 }, cfg);
+  // stageSel 2 = cfg.stages[1] = «Разгон» (0 — без базы, i — cfg.stages[i-1]); подпись карточки говорит именно «Разгон»
+  const g = goalCalc({ goal: cfg.goals.short_target, stageSel: 2 }, cfg);
   out.push({
     key: 'goal', title: `Хочу ${fmtN(cfg.goals.short_target)} ₽ чистыми`, calcId: 'goal', presetIndex: -1,
     params: 'цель в месяц · стадия «Разгон» · 130 м²',
@@ -57,7 +60,8 @@ function cases(cfg) {
     detail: `<div class="pc-kv"><span>Плановая прибыль</span><b>${signed(g.x.profit)}</b></div>
              <div class="pc-kv"><span>Зрителей на выездах</span><b>${fmtN(g.x.n * g.x.aud)}</b></div>
              <div class="pc-kv"><span>Выручка месяца</span><b>${rub(g.x.g)}</b></div>`,
-    advice: g.plan ? 'Цель достижима на этой стадии — план выше.' : 'Цель выше мощности стадии: зрелая база или ниже цель.'
+    d: safeDetail(() => goalDetail(g, g.model ? baseMonth(g.model, cfg) : null, cfg.stages[1].name, cfg)),
+    advice: g.plan ? 'Цель достижима на этой стадии: детали на экране шаблона.' : 'Цель выше мощности стадии: зрелая база или ниже цель.'
   });
   return out;
 }
@@ -72,60 +76,6 @@ function cardHTML(c) {
     <p class="pc-params">${esc(c.params)}</p>
     <div class="pc-num">${c.headline}<small>${esc(c.headlineNote)}</small></div>
     ${bar}`;
-}
-
-let expandedKey = null, lastFocus = null;
-
-function flipExpand(card, c) {
-  lastFocus = card;
-  const container = document.getElementById('presetCards');
-  container.classList.add('compact');
-  document.querySelectorAll('.pc-card.expanded').forEach(x => x.classList.remove('expanded'));
-  card.classList.add('expanded');
-  card.setAttribute('aria-expanded', 'true');
-  expandedKey = c.key;
-  stopShimmer();
-  const panel = `
-    ${cardHTML(c)}
-    <div class="pc-detail">${c.detail}</div>
-    <p class="pc-advice"><b>Совет помощника:</b> ${esc(c.advice)}</p>
-    <div class="pc-actions">
-      <button class="btn small primary" data-open>Изменить параметры</button>
-      <button class="btn small secondary" data-close>Закрыть</button>
-    </div>`;
-  // FLIP: первый кадр — старый размер, затем анимируем к раскрытому
-  const first = card.getBoundingClientRect();
-  card.innerHTML = panel;
-  card.querySelector('[data-open]').addEventListener('click', () => openInCalc(c));
-  card.querySelector('[data-close]').addEventListener('click', e => { e.stopPropagation(); collapse(card); });
-  const last = card.getBoundingClientRect();
-  if (!reduced() && last.height && first.height) {
-    card.animate([
-      { transform: `scaleY(${first.height / last.height}) scaleX(${first.width / last.width})`, transformOrigin: 'top left', opacity: .6 },
-      { transform: 'none', opacity: 1 }
-    ], { duration: 380, easing: 'cubic-bezier(.16,1,.3,1)' });
-  }
-  card.scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' });
-  card.querySelector('[data-close]').focus();
-}
-
-function collapse(card) {
-  const c = card._case;
-  const container = document.getElementById('presetCards');
-  card.classList.remove('expanded');
-  card.setAttribute('aria-expanded', 'false');
-  expandedKey = null;
-  const first = card.getBoundingClientRect();
-  card.innerHTML = cardHTML(c);
-  const last = card.getBoundingClientRect();
-  if (!reduced() && first.height && last.height) {
-    card.animate([
-      { transform: `scaleY(${first.height / last.height}) scaleX(${first.width / last.width})`, transformOrigin: 'top left' },
-      { transform: 'none' }
-    ], { duration: 260, easing: 'cubic-bezier(.16,1,.3,1)' });
-  }
-  if (!container.querySelector('.expanded')) container.classList.remove('compact');
-  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
 }
 
 function openInCalc(c) {
@@ -161,29 +111,21 @@ export async function initPresetCards(cfg = null) {
     ]);
     CFG = buildCalcConfig({ rates, config, competitors });
   }
-  const list = cases(CFG);
-  mount.innerHTML = list.map(c => `<button class="pc-card rv in" data-key="${c.key}" aria-expanded="false" aria-controls="pcPanel"></button>`).join('');
+  let list;
+  try { list = cases(CFG); } catch (e) {
+    // нет данных или сбой расчёта — честная подпись вместо пустого места
+    mount.innerHTML = '<p class="pc-empty">Шаблоны сейчас недоступны: не удалось посчитать по данным. Откройте нужный калькулятор ниже.</p>';
+    return;
+  }
+  mount.innerHTML = list.map(c => `<button type="button" class="pc-card rv in" data-key="${c.key}" aria-haspopup="dialog"></button>`).join('');
   [...mount.querySelectorAll('.pc-card')].forEach((card, i) => {
     const c = list[i];
     card._case = c;
     card.innerHTML = cardHTML(c);
-    card.addEventListener('click', () => (expandedKey === c.key ? collapse(card) : flipExpand(card, c)));
+    // клик открывает отдельный экран шаблона; повторный быстрый клик игнорируется самим экраном
+    card.addEventListener('click', () => { stopShimmer(); openPresetDetail({ list, key: c.key, opener: card, onTune: openInCalc, focusTarget: k => mount.querySelector(`.pc-card[data-key="${k}"]`) }); });
   });
   // мерцание останавливается при взаимодействии с любой карточки
   mount.addEventListener('pointerenter', stopShimmer, { once: true, capture: true });
   mount.addEventListener('focusin', stopShimmer, { once: true, capture: true });
-  // Esc и клик вне — закрыть
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && expandedKey) {
-      const card = mount.querySelector('.expanded');
-      if (card) collapse(card);
-    }
-  });
-  document.addEventListener('click', e => {
-    if (!expandedKey) return;
-    if (!e.target.closest('#presetCards')) {
-      const card = mount.querySelector('.expanded');
-      if (card) collapse(card);
-    }
-  }, true);
 }

@@ -76,6 +76,13 @@ export function simpleFields(cfg, mode) {
   };
 }
 
+/* Поля расходов, которые выводятся на экран явно (помещение / площадка и гонорар актёров): подмножество «Уточнить расчёт» */
+export function costFields(cfg, mode) {
+  const ids = mode === 'studio' ? ['area', 'rent', 'teamFee'] : ['venue', 'teamFee'];
+  const all = simpleFields(cfg, mode).details;
+  return ids.map(id => all.find(f => f.id === id)).filter(Boolean);
+}
+
 /* Значения по умолчанию: { id: def } для обоих списков полей */
 export function simpleDefaults(cfg, mode) {
   const f = simpleFields(cfg, mode);
@@ -134,6 +141,8 @@ function compute(input, cfg) {
       ...(fixedOther > 0 ? [{ id: 'other', label: 'Реклама и прочее', v: fixedOther }] : [])
     ];
     out.taxMonth = t.tax * scale;
+    // статьи для экрана «Посчитать» (в месяц, те же слагаемые, что в t.*): сумма статей = выручка − прибыль
+    out.articles = { rent: 0, venue: t.fee * scale, actors: (t.salary + t.social) * scale, tax: t.tax * scale, road: t.fuel * scale, ads: fixedOther, other: (t.wear + t.print) * scale };
     out.detail = t;
     return out;
   }
@@ -154,6 +163,14 @@ function compute(input, cfg) {
     { id: 'tax', label: 'Налог', v: b.tax }
   ];
   out.taxMonth = b.tax;
+  // статьи для экрана «Посчитать» (в месяц): слагаемые baseMonth() по тем же значениям cfg, что и сам расчёт
+  const bk = c.base_costs;
+  const rentPart = m.area * (m.rent + bk.utilities_per_m2), adsPart = bk.marketing_month + fixedOther;
+  const weekFee = m.w * bk.weekend_fee * (1 + c.gphRate);
+  out.articles = {
+    rent: rentPart, venue: 0, actors: b.teachers + weekFee, tax: b.tax, road: 0, ads: adsPart,
+    other: (b.fixed + fixedOther - rentPart - adsPart) + (b.week - weekFee) + b.party      // администратор, реквизит, доля кассы, праздники
+  };
   out.detail = b;
   return out;
 }

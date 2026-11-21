@@ -9,7 +9,9 @@ import { formatHeadline } from './calculators/headline.js';
 import { clamp, getPath, ruNum } from './calculators/util.js';
 import { loadScenarios, saveScenarios, addScenario, removeScenario, buildComparison } from './calculators/scenarios.js';
 import { methodLines } from './calculators/method.js';
-import { MODES, simpleFields, simpleDefaults, simpleProfit, makeSimpleModule } from './simple-calc.js';
+import { MODES, simpleFields, costFields, simpleDefaults, simpleProfit, makeSimpleModule } from './simple-calc.js';
+import { PERIODS, RUN_UNITS, normalizeReport, titleMax } from './simple-calc-report.js';
+import { openReport, ICONS as RICON } from './simple-calc-report-ui.js';
 import { state } from './state.js';
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -26,7 +28,7 @@ const IC = {
 };
 
 /* Состояние раздела: режим и значения полей по каждому режиму (хранится в localStorage; без него — значения по умолчанию) */
-let S = null;            // { mode, vals: { travel: {...}, studio: {...} }, more: bool }
+let S = null;            // { mode, vals: { travel: {...}, studio: {...} }, more: bool, report: { title, runN, runUnit, invest, period } }
 let MOD = null;          // модуль для сравнения сценариев
 let lastBig = null;      // текст большой цифры — «поп» только при изменении
 const picked = new Set();
@@ -40,7 +42,7 @@ const allFields = mode => { const f = fieldsOf(mode); return [...f.main, ...f.de
 function loadState() {
   const cfg = cfgNow();
   const saved = store.get(STATE_KEY, null);
-  const out = { mode: saved && MODES.some(m => m.id === saved.mode) ? saved.mode : MODES[0].id, vals: {}, more: !!(saved && saved.more) };
+  const out = { mode: saved && MODES.some(m => m.id === saved.mode) ? saved.mode : MODES[0].id, vals: {}, more: !!(saved && saved.more), report: normalizeReport(saved && saved.report, cfg) };
   MODES.forEach(m => {
     const def = simpleDefaults(cfg, m.id);
     const sv = saved && saved.vals && saved.vals[m.id];
@@ -102,12 +104,39 @@ function paintFields() {
   });
 }
 
+/* Блок «Для итога»: название, прокат, вложения, период. Значения — в S.report, поля помечены data-rf */
+const numBox = (id, rf, ph, suf) => `<span class="sc-numbox"><input class="sc-num" id="${id}" data-rf="${rf}" type="number" inputmode="decimal" step="any" min="0" placeholder="${esc(ph)}" aria-describedby="${id}-h"><span class="sc-suf" aria-hidden="true">${esc(suf)}</span></span>`;
+function reportBlockHTML() {
+  return `<div class="sc-fields sc-rep">
+    <div class="sc-field"><label class="sc-label" for="scr-title">Название постановки</label><p class="sc-hint" id="scr-title-h">Оно будет в заголовке итога, например «Золотой ключик»</p>
+      <input class="sc-text" id="scr-title" data-rf="title" type="text" maxlength="${titleMax(cfgNow())}" autocomplete="off" placeholder="Мой спектакль" aria-describedby="scr-title-h"></div>
+    <div class="sc-field"><label class="sc-label" for="scr-runN">Сколько идёт спектакль</label><p class="sc-hint" id="scr-runN-h">Как долго вы будете его показывать</p>
+      <div class="sc-pair">${numBox('scr-runN', 'runN', '0', '')}<div class="sc-selbox"><select class="sc-select" id="scr-runUnit" data-rf="runUnit" aria-label="Единица срока проката">${RUN_UNITS.map(u => `<option value="${u.id}">${esc(u.label)}</option>`).join('')}</select></div></div></div>
+    <div class="sc-field"><label class="sc-label" for="scr-invest">Вложения на старте</label><p class="sc-hint" id="scr-invest-h">Костюмы, декорации, реклама до первого показа — разово</p>
+      ${numBox('scr-invest', 'invest', '0', '₽')}</div>
+    <div class="sc-field"><span class="sc-label" id="scr-period-l">Период расчёта</span><p class="sc-hint" id="scr-period-h">За какое время показать итог</p>
+      <div class="sc-seg" role="group" aria-labelledby="scr-period-l" aria-describedby="scr-period-h">${PERIODS.map(p => `<button type="button" class="sc-segb" data-period="${p.id}" aria-pressed="false">${esc(p.label)}</button>`).join('')}</div></div>
+  </div>`;
+}
+function paintReport() {
+  const R = S.report;
+  const set = (id, v) => { const el = $(id); if (el && document.activeElement !== el) el.value = v == null ? '' : String(v); };
+  set('scr-title', R.title); set('scr-runN', R.runN); set('scr-invest', R.invest || '');
+  const u = $('scr-runUnit'); if (u) u.value = R.runUnit;
+  document.querySelectorAll('[data-period]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.period === R.period)));
+}
+
 function buildFields() {
   const f = fieldsOf(S.mode);
+  const costs = costFields(cfgNow(), S.mode);
+  const costIds = new Set(costs.map(x => x.id));
   $('scFields').innerHTML = f.main.map(fieldHTML).join('');
-  $('scDetail').innerHTML = f.details.map(fieldHTML).join('');
+  $('scCosts').innerHTML = costs.map(fieldHTML).join('');
+  $('scRep').innerHTML = reportBlockHTML();
+  $('scDetail').innerHTML = f.details.filter(x => !costIds.has(x.id)).map(fieldHTML).join('');
   $('scMore').open = !!S.more;
   paintFields();
+  paintReport();
   icons();
 }
 
@@ -295,12 +324,35 @@ async function saveScenario() {
   });
   if (!res || !res.values) return;
   const uid = `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-  const next = addScenario(list, { name: res.values.name, inputs: { ...cur(), mode: S.mode }, at: new Date().toISOString(), uid }, cfg.calc.scenarios.max_saved, cfg.calc.scenarios.max_name_len);
+  const next = addScenario(list, { name: res.values.name, inputs: { ...cur(), mode: S.mode, report: { ...S.report } }, at: new Date().toISOString(), uid }, cfg.calc.scenarios.max_saved, cfg.calc.scenarios.max_name_len);
   saveScenarios(store, SCEN_ID, next);
   const added = next.find(s => s.name.toLowerCase() === String(res.values.name || '').trim().replace(/\s+/g, ' ').toLowerCase()) || next[next.length - 1];
   picked.add(added.id);
   renderSaved(); renderCompare();
   toast(`Сценарий «${added.name}» сохранён в этом браузере`);
+}
+
+/* ==== Экран «Посчитать» ==== */
+function openCalc() {
+  const mode = MODES.find(m => m.id === S.mode);
+  openReport({
+    input: { ...cur(), mode: S.mode, ...S.report }, cfg: cfgNow(), ctx: { seasonality: seasonRows() },
+    opener: $('scCalcBtn'), modeLabel: mode ? mode.label : '', onSave: saveReportScenario
+  });
+}
+
+/* Сохранить из экрана итога: в то же хранилище сценариев, что и кнопка «Сохранить»; имя — название постановки */
+function saveReportScenario(r) {
+  const cfg = cfgNow();
+  const list = loadScenarios(store, SCEN_ID);
+  const uid = `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const next = addScenario(list, { name: r.title, inputs: { ...cur(), mode: S.mode, report: { ...S.report } }, at: new Date().toISOString(), uid }, cfg.calc.scenarios.max_saved, cfg.calc.scenarios.max_name_len);
+  saveScenarios(store, SCEN_ID, next);
+  const added = next.find(s => s.name.toLowerCase() === String(r.title).trim().replace(/\s+/g, ' ').toLowerCase()) || next[next.length - 1];
+  picked.add(added.id);
+  renderSaved(); renderCompare();
+  toast(`Сохранено: «${added.name}»`);
+  return added.name;
 }
 
 /* ==== События ==== */
@@ -316,6 +368,15 @@ function setValue(id, raw, fromTyping) {
   render();
 }
 
+/* Поле блока «Для итога»: хранится как ввёл человек (пустое число — значение по умолчанию при расчёте итога) */
+function setReportField(id, raw) {
+  const R = S.report;
+  if (id === 'title') R.title = String(raw).slice(0, titleMax(cfgNow()));
+  else if (id === 'runUnit' || id === 'period') R[id] = raw;
+  else R[id] = raw === '' ? '' : Math.max(0, Number(raw) || 0);
+  persist();
+}
+
 function setMode(mode) {
   if (mode === S.mode) return;
   S.mode = mode;
@@ -328,6 +389,7 @@ function setMode(mode) {
 function bind(root) {
   root.addEventListener('input', e => {
     const t = e.target;
+    if (t.matches('[data-rf]')) { setReportField(t.dataset.rf, t.value); return; }
     if (t.matches('.sc-num')) {
       // печатаем цифрами: пересчёт сразу, без правки самого поля (курсор не прыгает)
       const f = allFields(S.mode).find(x => x.id === t.dataset.f);
@@ -342,6 +404,7 @@ function bind(root) {
   });
   root.addEventListener('change', e => {
     const t = e.target;
+    if (t.matches('[data-rf]')) { setReportField(t.dataset.rf, t.value); paintReport(); return; }
     if (t.matches('.sc-select')) setValue(t.dataset.f, t.value);
     else if (t.matches('.sc-num')) setValue(t.dataset.f, t.value);                 // на выходе из поля значение нормализуется
     else if (t.matches('[data-sel]')) { if (t.checked) picked.add(t.dataset.sel); else picked.delete(t.dataset.sel); renderCompare(); }
@@ -349,6 +412,8 @@ function bind(root) {
   root.addEventListener('click', e => {
     const mode = e.target.closest('.sc-mode');
     if (mode) { setMode(mode.dataset.mode); return; }
+    const seg = e.target.closest('[data-period]');
+    if (seg) { setReportField('period', seg.dataset.period); paintReport(); return; }
     const step = e.target.closest('.sc-step');
     if (step) {
       const f = allFields(S.mode).find(x => x.id === step.dataset.for);
@@ -360,13 +425,14 @@ function bind(root) {
     const so = e.target.closest('[data-open]');
     if (so) {
       const s = loadScenarios(store, SCEN_ID).find(x => x.id === so.dataset.open);
-      if (s) { S.mode = MODES.some(m => m.id === s.inputs.mode) ? s.inputs.mode : S.mode; S.vals[S.mode] = { ...simpleDefaults(cfgNow(), S.mode), ...s.inputs }; persist(); document.querySelectorAll('.sc-mode').forEach(b => { const on = b.dataset.mode === S.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); buildFields(); render(); toast(`Открыт сценарий «${s.name}»`); }
+      if (s) { S.mode = MODES.some(m => m.id === s.inputs.mode) ? s.inputs.mode : S.mode; const { report: rp, ...rest } = s.inputs; S.vals[S.mode] = { ...simpleDefaults(cfgNow(), S.mode), ...rest }; if (rp) S.report = normalizeReport(rp, cfgNow()); persist(); document.querySelectorAll('.sc-mode').forEach(b => { const on = b.dataset.mode === S.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); buildFields(); render(); toast(`Открыт сценарий «${s.name}»`); }
       return;
     }
     const sd = e.target.closest('[data-del]');
     if (sd) { saveScenarios(store, SCEN_ID, removeScenario(loadScenarios(store, SCEN_ID), sd.dataset.del)); picked.delete(sd.dataset.del); renderSaved(); renderCompare(); toast('Сценарий удалён'); return; }
     const act = e.target.closest('[data-act]');
     if (!act) return;
+    if (act.dataset.act === 'calc') { openCalc(); return; }
     if (act.dataset.act === 'reset') { S.vals[S.mode] = simpleDefaults(cfgNow(), S.mode); persist(); buildFields(); render(); toast('Значения сброшены'); }
     if (act.dataset.act === 'save') saveScenario();
     if (act.dataset.act === 'compare') {
@@ -384,6 +450,11 @@ function bind(root) {
       window.print();
     }
     if (act.dataset.act === 'jump') $('scResult').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  });
+  // Enter в поле ввода = «Посчитать» (числа и название; выбор и кнопки работают по-своему)
+  root.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.isComposing || e.defaultPrevented) return;
+    if (e.target.matches && e.target.matches('input.sc-num, input.sc-text')) { e.preventDefault(); openCalc(); }
   });
   // «Уточнить расчёт» запоминается
   $('scMore').addEventListener('toggle', () => { S.more = $('scMore').open; persist(); });
@@ -408,10 +479,16 @@ export function initSimpleCalc() {
     <div class="sc-grid">
       <article class="card sc-in">
         <div class="sc-fields" id="scFields"></div>
+        <h3 class="sc-grouph">Помещение и оплата актёров</h3>
+        <div class="sc-fields" id="scCosts"></div>
+        <h3 class="sc-grouph">Для итога «Посчитать»</h3>
+        <div id="scRep"></div>
         <details class="sc-more" id="scMore"><summary>Уточнить расчёт<small>аренда, реквизит, реклама, гонорары, взносы</small></summary>
           <p class="sc-hint">Значения подставлены из предположений проекта. Меняйте, если знаете точнее.</p>
           <div class="sc-fields sc-detail" id="scDetail"></div>
         </details>
+        <button type="button" class="btn primary sc-calc" id="scCalcBtn" data-act="calc" aria-haspopup="dialog">${RICON.calc}<span>Посчитать</span></button>
+        <p class="sc-hint sc-calc-h">Откроется отдельный экран с итогом: сколько пришло, ушло и осталось. Цифры ориентировочные.</p>
         <div class="sc-actions">
           <button type="button" class="btn small secondary" data-act="reset">${ic('rotate-ccw')}<span>Сбросить</span></button>
           <button type="button" class="btn small secondary" data-act="save">${ic('bookmark')}<span>Сохранить</span></button>

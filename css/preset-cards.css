@@ -89,3 +89,114 @@
   .pc-card{padding:13px 14px}
   #presetCards.compact{grid-template-columns:1fr 1fr}
 }
+
+.pc-empty{grid-column:1/-1;padding:14px 16px;border:1px dashed var(--line);border-radius:var(--r-s);color:var(--mutedS);font-size:13px}
+
+/* ============================================================
+   Отдельный экран шаблона (js/preset-detail.js): <dialog class="pd">.
+   Телефон — на весь экран, шапка закреплена; от 760px — широкая плашка по центру.
+   Анимация только transform/opacity; prefers-reduced-motion — сразу итог.
+   ============================================================ */
+html.pd-lock{overflow:hidden;padding-right:var(--pd-sbw,0)}
+.pd{
+  position:fixed;inset:0;margin:0;width:100%;height:100%;max-width:none;max-height:none;padding:0;border:0;
+  background:var(--bg);color:var(--text);overscroll-behavior:contain;
+}
+.pd[open]{display:flex;flex-direction:column;animation:pdOpen .4s var(--ease)}
+.pd::backdrop{background:color-mix(in srgb,var(--void) 55%,transparent)}
+@keyframes pdOpen{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+
+/* шапка: всегда на виду (вне области прокрутки) */
+.pd-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;
+  background:var(--card);border-bottom:1px solid var(--line)}
+.pd-back{min-height:48px;padding:10px 22px;font-size:15px}
+.pd-x{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:18px;color:var(--text);
+  background:var(--card);border:1px solid var(--line);cursor:pointer}
+.pd-x:hover{background:var(--chip)}
+.pd :is(button,summary):focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px}
+.pd-scroll{flex:1 1 auto;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.pd-body{max-width:820px;margin:0 auto;padding:20px 16px 40px}
+
+.pd-kicker2{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS);margin:0}
+.pd-title{font-size:clamp(24px,5vw,36px);line-height:1.15;letter-spacing:-.03em;margin:4px 0 6px;outline:none}
+.pd-cond{font-size:clamp(16px,2.6vw,20px);font-weight:700;margin:0 0 6px}
+.pd-lead{font-size:14px;line-height:1.5;color:var(--text2);margin:0 0 10px}
+.pd-approx{display:inline-flex;gap:8px;align-items:center;font-size:12px;font-weight:600;color:var(--mutedS);
+  border:1px dashed var(--silver);border-radius:999px;padding:5px 12px;margin:0 0 4px}
+.pd-sec{margin-top:22px}
+.pd-sec h3{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mutedS);margin:0 0 10px}
+
+/* что нужно */
+.pd-needs{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+.pd-needs li{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--card)}
+.pd-needs span{font-size:12px;color:var(--mutedS)}
+.pd-needs b{font-size:14px;line-height:1.35}
+
+/* итог: выручка → расходы → чистыми */
+.pd-steps{display:grid;grid-template-columns:1fr;gap:6px;align-items:stretch}
+.pd-step{position:relative;border:1px solid var(--line);border-radius:var(--r-s);padding:14px 16px;background:var(--card);display:flex;flex-direction:column;gap:4px;min-width:0}
+.pd-step-l{font-size:12px;font-weight:600;color:var(--mutedS)}
+.pd-count{font-size:clamp(24px,6vw,32px);font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1.1;overflow-wrap:anywhere}
+.pd-net{background:var(--solid);color:var(--on-solid);border-color:var(--solid)}
+.pd-net .pd-step-l{color:var(--on-solid);opacity:.85}
+.pd-flow{text-align:center;color:var(--mutedS);font-size:18px;line-height:1;transform:rotate(90deg);height:18px}
+.pd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pd-loss{margin:10px 0 0;border:1px solid var(--text);border-radius:12px;padding:10px 14px;font-size:13px}
+
+/* куда ушли деньги */
+.pd-bar{display:flex;height:22px;border-radius:12px;overflow:hidden;background:var(--track)}
+.pd-seg{display:block;min-width:2px;height:100%;transform-origin:left center;animation:pdGrow .8s var(--ease) both;animation-delay:calc(.35s + var(--i,0)*.1s)}
+@keyframes pdGrow{from{transform:scaleX(0)}to{transform:none}}
+.pd-seg.e0,.pd-sw.e0{background:repeating-linear-gradient(-45deg,var(--text2),var(--text2) 3px,transparent 3px,transparent 6px)}
+.pd-seg.e1,.pd-sw.e1{background:var(--silver)}
+.pd-seg.e2,.pd-sw.e2{background:radial-gradient(circle,var(--text2) 1.3px,transparent 1.6px) 0 0/6px 6px,var(--chip);box-shadow:inset 0 0 0 1px var(--silver)}
+.pd-seg.net,.pd-sw.net{background:var(--solid)}
+.pd-legend{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:6px}
+.pd-legend li{display:grid;grid-template-columns:14px 1fr auto 44px;gap:10px;align-items:center;font-size:13px}
+.pd-sw{display:block;width:14px;height:14px;border-radius:4px}
+.pd-legend b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pd-legend em{font-style:normal;color:var(--mutedS);text-align:right;font-variant-numeric:tabular-nums}
+.pd-more{margin-top:10px;font-size:13px}
+.pd-more summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600}
+.pd-costs{list-style:none;padding:0;margin:0}
+.pd-costs li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.pd-costs b{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* достижимо ли: значок и текст, не только цвет; рамка слева толще при «нет» */
+.pd-verdict{border:1px solid var(--line);border-left:6px solid var(--text);border-radius:var(--r-s);padding:14px 16px;background:var(--card)}
+.pd-verdict h3{margin-bottom:6px}
+.pd-verdict p{margin:0 0 8px;font-size:14px;line-height:1.55}
+.pd-vt{display:flex;align-items:center;gap:10px;font-size:18px!important;font-weight:800;letter-spacing:-.02em}
+.pd-vt i{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--solid);color:var(--on-solid);font-style:normal;font-size:15px;flex:none}
+.pd-warn{border-left-style:dashed}
+.pd-bad{border-left-width:10px}
+.pd-advice{color:var(--text2);font-size:13px!important}
+
+.pd-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.pd-actions .btn{flex:1 1 200px}
+.pd-others{margin-top:18px}
+.pd-others h3{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mutedS);margin:0 0 10px}
+.pd-others ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.pd-other{width:100%;min-height:var(--tap);text-align:left;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--card);color:var(--text);cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.pd-other:hover{border-color:var(--silver)}
+.pd-other span{font-size:13px;font-weight:600}
+.pd-other b{font-size:17px;font-variant-numeric:tabular-nums}
+.pd-other small{font-size:11px;color:var(--mutedS)}
+
+/* каскадное появление: только opacity/transform; без анимации элементы просто видны */
+.pd-in{animation:pdIn .5s var(--ease) both;animation-delay:calc(var(--i,0)*.07s)}
+@keyframes pdIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* планшет и десктоп: широкая плашка по центру, шаги в строку */
+@media(min-width:760px){
+  .pd{inset:auto;top:50%;left:50%;width:min(880px,calc(100% - 48px));height:min(92vh,860px);margin:0;border-radius:var(--r);
+    box-shadow:var(--shadow-lg);border:1px solid var(--line);overflow:hidden;translate:-50% -50%}
+  .pd[open]{animation:pdOpenD .4s var(--ease)}
+  .pd-body{padding:26px 28px 40px}
+  .pd-steps{grid-template-columns:1fr auto 1fr auto 1fr}
+  .pd-flow{transform:none;height:auto;align-self:center}
+}
+@keyframes pdOpenD{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  .pd[open],.pd-in,.pd-seg{animation:none}
+}
