@@ -143,7 +143,12 @@ function fillPricesTab() {
     <p class="hint">Всё, что помечено «допущение проекта», редактируется в калькуляторах. Реальные тарифы аренды — только по запросу КП у собственника.</p>`;
 }
 
-/* ---------- Открытие/закрытие ---------- */
+/* ---------- Открытие/закрытие ----------
+   Интеграция с историей браузера: при открытии кладём pushState — тогда кнопка «назад»
+   браузера закрывает ПОДРАЗДЕЛ, а не уводит с сайта (жалоба владельца: «сайт закрывается»).
+   Один источник истины: settle() снимает пуш; все пути закрытия сходятся в close-событие диалога. */
+let pushed = false;
+function settle() { if (pushed) { pushed = false; try { history.back(); } catch (e) { /* file:// */ } } }
 export function openClients(fromEl) {
   if (fromEl && typeof fromEl.focus === 'function') lastFocus = fromEl;
   ensureDialog();
@@ -151,9 +156,18 @@ export function openClients(fromEl) {
   if (typeof dlg.showModal === 'function') dlg.showModal();
   showTab('map');
   setTimeout(() => dlg.querySelector('#clMap') && initClientMap(dlg.querySelector('#clMap'), currentPlace), 80);
+  if (!pushed) {
+    try { history.pushState({ cl: 1 }, ''); pushed = true; } catch (e) { /* file:// или лимит истории */ }
+  }
   icons();
 }
-export function closeClients() { if (dlg && dlg.open) dlg.close(); }
+export function closeClients() { if (dlg && dlg.open) dlg.close(); else settle(); }
+/* «назад» браузера при открытом подразделе — закрыть его (close-событие → settle) */
+/* «назад» браузера при открытом подразделе — закрыть его. ВАЖНО: сначала снимаем пуш,
+   иначе close-событие вызовет settle() и будет ВТОРОЙ history.back() → выкидывает с сайта. */
+addEventListener('popstate', () => { if (dlg && dlg.open) { pushed = false; dlg.close(); } });
+/* любое закрытие диалога (кнопки, Esc, клик вне, программное) — снять пуш */
+addEventListener('close', e => { if (e.target === dlg) settle(); }, true);
 
 /* Самоподключаемый: строит вход-карточку после DOM */
 if (typeof document !== 'undefined') {

@@ -39,7 +39,7 @@
 
 /* ===== Т3: подраздел «Клиенты и площадки» ===== */
 .cl-entry{
-  width:100%;display:flex;align-items:center;gap:18px;text-align:left;
+  width:100%;display:flex;align-items:center;gap:16px;text-align:left;flex-wrap:wrap;
   background:var(--card);border:1px solid var(--line);border-radius:var(--r);
   padding:20px 22px;box-shadow:var(--shadow);cursor:pointer;
   transition:transform .35s var(--ease),border-color .2s,box-shadow .35s var(--ease);
@@ -49,16 +49,24 @@
 .cl-ic{width:52px;height:52px;border-radius:16px;background:var(--ink);color:var(--bg);display:grid;place-items:center;flex-shrink:0}
 :root[data-theme="dark"] .cl-ic{background:#F5F5F7;color:#0A0A0A}
 .cl-ic svg.lucide{width:26px;height:26px}
-.cl-t{display:grid;gap:3px;min-width:0}
+.cl-t{display:grid;gap:3px;min-width:min(220px,58%);flex:1 1 220px}
 .cl-t small{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .cl-t h3{font-size:clamp(19px,2.2vw,25px);letter-spacing:-.03em}
 .cl-t .tiny{font-size:12.5px}
-.cl-stats{display:flex;gap:18px;margin-left:auto;flex-shrink:0}
+.cl-stats{display:flex;gap:16px;margin-left:auto;flex-shrink:0;flex-wrap:wrap}
 .cl-stats span{display:grid;gap:2px;text-align:right}
 .cl-stats b{font-size:clamp(19px,2vw,26px);font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
-.cl-stats small{font-size:10.5px;color:var(--mutedS)}
+.cl-stats small{font-size:10.5px;color:var(--mutedS);white-space:nowrap}
 .cl-go{color:var(--silver);font-size:22px;transition:transform .3s var(--ease)}
 .cl-entry:hover .cl-go{transform:translateX(5px)}
+/* Мобильный: счётчики не наезжают на заголовок — строкой под текстом */
+@media(max-width:640px){
+  .cl-entry{padding:18px;row-gap:14px}
+  .cl-stats{margin-left:64px;width:calc(100% - 64px);justify-content:space-between;gap:8px}
+  .cl-stats span{text-align:left}
+  .cl-go{position:absolute;right:14px;top:18px}
+  .cl-entry{position:relative}
+}
 
 .cl-dialog{
   width:100vw;height:100dvh;max-width:none;max-height:none;border:0;border-radius:0;padding:0;

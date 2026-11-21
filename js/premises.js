@@ -4,6 +4,7 @@
    (запрещён условиями сервисов) — только ручной ввод. Бейдж «новое» для объектов,
    добавленных после последнего визита. Данные — в IndexedDB (storage-idb). */
 import { store2 } from './storage-idb.js';
+import { toast } from './ui/helpers.js';
 
 const KEY = 'premises';
 const STATUSES = [
@@ -60,28 +61,52 @@ function bind() {
 }
 
 async function persist() { await store2.set(KEY, items); }
-async function addPremise() {
-  const address = prompt('Адрес (например: Богдана Хмельницкого, 25):');
-  if (address == null) return;
-  const area = prompt('Площадь, м²:', '130');
-  if (area == null) return;
-  const price = prompt('Цена, ₽/мес:', '');
-  if (price == null) return;
-  const contact = prompt('Контакт (имя, телефон):', '');
-  if (contact === null) return;
-  const url = prompt('Ссылка на объявление (необязательно):', '');
-  if (url === null) return;
-  items.push({
-    id: items.reduce((m, p) => Math.max(m, p.id || 0), 0) + 1,
-    address: String(address).slice(0, 200),
-    area: Math.max(0, +area || 0),
-    price: Math.max(0, +price || 0),
-    contact: String(contact).slice(0, 120),
-    url: /^https?:\/\//.test(url) ? url : '',
-    status: 'new',
-    date: new Date().toISOString()
+
+/* Добавление: инлайн-форма вместо prompt(). Причины: браузер может блокировать нативные
+   диалоги (после случайного «запретить диалоги» prompt молча возвращает null и кнопка
+   «не работает»), в headless/встроенных просмотрах prompt вообще недоступен. Форма —
+   надёжный путь без блокировки потока. */
+let adding = false;
+function addPremise() {
+  if (adding) { ui.body.querySelector('.pr-form')?.remove(); adding = false; return; }
+  adding = true;
+  const form = document.createElement('form');
+  form.className = 'pr-form';
+  form.novalidate = true;
+  form.innerHTML = `
+    <div class="pr-form-grid">
+      <label class="mf"><span>Адрес *</span><input name="address" type="text" maxlength="200" required placeholder="Богдана Хмельницкого, 25"></label>
+      <label class="mf"><span>Площадь, м²</span><input name="area" type="number" inputmode="numeric" min="0" step="1" placeholder="130"></label>
+      <label class="mf"><span>Цена, ₽/мес</span><input name="price" type="number" inputmode="numeric" min="0" step="500" placeholder="130000"></label>
+      <label class="mf"><span>Контакт</span><input name="contact" type="text" maxlength="120" placeholder="Анна, +7-913-…"></label>
+      <label class="mf"><span>Ссылка на объявление</span><input name="url" type="url" inputmode="url" placeholder="https://…"></label>
+      <p class="ferr" role="alert" hidden></p>
+      <div class="toolrow"><button type="submit" class="btn small primary">Сохранить</button><button type="button" class="btn small secondary" data-pr-cancel>Отмена</button></div>
+    </div>`;
+  ui.body.insertBefore(form, ui.body.querySelector('.pr-list'));
+  form.querySelector('[data-pr-cancel]').addEventListener('click', () => { adding = false; form.remove(); });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const f = form.elements;
+    const err = form.querySelector('.ferr');
+    const fail = m => { err.textContent = m; err.hidden = false; };
+    const address = f.address.value.trim();
+    if (!address) return fail('Укажите адрес — хотя бы улицу и дом.');
+    const url = f.url.value.trim();
+    if (url && !/^https?:\/\//.test(url)) return fail('Ссылка должна начинаться с http:// или https://');
+    items.push({
+      id: items.reduce((m, p) => Math.max(m, p.id || 0), 0) + 1,
+      address: address.slice(0, 200),
+      area: Math.max(0, Math.round(+f.area.value || 0)),
+      price: Math.max(0, Math.round(+f.price.value || 0)),
+      contact: f.contact.value.trim().slice(0, 120),
+      url,
+      status: 'new',
+      date: new Date().toISOString()
+    });
+    adding = false;
+    persist().then(() => { render(); toast('Помещение добавлено'); });
   });
-  await persist(); render();
 }
 async function setStatus(id, status) {
   const p = items.find(x => x.id === id); if (!p) return;

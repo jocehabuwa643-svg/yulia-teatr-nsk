@@ -32,7 +32,9 @@ export function initClientMap(el, place) {
       layer = L.layerGroup().addTo(mapObj);
     }
     drawObjects(L, p);
-    setTimeout(() => { mapObj.invalidateSize(); }, 80);
+    // Размер диалога на телефоне нестабилен в момент открытия: серия invalidateSize,
+    // иначе Leaflet остаётся «сломанным» (серый квадрат, маркеров не видно)
+    [120, 350, 800, 1500].forEach(ms => setTimeout(() => { try { mapObj.invalidateSize({ pan: false }); mapObj.fitBounds((p.objects || []).map(o => o.ll).filter(a => Array.isArray(a)), { padding: [24, 24], maxZoom: 13, animate: false }); } catch (e) { /* карта пересоздана */ } }, ms));
   }).catch(() => {
     el.innerHTML = '<div class="nodata"><strong>Карта недоступна</strong><span>Leaflet не загрузился — счётчики выше остаются рабочими.</span></div>';
   });
