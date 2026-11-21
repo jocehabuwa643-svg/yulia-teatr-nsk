@@ -5,7 +5,7 @@
    reduced-motion — без движения. Тач-цели ≥ 44px. На узких экранах — внизу на всю ширину с отступами 16px.
    ============================================================ */
 
-/* Контейнер: справа снизу, над контентом, ниже системного тоста (.toast — 1500) */
+/* Контейнер (ненавязчивый): справа снизу, над контентом, ниже системного тоста (.toast — 1500) */
 .newsflash{
   position:fixed;right:24px;bottom:24px;z-index:1400;
   width:min(380px,calc(100vw - 48px));
@@ -87,6 +87,27 @@
 }
 .newsflash .nf-item:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:-2px;border-radius:var(--r-s)}
 .newsflash .nf-close:focus-visible,.newsflash .nf-all:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px;border-radius:999px}
+
+/* Два состояния: compact (по умолчанию) — только одна строка и кнопка «Посмотреть»; open — список новостей и «Все новости» */
+.newsflash.compact{width:min(340px,calc(100vw - 48px));padding-bottom:16px}
+.newsflash.compact .nf-list,.newsflash.compact .nf-all{display:none}
+.newsflash.open .nf-peek,.newsflash.open .nf-view{display:none}
+.newsflash .nf-peek{
+  margin:0 8px 10px 6px;font-size:14px;line-height:1.35;font-weight:600;color:var(--text);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+/* «Посмотреть» — явная кнопка: заливка, стрелка */
+.newsflash .nf-view{
+  display:inline-flex;align-items:center;gap:8px;min-height:var(--tap);margin:0 0 0 6px;padding:0 18px;
+  border:0;border-radius:999px;background:var(--solid);color:var(--on-solid);
+  font-size:14px;font-weight:700;cursor:pointer;box-shadow:var(--shadow);
+  transition:transform .35s var(--spring);
+}
+.newsflash .nf-view svg.lucide{width:16px;height:16px;transition:transform .35s var(--spring)}
+.newsflash .nf-view:active{transform:scale(.97)}
+.newsflash .nf-view:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px}
+@media (hover:hover){.newsflash .nf-view:hover svg.lucide{transform:translateX(3px)}}
+@media (max-width:600px){.newsflash.compact{width:auto}.newsflash .nf-peek{font-size:13px;-webkit-line-clamp:1}}
 
 /* Узкие экраны: внизу на всю ширину с отступами 16px, с учётом «чёлки»/жестовой панели */
 @media (max-width:600px){

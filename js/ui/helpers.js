@@ -1,5 +1,6 @@
 /* helpers.js — форматирование и DOM-хелперы без бизнес-логики */
 import { ICON_DATA } from './icon-data.js';
+import { bindTapHints } from './tap-hints.js'; // подсказка «пальчик» на главных кнопках (отдельный модуль)
 export const $ = id => document.getElementById(id);
 export const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 export const fmt = v => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(v)).replace(/-/g, '−');
@@ -241,82 +242,11 @@ export function initUI() {
     $$('.track > span').forEach(bindScaleBar);
     bindTapHints();
   };
-  initTapCounter();
   let queued = false;
   new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; scan(); }); } })
     .observe(document.body, { childList: true, subtree: true });
   document.addEventListener('input', e => { if (e.target.matches && e.target.matches('input[type=range]')) paintRange(e.target); }, true);
   scan();
-}
-
-/* ---------- Подсказка «пальчик / нажмите» на главных действиях разделов ----------
-   По одной цели на группу: к кнопке добавляется маленькая иконка руки (.taphint), которая дважды показывает жест «тап»,
-   когда кнопка впервые попала в зону видимости; дальше — только при наведении мыши (CSS, @media(hover:hover)).
-   Когда Юлия нажала такие кнопки TAP_LIMIT раз (счётчик в localStorage 'yulia.v2.tapHint'), авто-показ больше не включается.
-   При reduced-motion анимация отключена глобально (base.css) — иконка не появляется вовсе. */
-const TAP_TARGETS = [
-  '.hero-cta .btn.primary',         // Обзор: «Открыть калькуляторы»
-  '#calcnav .mode:not(.on)',        // Калькуляторы: переключатель калькулятора
-  '#marketFilters .chip:not(.on)',  // Навигатор: фильтр групп
-  '#areaMode',                      // Карта: режим «Города области»
-  '#guideTabs .tab:not(.on)'        // Справочник: вкладки
-];
-const TAP_KEY = 'tapHint';
-const TAP_LIMIT = 3;
-const tapPlayed = new Set();        // индексы групп, где авто-показ уже был в этой сессии
-let tapObserver = null;
-
-const tapCount = () => { const n = store.get(TAP_KEY, 0); return Number.isFinite(n) ? n : 0; };
-const veilOpen = () => { const v = document.getElementById('veil'); return !!v && !v.hidden && getComputedStyle(v).display !== 'none'; };
-
-/* Проиграть жест на кнопке: пока открыта заставка — отложить; лимит нажатий исчерпан — не играть */
-function playTap(host) {
-  if (!host.isConnected || tapCount() >= TAP_LIMIT || !motionOK()) return;
-  if (veilOpen()) { setTimeout(() => playTap(host), 1200); return; }
-  const hint = host.querySelector(':scope > .taphint');
-  if (!hint) return;
-  hint.classList.remove('play');
-  void hint.offsetWidth; // перезапуск CSS-анимации
-  hint.classList.add('play');
-  hint.addEventListener('animationend', () => hint.classList.remove('play'), { once: true });
-}
-
-function bindTapHints() {
-  TAP_TARGETS.forEach((sel, gi) => {
-    const root = document.querySelector(sel.split(' ')[0]);
-    if (!root || root.matches('.has-tap') || root.querySelector('.has-tap')) return; // в группе уже есть подсказка
-    const host = document.querySelector(sel);
-    if (!host || !host.offsetParent) return;
-    host.classList.add('has-tap');
-    const hint = document.createElement('span');
-    hint.className = 'taphint';
-    hint.setAttribute('aria-hidden', 'true');
-    hint.innerHTML = '<i data-lucide="pointer"></i>';
-    host.appendChild(hint);
-    icons();
-    if (tapPlayed.has(gi) || tapCount() >= TAP_LIMIT) return;
-    tapPlayed.add(gi);
-    if (!window.IntersectionObserver) return;
-    if (!tapObserver) tapObserver = new IntersectionObserver(list => list.forEach(x => {
-      if (!x.isIntersecting) return;
-      tapObserver.unobserve(x.target);
-      setTimeout(() => playTap(x.target), 400);
-    }), { threshold: .9 });
-    tapObserver.observe(host);
-  });
-}
-
-/* Нажатие на кнопку с подсказкой увеличивает счётчик; после лимита авто-показ прекращается */
-function initTapCounter() {
-  document.addEventListener('click', e => {
-    const host = e.target.closest && e.target.closest('.has-tap');
-    if (!host) return;
-    const n = tapCount() + 1;
-    store.set(TAP_KEY, n);
-    const hint = host.querySelector(':scope > .taphint');
-    if (hint) hint.classList.remove('play');
-    if (n >= TAP_LIMIT && tapObserver) { tapObserver.disconnect(); }
-  }, true);
 }
 
 /* localStorage с защитой и версией схемы */

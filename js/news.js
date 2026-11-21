@@ -9,7 +9,9 @@
 export const FRESH_DAYS = 14;        // «свежая» новость для дайджеста и плашки
 export const TOAST_MAX = 3;          // сколько новостей в плашке
 export const TOAST_MAX_NARROW = 2;   // сколько новостей в плашке на телефоне (≤600px)
-export const TOAST_SHOW_MS = 9000;   // сколько висит плашка
+export const TOAST_TEASER_MS = 25000; // сколько висит свёрнутая плашка (20–30 с), если её не открыли
+export const TOAST_OPEN_MS = 9000;    // сколько висит раскрытая плашка после «Посмотреть» (8–10 с)
+export const TOAST_SHOW_MS = TOAST_TEASER_MS; // совместимость со старым именем
 export const TOAST_DELAY_MS = 1500;  // пауза после первого действия
 const SEEN_KEY = 'yulia.v2.news.seen';
 const SESSION_KEY = 'yulia.v2.news.toastShown';
@@ -116,6 +118,16 @@ function buildToast(doc, items, now, allTarget) {
   close.innerHTML = CLOSE_SVG;
   head.append(kicker, close);
 
+  // свёрнутый вид: одна строка с первой новостью и кнопка «Посмотреть» (раскрывает список)
+  const peek = doc.createElement('p');
+  peek.className = 'nf-peek';
+  peek.textContent = items[0].title;
+  const view = doc.createElement('button');
+  view.type = 'button';
+  view.className = 'nf-view';
+  view.innerHTML = '<span>Посмотреть</span>' + ARROW_SVG;
+  view.setAttribute('aria-expanded', 'false');
+
   // список: каждая новость — ссылка на первоисточник в новой вкладке
   const list = doc.createElement('ul');
   list.className = 'nf-list';
@@ -144,7 +156,8 @@ function buildToast(doc, items, now, allTarget) {
     list.append(li);
   }
 
-  box.append(head, list);
+  box.className = 'newsflash compact';
+  box.append(head, peek, view, list);
 
   // «Все новости» — только если на странице есть блок дайджеста
   let all = null;
@@ -162,7 +175,7 @@ function buildToast(doc, items, now, allTarget) {
   bar.setAttribute('aria-hidden', 'true');
   box.append(bar);
 
-  return { box, close, all, bar };
+  return { box, close, all, bar, view };
 }
 
 /* Подключает новости к странице.
@@ -196,7 +209,7 @@ export function initNews(newsData, { now = Date.now(), doc = globalThis.document
   };
 
   let armTimer = 0, hideTimer = 0, removeTimer = 0;
-  let toast = null, remaining = TOAST_SHOW_MS, startedAt = 0, paused = false, done = false;
+  let toast = null, remaining = TOAST_TEASER_MS, startedAt = 0, paused = false, done = false;
   // прокрутку ловим по её источникам (колесо, касание, клавиши): событие scroll бывает и без участия человека (восстановление позиции)
   const EVENTS = ['pointerdown', 'keydown', 'input', 'wheel', 'touchstart'];
   const opts = { passive: true, capture: true };
@@ -257,15 +270,36 @@ export function initNews(newsData, { now = Date.now(), doc = globalThis.document
 
     const allTarget = allId ? doc.getElementById(allId) : null;
     toast = buildToast(doc, shown, now, allTarget);
-    const { box, close, all, bar } = toast;
-    // длительность полоски = время показа; пауза останавливает анимацию классом .paused
-    bar.style.animationDuration = TOAST_SHOW_MS + 'ms';
+    const { box, close, all, bar, view } = toast;
+    // длительность полоски = время показа свёрнутой плашки; пауза останавливает анимацию классом .paused
+    remaining = TOAST_TEASER_MS;
+    bar.style.animationDuration = TOAST_TEASER_MS + 'ms';
     if (reduced()) box.classList.add('still');
     doc.body.append(box);
     // кадр между вставкой и классом .show — чтобы сработал переход transform/opacity
     win.requestAnimationFrame(() => win.requestAnimationFrame(() => box.classList.add('show')));
 
     close.addEventListener('click', hide);
+    // «Посмотреть»: раскрываем список и даём ещё TOAST_OPEN_MS (мышью — без залипания на паузе, с клавиатуры — фокус на первую новость)
+    view.addEventListener('click', e => {
+      if (!toast) return;
+      const byKeyboard = e.detail === 0;
+      box.classList.remove('compact');
+      box.classList.add('open');
+      view.setAttribute('aria-expanded', 'true');
+      win.clearTimeout(hideTimer);
+      remaining = TOAST_OPEN_MS;
+      bar.style.animation = 'none';
+      void bar.offsetWidth; // перезапуск полоски
+      bar.style.animation = '';
+      bar.style.animationDuration = TOAST_OPEN_MS + 'ms';
+      const first = box.querySelector('.nf-item');
+      if (byKeyboard && first) { try { first.focus({ preventScroll: true }); } catch { /* ок */ } }
+      else { try { view.blur(); } catch { /* ок */ } }
+      paused = false;
+      // курсор уже над раскрывшейся плашкой — mouseenter не придёт, поэтому паузу ставит только фокус; пауза по наведению включится, когда курсор выйдет и вернётся
+      if (box.contains(doc.activeElement)) { paused = true; box.classList.add('paused'); } else startTimer();
+    });
     box.addEventListener('mouseenter', pauseTimer);
     box.addEventListener('mouseleave', resumeTimer);
     box.addEventListener('focusin', pauseTimer);
@@ -273,6 +307,7 @@ export function initNews(newsData, { now = Date.now(), doc = globalThis.document
     // Escape закрывает плашку, где бы ни был фокус (в том числе когда мышь держит таймер на паузе);
     // слушатель на документе живёт только пока плашка на экране
     doc.addEventListener('keydown', onEscape, true);
+    doc.addEventListener('focusin', onFieldFocus, true);
     if (all) all.addEventListener('click', e => {
       const target = doc.getElementById(allId);
       if (!target) return;
@@ -287,6 +322,13 @@ export function initNews(newsData, { now = Date.now(), doc = globalThis.document
     return true;
   }
 
+  /* Человек начал вводить цифры в калькулятор или поле поиска — плашка не должна мешать: убираем её */
+  function onFieldFocus(e) {
+    const t = e && e.target;
+    if (!toast || !t || t.nodeType !== 1 || toast.box.contains(t)) return;
+    if (t.matches && t.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]),textarea,select')) hide();
+  }
+
   function onEscape(e) {
     if (e.key !== 'Escape' || !toast) return;
     // фокус внутри плашки — Escape адресован ей, дальше по странице не идёт
@@ -297,6 +339,7 @@ export function initNews(newsData, { now = Date.now(), doc = globalThis.document
   function hide() {
     if (!toast) return;
     doc.removeEventListener('keydown', onEscape, true);
+    doc.removeEventListener('focusin', onFieldFocus, true);
     win.clearTimeout(hideTimer);
     const { box } = toast;
     // если фокус был внутри плашки — снимаем его, чтобы он не остался на удалённом элементе
@@ -315,6 +358,7 @@ export function initNews(newsData, { now = Date.now(), doc = globalThis.document
     win.clearTimeout(hideTimer);
     win.clearTimeout(removeTimer);
     doc.removeEventListener('keydown', onEscape, true);
+    doc.removeEventListener('focusin', onFieldFocus, true);
     if (toast) { toast.box.remove(); toast = null; }
     done = true;
   };

@@ -350,3 +350,10 @@ test('classify: «грант/фонд» в тексте новости о фес
   assert.equal(classify(festival, SRC), 'culture');
   assert.equal(classify({ title: 'Конкурс', description: 'Открыт приём заявок на получение гранта' }, SRC), 'grants');
 });
+
+/* Тайминги плашки по ТЗ владельца: свёрнутая висит 20–30 с, раскрытая после «Посмотреть» — 8–10 с */
+test('плашка новостей: свёрнутая 20–30 с, раскрытая 8–10 с', async () => {
+  const m = await import('../js/news.js');
+  assert.ok(m.TOAST_TEASER_MS >= 20000 && m.TOAST_TEASER_MS <= 30000);
+  assert.ok(m.TOAST_OPEN_MS >= 8000 && m.TOAST_OPEN_MS <= 10000);
+});
