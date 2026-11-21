@@ -1,0 +1,99 @@
+/* restructure.css — Т1/Т3/Т5: модалка конкурента по блокам, подраздел «Клиенты и площадки»,
+   крупная типографика главных разделов. Анимации — только transform/opacity. */
+
+/* ===== Т5: крупнее заголовки основных разделов ===== */
+.secthead h2{font-size:clamp(27px,3.4vw,46px);letter-spacing:-.045em;line-height:1.08}
+.section#calc .secthead h2,
+.section#market .secthead h2,
+.section#geo .secthead h2{font-size:clamp(30px,3.8vw,50px)}
+.secthead .eyebrow{font-size:12px;letter-spacing:.16em}
+.secthead h2 + .tiny, .secthead p.tiny{font-size:13px;line-height:1.55}
+
+/* ===== Т1: модалка «Схема по блокам» ===== */
+.cd-dialog{
+  width:min(760px,calc(100% - 28px));max-height:min(88vh,860px);
+  border:1px solid var(--line);border-radius:var(--r);padding:0;
+  background:var(--card);color:var(--text);box-shadow:var(--shadow-lg);
+}
+.cd-dialog::backdrop{background:rgba(10,10,10,.55);backdrop-filter:blur(6px)}
+.cd-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:18px 20px 10px;border-bottom:1px solid var(--line)}
+.cd-head h3{font-size:clamp(20px,2.4vw,26px);letter-spacing:-.03em}
+.cd-status{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--card2)}
+.cd-blocks{padding:14px 20px 8px;display:grid;gap:14px}
+.cd-block h4{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--mutedS);margin-bottom:8px}
+.cd-row{display:flex;justify-content:space-between;gap:14px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.cd-row:last-child{border-bottom:0}
+.cd-k{color:var(--mutedS);font-size:12.5px}
+.cd-v{text-align:right}
+.cd-v b{font-variant-numeric:tabular-nums}
+.cd-v small{display:block;color:var(--mutedS);font-size:11.5px;margin-top:2px}
+.cd-none{opacity:.55;font-weight:600}
+.cd-badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:1px 8px;font-size:10px;color:var(--mutedS);background:var(--chip);white-space:nowrap}
+.cd-badge.stale{border-style:dashed;border-color:var(--silver);color:var(--text2)}
+.cd-badge.none{opacity:.6}
+.cd-table{width:100%;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:8px 0 4px;font-size:13.5px}
+.cd-table th{background:var(--chip);text-align:left;font-size:11.5px;color:var(--mutedS);padding:7px 12px}
+.cd-table td{padding:8px 12px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.cd-note{font-size:12px;color:var(--mutedS);line-height:1.5;margin-top:8px}
+.cd-foot{border-top:1px solid var(--line);padding:12px 20px;font-size:11.5px;color:var(--mutedS);line-height:1.5}
+
+/* ===== Т3: подраздел «Клиенты и площадки» ===== */
+.cl-entry{
+  width:100%;display:flex;align-items:center;gap:18px;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:20px 22px;box-shadow:var(--shadow);cursor:pointer;
+  transition:transform .35s var(--ease),border-color .2s,box-shadow .35s var(--ease);
+}
+.cl-entry:hover{transform:translateY(-3px);border-color:var(--silver);box-shadow:var(--shadow-lg)}
+.cl-entry:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px}
+.cl-ic{width:52px;height:52px;border-radius:16px;background:var(--ink);color:var(--bg);display:grid;place-items:center;flex-shrink:0}
+:root[data-theme="dark"] .cl-ic{background:#F5F5F7;color:#0A0A0A}
+.cl-ic svg.lucide{width:26px;height:26px}
+.cl-t{display:grid;gap:3px;min-width:0}
+.cl-t small{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.cl-t h3{font-size:clamp(19px,2.2vw,25px);letter-spacing:-.03em}
+.cl-t .tiny{font-size:12.5px}
+.cl-stats{display:flex;gap:18px;margin-left:auto;flex-shrink:0}
+.cl-stats span{display:grid;gap:2px;text-align:right}
+.cl-stats b{font-size:clamp(19px,2vw,26px);font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.cl-stats small{font-size:10.5px;color:var(--mutedS)}
+.cl-go{color:var(--silver);font-size:22px;transition:transform .3s var(--ease)}
+.cl-entry:hover .cl-go{transform:translateX(5px)}
+
+.cl-dialog{
+  width:100vw;height:100dvh;max-width:none;max-height:none;border:0;border-radius:0;padding:0;
+  background:var(--bg);color:var(--text);
+}
+@media(min-width:900px){
+  .cl-dialog{width:min(1180px,calc(100% - 60px));height:min(900px,calc(100dvh - 60px));margin:auto;border-radius:var(--r);border:1px solid var(--line);box-shadow:var(--shadow-lg)}
+}
+.cl-dialog::backdrop{background:rgba(10,10,10,.6);backdrop-filter:blur(6px)}
+.cl-head{display:flex;gap:14px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:blur(18px)}
+.cl-head h2{font-size:clamp(24px,3vw,34px);letter-spacing:-.04em}
+.cl-head > div{flex:1;min-width:0}
+.cl-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:12px 18px 0}
+.cl-body{padding:14px 18px 20px;overflow:auto;height:calc(100% - 118px)}
+.cl-mapwrap{height:min(52vh,430px);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--chip)}
+.cl-map{width:100%;height:100%}
+.cl-placebar{display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.cl-placebar select{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--card);color:var(--text);min-height:44px}
+.clm-legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:12px;font-size:12px;color:var(--mutedS)}
+.clm-legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.clm-dot.clm-s{background:#1C1C1E;border:1.5px solid #8E8E93}
+.clm-dot.clm-d{background:#8E8E93;border:1.5px solid #8E8E93}
+.clm-dot.clm-c{background:transparent;border:2px solid #1C1C1E}
+:root[data-theme="dark"] .clm-dot.clm-s{background:#F5F5F7;border-color:#8E8E93}
+:root[data-theme="dark"] .clm-dot.clm-d{background:#8E8E93}
+:root[data-theme="dark"] .clm-dot.clm-c{border-color:#F5F5F7}
+.clm-wrap,.clm-dot{display:inline-block}
+.clm-dot{width:14px;height:14px;border-radius:50%}
+
+/* Розовый Karmanov: prefix rows */
+.kd-note{font-size:12px;color:var(--mutedS);line-height:1.5;margin-top:8px}
+.kd-note kbd{background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:11px}
+
+/* Тач-цели */
+@media (pointer:coarse){
+  .cl-entry{padding:22px}
+  .cl-head{padding:16px}
+}

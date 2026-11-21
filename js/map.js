@@ -82,6 +82,7 @@ export function initMap(regionsData, calcConfig) {
   };
   $('cityMode').onclick = () => setMode(false, null, true);
   $('areaMode').onclick = () => setMode(true, null, true);
+  $('oblastMode').onclick = () => setMode('oblast', null, true);
   renderScenario();
   setMode(false, 'home', false);
 
@@ -90,23 +91,36 @@ export function initMap(regionsData, calcConfig) {
   enter($('map'), () => ensureLeaflet().catch(() => null).then(buildMap), '600px');
 }
 
-/* Переключатель режимов: подгоняет карту, выбирает локацию (заданную или первую в режиме) */
+/* Переключатель режимов: 'city' | 'area' | 'oblast'. Подгоняет карту, выбирает локацию */
 function setMode(reg, id, fit) {
   areaMode = reg;
-  $('cityMode').classList.toggle('on', !reg);
-  $('areaMode').classList.toggle('on', reg);
-  $('cityMode').setAttribute('aria-pressed', String(!reg));
-  $('areaMode').setAttribute('aria-pressed', String(reg));
-  const target = id || (reg ? ((PTS.find(p => p.g === 2) || {}).id) : 'home') || 'home';
+  const oblast = reg === 'oblast';
+  $('cityMode').classList.toggle('on', reg === false);
+  $('areaMode').classList.toggle('on', reg === true);
+  if ($('oblastMode')) $('oblastMode').classList.toggle('on', oblast);
+  $('cityMode').setAttribute('aria-pressed', String(reg === false));
+  $('areaMode').setAttribute('aria-pressed', String(reg === true));
+  if ($('oblastMode')) $('oblastMode').setAttribute('aria-pressed', String(oblast));
+  const target = oblast ? 'home' : (id || (reg ? ((PTS.find(p => p.g === 2) || {}).id) : 'home')) || 'home';
   if (mapObj) fitMode();
   showLocation(target, { pan: false });
   if (fit && mapObj) setTimeout(invalidate, 60);
 }
 
 function fitMode() {
-  const arr = areaMode ? PTS.filter(p => p.id === 'home' || p.g === 2) : PTS.filter(p => p.g !== 2);
+  let arr;
+  if (areaMode === 'oblast') {
+    // вся Новосибирская область: наши точки + места потенциальных клиентов из leads.json (OSM)
+    const extra = (state.DATA && state.DATA.leads && state.DATA.leads.places || [])
+      .map(p => p.coords).filter(a => Array.isArray(a) && a.length === 2);
+    arr = [...PTS.map(p => p.ll), ...extra];
+    if (!arr.length) arr = PTS.map(p => p.ll);
+  } else {
+    arr = areaMode ? PTS.filter(p => p.id === 'home' || p.g === 2) : PTS.filter(p => p.g !== 2);
+    arr = arr.map(p => p.ll);
+  }
   if (!arr.length) return;
-  mapObj.fitBounds(arr.map(p => p.ll), { padding: [22, 22], maxZoom: areaMode ? 9 : 12, animate: !reduced });
+  mapObj.fitBounds(arr, { padding: [22, 22], maxZoom: areaMode === 'oblast' ? 8 : areaMode ? 9 : 12, animate: !reduced });
 }
 
 function invalidate() { if (mapObj) mapObj.invalidateSize({ pan: false }); }
@@ -168,6 +182,23 @@ function buildMap() {
     marker.on('add', a11y);
     a11y();
     marks[p.id] = marker;
+  });
+
+  // Спрос по области: круги по местам из leads.json (OpenStreetMap) — размер = школы+сады («потенциал на выезд»).
+  // Только данные источника, без выдуманных коэффициентов; OSM неполон — пометка в подсказке.
+  const leadsPlaces = (state.DATA && state.DATA.leads && state.DATA.leads.places) || [];
+  leadsPlaces.forEach(p => {
+    if (!Array.isArray(p.coords) || p.coords.length !== 2) return;
+    const pot = (p.school || 0) + (p.kindergarten || 0);
+    if (!pot) return;
+    const rad = 8 + Math.sqrt(pot) * 2.2; // масштаб радиуса от потенциала, пиксели
+    const ring = L.circleMarker(p.coords, {
+      radius: Math.min(rad, 26), color: '#8E8E93', weight: 1.6,
+      fillColor: '#1C1C1E', fillOpacity: .28, title: p.name
+    }).addTo(mapObj);
+    ring.bindTooltip(`<b>${p.name}</b>: школы ${p.school || 0} + сады ${p.kindergarten || 0} → потенциал ${pot}${p.culture ? ` · ДК ${p.culture}` : ''}<br><small>по данным OpenStreetMap, возможны пропуски${p.updated_at ? ' · обновлено ' + new Date(p.updated_at).toLocaleDateString('ru-RU') : ''}</small>`, { direction: 'top' });
+    ring.on('click', () => { const o = $('location'); if (o) { o.value = ''; } toast(`${p.name}: ${pot} учреждений для выезда (OSM)`); });
+    marks['leads-' + p.id] = ring;
   });
 
   fitMode();

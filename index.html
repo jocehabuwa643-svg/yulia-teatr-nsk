@@ -30,6 +30,7 @@
 <link rel="stylesheet" href="css/afford.css">
 <link rel="stylesheet" href="css/preset-cards.css">
 <link rel="stylesheet" href="css/premises.css">
+<link rel="stylesheet" href="css/restructure.css">
 <!-- Leaflet, Chart.js и Lucide здесь не подключаются: js/ui/helpers.js подгружает их лениво (карта/графики — за ~600px до блока, иконки — в простое) -->
 <style>
 /* Печать / PDF: только активный калькулятор и результат, всегда светлая палитра независимо от темы экрана */
@@ -191,6 +192,9 @@
   <!-- Дайджест «Сегодня»: дата открытия, ближайшие сроки, новости отрасли (js/today.js; место зарезервировано в css/today.css) -->
   <section id="today" class="today" aria-labelledby="todayTitle" aria-busy="true"><h2 class="sr-only" id="todayTitle">Сегодня</h2></section>
   <div id="kpis" class="kpis cascade"></div>
+
+  <!-- Вход в подраздел «Клиенты и площадки» (js/clients-view.js строит карточку) -->
+  <div id="clientsEntry" style="margin-top:14px"></div>
 
   <div class="analytics">
     <article class="card rv">
@@ -362,6 +366,7 @@
       <div class="mapmodes" role="group" aria-label="Масштаб карты">
         <button type="button" class="mmode on" id="cityMode" aria-pressed="true">Новосибирск и Богдана Хмельницкого</button>
         <button type="button" class="mmode" id="areaMode" aria-pressed="false">Города области</button>
+        <button type="button" class="mmode" id="oblastMode" aria-pressed="false">Вся область · спрос</button>
       </div>
       <div id="map" class="mapstage" role="region" aria-label="Карта площадок и гастрольных маршрутов"></div>
       <p class="mapwarning" id="mapwarning" role="status" hidden></p>

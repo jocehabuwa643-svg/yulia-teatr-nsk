@@ -94,8 +94,8 @@ async function removePremise(id) {
 }
 function render() { ui.body.innerHTML = cardHTML(); bind(); }
 
-export async function initPremises() {
-  const geo = document.getElementById('geo');
+export async function initPremises(mountEl) {
+  const geo = mountEl || document.getElementById('geo');
   if (!geo || document.getElementById('premisesCard')) return [];
   items = (await store2.get(KEY, [])) || [];
   if (!Array.isArray(items)) items = [];
@@ -104,7 +104,7 @@ export async function initPremises() {
   card.className = 'card rv in';
   card.id = 'premisesCard';
   card.style.cssText = 'padding:clamp(18px,2vw,28px);margin-top:14px';
-  geo.querySelector('.mapgrid').insertAdjacentElement('afterend', card);
+  geo.appendChild(card);
   ui.body = card;
   render();
   return items;

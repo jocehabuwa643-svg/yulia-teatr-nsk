@@ -5,6 +5,7 @@
 import { $, $$, fmt, ic, icons, toast, store, isStale, enter, counter } from './ui/helpers.js';
 import { state } from './state.js';
 import { monthWindow, windowTitle, holidayStatus, holidayEndedInMonth } from './calendar.js';
+import { openCompetitorDetail, setDetailFocus } from './competitor-detail.js';
 
 /* ---------- Общие утилиты ---------- */
 
@@ -227,6 +228,7 @@ function cardHtml(c) {
         <div class="toolrow"><button type="submit" class="btn small primary">Сохранить</button>${manual ? '<button type="button" class="btn small secondary" data-clear>Убрать</button>' : ''}</div>
       </form>
     </details>
+    <button type="button" class="btn small primary rv-scheme" data-detail="${esc(c.id)}">${ic('layout-grid')}<span>Схема по блокам</span></button>
     ${link ? `<a class="btn small secondary rv-src" target="_blank" rel="noopener noreferrer" href="${esc(link)}">Источник ${ic('external-link')}</a>` : ''}
   </article>`;
 }
@@ -263,6 +265,14 @@ function refreshAfterManual(id) {
 
 function bindCards() {
   const box = $('marketCards');
+  // Схема по блокам: модалка конкурента (что проводят / цена / аренда / выручка-оценка)
+  box.addEventListener('click', e => {
+    const b = e.target.closest('[data-detail]'); if (!b) return;
+    e.preventDefault();
+    const c = ALL.find(x => x.id === b.dataset.detail); if (!c) return;
+    setDetailFocus(b);
+    openCompetitorDetail(c, manualAll()[c.id] || null);
+  });
   box.addEventListener('submit', e => {
     const f = e.target.closest('.mform'); if (!f) return;
     e.preventDefault();

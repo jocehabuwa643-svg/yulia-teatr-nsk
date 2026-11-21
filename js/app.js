@@ -18,6 +18,7 @@ import { initNews } from './news.js';
 import { initNotes } from './notes.js';
 import { initPresetCards } from './preset-cards.js';
 import { initPremises } from './premises.js';
+import { buildEntryCard } from './clients-view.js';
 import { initLiveData } from './live-data.js';
 import './afford.js'; // самоподключаемый: «пальчик»-пульс на главных кнопках при первом входе
 import { initReveal, enter, whenIdle } from './ui/helpers.js';
@@ -168,6 +169,7 @@ async function main() {
   // Первый экран — сразу: «Сегодня», Обзор и ленивая подгрузка Chart.js
   startToday(DATA, CFG.checklist_30d || []);
   safe('Обзор', () => initOverview(CFG));
+  safe('Вход «Клиенты и площадки»', () => buildEntryCard());
   safe('Графики', () => lazyChartLib(document.querySelector('.analytics')));
   initReveal();
   icons();
@@ -182,11 +184,11 @@ async function main() {
     },
     market: () => safe('Навигатор рынка', () => initMarket(CFG, DATA.competitors || { outbound_performers: [], studio_scene: [], party_venues: [], stationary_benchmarks: [] }, DATA.market || {})),
     geo: () => {
+      // Помещения и клиенты переехали в подраздел «Клиенты и площадки» (js/clients-view.js, вход-карточка на главной)
       safe('Карта', () => {
         setMapConfig(CFG);
         initMap(DATA.regions || { points: [], region_routes: [], home_zone_radius_m: 1250 }, CFG);
       });
-      asyncSafe('Помещения', initPremises);
     },
     guide: () => safe('Справочник', () => initGuide(DATA.guide || { categories: [], entries: [] })),
     launch: () => {
