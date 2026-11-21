@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "note": "Школы, детские сады и ДК/клубы по данным OpenStreetMap (ODbL); возможны пропуски. Потенциал на выезд = школы + детские сады (без коэффициентов). Обновляется раз в неделю: scripts/fetch-leads.mjs.",
-  "updated_at": "2026-11-21T03:22:01.963Z",
+  "updated_at": "2026-11-21T18:01:52.186Z",
   "stale": false,
   "sources": [
     {
@@ -10,10 +10,10 @@
       "url": "https://www.openstreetmap.org/copyright",
       "license": "ODbL 1.0 — © участники OpenStreetMap",
       "note": "Теги amenity=school / kindergarten / community_centre / arts_centre; неполно, возможны пропуски",
-      "fetched_at": "2026-11-21T03:22:01.963Z",
-      "status": "ok",
+      "fetched_at": "2026-11-21T18:01:52.186Z",
+      "status": "partial",
       "items": 800,
-      "osm_data_timestamp": "2026-11-21T03:23:08Z"
+      "osm_data_timestamp": "2026-11-21T18:14:55Z"
     }
   ],
   "places": [
@@ -5786,7 +5786,7 @@
       "objects_truncated": false,
       "source": "osm-overpass",
       "fetched_at": "2026-11-21T03:22:01.963Z",
-      "stale": false,
+      "stale": true,
       "districts": [
         {
           "id": "r364776",
@@ -5908,7 +5908,9 @@
             82.92639
           ]
         }
-      ]
+      ],
+      "stale_since": "2026-11-21T18:01:52.186Z",
+      "stale_reason": "Overpass maps.mail.ru (Новосибирск): HTTP 504"
     },
     {
       "id": "berdsk",
@@ -6263,7 +6265,9 @@
       "objects_truncated": false,
       "source": "osm-overpass",
       "fetched_at": "2026-11-21T03:22:01.963Z",
-      "stale": false
+      "stale": true,
+      "stale_since": "2026-11-21T18:01:52.186Z",
+      "stale_reason": "Overpass maps.mail.ru (Бердск): HTTP 504"
     },
     {
       "id": "iskitim",
@@ -6473,7 +6477,7 @@
       ],
       "objects_truncated": false,
       "source": "osm-overpass",
-      "fetched_at": "2026-11-21T03:22:01.963Z",
+      "fetched_at": "2026-11-21T18:01:52.186Z",
       "stale": false
     },
     {
@@ -6517,7 +6521,9 @@
       "objects_truncated": false,
       "source": "osm-overpass",
       "fetched_at": "2026-11-21T03:22:01.963Z",
-      "stale": false
+      "stale": true,
+      "stale_since": "2026-11-21T18:01:52.186Z",
+      "stale_reason": "Overpass maps.mail.ru (Коченёво): HTTP 504"
     },
     {
       "id": "moshkovo",
@@ -6567,7 +6573,7 @@
       ],
       "objects_truncated": false,
       "source": "osm-overpass",
-      "fetched_at": "2026-11-21T03:22:01.963Z",
+      "fetched_at": "2026-11-21T18:01:52.186Z",
       "stale": false
     },
     {
@@ -6650,7 +6656,7 @@
       ],
       "objects_truncated": false,
       "source": "osm-overpass",
-      "fetched_at": "2026-11-21T03:22:01.963Z",
+      "fetched_at": "2026-11-21T18:01:52.186Z",
       "stale": false
     }
   ],
@@ -6660,7 +6666,14 @@
     "culture": 48,
     "potential": 752,
     "places_total": 6,
-    "places_ok": 6,
-    "places_stale": 0
-  }
+    "places_ok": 3,
+    "places_stale": 3
+  },
+  "partial": true,
+  "stale_places": [
+    "novosibirsk",
+    "berdsk",
+    "kochenevo"
+  ],
+  "stale_reason": "Новосибирск: Overpass maps.mail.ru (Новосибирск): HTTP 504; Бердск: Overpass maps.mail.ru (Бердск): HTTP 504; Коченёво: Overpass maps.mail.ru (Коченёво): HTTP 504"
 }

@@ -185,7 +185,7 @@
    "source_url": "https://unc-planetary.ru/",
    "fetched_at": "2026-11-18",
    "confidence": "medium",
-   "checked_at": "2026-11-21T04:02:48.801Z",
+   "checked_at": "2026-11-21T18:16:33.220Z",
    "check_status": "ok",
    "observed": {
     "url": "https://unc-planetary.ru/",
@@ -193,14 +193,15 @@
     "content_hash": "e36c98e613a2cec2",
     "text_length": 4396,
     "hash_at": "2026-11-21T03:22:02.004Z",
-    "last_ok_at": "2026-11-21T04:02:48.801Z",
+    "last_ok_at": "2026-11-21T18:16:33.220Z",
     "price": {
      "value": 300,
      "unit": "₽",
      "qualifier": "от",
+     "kind": "ticket",
      "snippet": "путников планет, а также самые интересные и необычные факты о них. Купить билет От 300 руб. Лекции для всех Подробнее Животные в космосе Лекция — истор",
      "source_url": "https://unc-planetary.ru/",
-     "fetched_at": "2026-11-21T04:02:48.801Z",
+     "fetched_at": "2026-11-21T18:16:33.220Z",
      "confidence": "low",
      "method": "auto-regex"
     }
@@ -417,7 +418,18 @@
      "fetched_at": "2026-11-21"
     }
    ],
-   "verified_at": "2026-11-21"
+   "verified_at": "2026-11-21",
+   "checked_at": "2026-11-21T18:16:33.220Z",
+   "check_status": "ok",
+   "observed": {
+    "url": "https://puppets-nsk.ru/",
+    "http_status": 200,
+    "content_hash": "62587bed03c0c434",
+    "text_length": 8717,
+    "hash_at": "2026-11-21T18:16:33.220Z",
+    "last_ok_at": "2026-11-21T18:16:33.220Z",
+    "price": null
+   }
   },
   {
    "id": "planetary-bolshoy",
@@ -496,7 +508,12 @@
      "fetched_at": "2026-11-21"
     }
    ],
-   "verified_at": "2026-11-21"
+   "verified_at": "2026-11-21",
+   "checked_at": "2026-11-21T18:16:33.220Z",
+   "check_status": "unavailable",
+   "observed": {
+    "error": "www.nebo-nsk.ru: таймаут 10000 мс"
+   }
   },
   {
    "id": "prosto-fizika",
@@ -860,7 +877,7 @@
    "source_url": "https://playpanda.ru/",
    "fetched_at": "2026-11-21",
    "confidence": "high",
-   "checked_at": "2026-11-21T03:22:02.004Z",
+   "checked_at": "2026-11-21T18:16:33.220Z",
    "check_status": "ok",
    "observed": {
     "url": "https://playpanda.ru/",
@@ -868,8 +885,9 @@
     "content_hash": "56a63343590de333",
     "text_length": 7021,
     "hash_at": "2026-11-21T03:22:02.004Z",
-    "last_ok_at": "2026-11-21T03:22:02.004Z",
-    "price": null
+    "last_ok_at": "2026-11-21T18:16:33.220Z",
+    "price": null,
+    "price_note": "на странице несколько цен или диапазон — автоматически не определено"
    },
    "cases": [
     {
