@@ -4,7 +4,9 @@
    Для каждой записи с публичной страницей-источником: проверяет robots.txt (запрещено — пропуск со статусом),
    скачивает страницу (таймаут 10 с, повторы), фиксирует: доступна ли, изменился ли видимый текст (устойчивый хеш),
    и ТОЛЬКО если на странице явно и однозначно найден ценник рядом со словами «билет / спектакль / программа / стоимость…» —
-   записывает его как наблюдение observed.price (confidence:'low', авто-извлечение). Ручное значение prices[] НЕ трогается:
+   записывает его как наблюдение observed.price (confidence:'low', авто-извлечение) с ТИПОМ цены kind
+   (билет / выезд за ребёнка / пакет праздника / час аренды / абонемент — по ближайшему ключевому слову, js/competitor-prices.js);
+   интерфейс сравнивает наблюдение только с ценами карточки того же типа. Ручное значение prices[] НЕ трогается:
    на сайте показывается «на сайте указано … (проверено …)» рядом с ним, при расхождении — пометка.
 
    Не делает: обход защиты, капчи, авторизацию, сбор с 2ГИС / VK / Яндекс / Zoon (их условия запрещают автоматический сбор —
@@ -16,6 +18,7 @@
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { kindFromText } from '../js/competitor-prices.js';
 import { DATA_DIR, PROJECT_UA, fetchRetry, readJson, writeJsonIfChanged, detectIndent, wait, robotsAllowsPath, ageInDays } from './fetch-util.mjs';
 
 /* ---------- Настройки ---------- */
@@ -28,8 +31,9 @@ export const DENY_HOSTS = ['2gis.ru', 'vk.ru', 'vk.com', 'ok.ru', 'yandex.ru', '
 
 /* Допустимый диапазон ценника (₽): отсекает мусор вроде «5 р.» и номера счетов */
 const PRICE_MIN = 50, PRICE_MAX = 300_000;
-/* Слова рядом с числом, без которых цифра с «₽» не считается ценой услуги */
-const PRICE_CONTEXT = /(билет|спектакл|программ|стоимост|цен[аыуе]\b|вход|сеанс|шоу|занят|выезд|с человека|с ребёнка|с ребенка|за ребёнка|за ребенка|с участника|абонемент|аренд)/i;
+/* Слова рядом с числом, без которых цифра с «₽» не считается ценой услуги (пакеты и тарифы праздников — тоже цена,
+   чтобы прайс площадки с несколькими пакетами честно признавался «неоднозначным», а не молча пропускался) */
+const PRICE_CONTEXT = /(билет|спектакл|программ|стоимост|цен[аыуе]\b|вход|сеанс|шоу|занят|выезд|с человека|с ребёнка|с ребенка|за ребёнка|за ребенка|с участника|абонемент|аренд|пакет|тариф|праздник|день рожд)/i;
 /* Слова перед числом, после которых это точно не цена услуги (реквизиты, капитал и т.п.) */
 const PRICE_BLOCK = /(инн|огрн|кпп|бик|р\/с|расч[её]тн|уставн|капитал|выручк|оборот|штраф|тел\.?|телефон|факс)\s*[:№#]?\s*$/i;
 
@@ -81,7 +85,9 @@ export function extractPrice(text) {
     if (PRICE_BLOCK.test(t.slice(Math.max(0, start - 24), start))) continue;
     const win = t.slice(Math.max(0, start - 80), Math.min(t.length, end + 60));
     if (!PRICE_CONTEXT.test(win)) continue;
-    found.push({ value, qualifier: m[1] ? m[1].toLowerCase() : null, snippet: win.trim(), at: start });
+    // тип цены (билет / выезд за ребёнка / пакет / час / абонемент) — по ближайшему к числу ключевому слову
+    const winStart = Math.max(0, start - 80);
+    found.push({ value, qualifier: m[1] ? m[1].toLowerCase() : null, snippet: win.trim(), at: start, kind: kindFromText(win, start - winStart) });
   }
   // диапазон рядом с ключевыми словами делает цену неоднозначной
   for (const m of t.matchAll(RANGE_RE)) {
@@ -92,7 +98,9 @@ export function extractPrice(text) {
   const distinct = [...new Set(found.map(f => f.value))];
   if (distinct.length > 1) return { value: null, reason: 'ambiguous', values: distinct.slice(0, 8) };
   const f = found[0];
-  return { value: f.value, unit: '₽', qualifier: f.qualifier, snippet: f.snippet.slice(0, 160) };
+  // одна цена, но слова рядом указывают на разные типы (например, «билет» и «час аренды») — тип не угадываем
+  const kinds = [...new Set(found.map(x => x.kind))];
+  return { value: f.value, unit: '₽', qualifier: f.qualifier, kind: kinds.length === 1 ? kinds[0] : 'other', snippet: f.snippet.slice(0, 160) };
 }
 
 /* ---------- Сравнение наблюдений ---------- */
@@ -162,7 +170,7 @@ export function buildCheck(prevObserved, url, status, html, nowIso) {
     url, http_status: status, content_hash: hash, text_length: text.length,
     hash_at: prev.content_hash === hash ? (prev.hash_at || nowIso) : nowIso,
     last_ok_at: nowIso,
-    price: pr.value ? { value: pr.value, unit: pr.unit, qualifier: pr.qualifier, snippet: pr.snippet, source_url: url, fetched_at: nowIso, confidence: 'low', method: 'auto-regex' } : null
+    price: pr.value ? { value: pr.value, unit: pr.unit, qualifier: pr.qualifier, kind: pr.kind || 'other', snippet: pr.snippet, source_url: url, fetched_at: nowIso, confidence: 'low', method: 'auto-regex' } : null
   };
   if (!pr.value && pr.reason === 'ambiguous') observed.price_note = 'на странице несколько цен или диапазон — автоматически не определено';
   const d = diffObserved(prev, observed);
@@ -196,8 +204,9 @@ export async function checkItem(item, nowIso, deps = {}) {
 
 /* ---------- Запуск ---------- */
 
-export async function run({ now = new Date() } = {}) {
-  const file = join(DATA_DIR, 'competitors.json');
+/* dataDir и deps — для тестов: прогон на копии данных без сети */
+export async function run({ now = new Date(), dataDir = DATA_DIR, deps = {} } = {}) {
+  const file = join(dataDir, 'competitors.json');
   const doc = readJson(file);
   const nowIso = now.toISOString();
   const tally = {};
@@ -205,7 +214,7 @@ export async function run({ now = new Date() } = {}) {
     for (const item of doc[key] || []) {
       if (!item || !item.source_url) continue;
       const prevChecked = item.checked_at, prevStatus = item.check_status, prevObs = item.observed;
-      const res = await checkItem(item, nowIso);
+      const res = await checkItem(item, nowIso, deps);
       /* идемпотентность: если по существу ничего не изменилось и прошлая проверка свежая (<6 дн.), метки времени не трогаем */
       if (prevChecked && prevStatus === res.check_status && ageInDays(prevChecked, now.getTime()) < 6) {
         const strip = o => JSON.stringify(o ? { ...o, last_ok_at: 0, price: o.price ? { ...o.price, fetched_at: 0 } : o.price } : null);
@@ -215,7 +224,7 @@ export async function run({ now = new Date() } = {}) {
       item.check_status = res.check_status;
       if (res.observed) item.observed = res.observed; else delete item.observed;
       tally[res.check_status] = (tally[res.check_status] || 0) + 1;
-      const px = res.observed && res.observed.price ? ` · цена на сайте ${res.observed.price.qualifier || ''} ${res.observed.price.value} ₽` : '';
+      const px = res.observed && res.observed.price ? ` · цена на сайте ${res.observed.price.qualifier || ''} ${res.observed.price.value} ₽ (${res.observed.price.kind})` : '';
       console.log(`[competitors] ${item.id}: ${res.check_status}${px}`);
     }
   }

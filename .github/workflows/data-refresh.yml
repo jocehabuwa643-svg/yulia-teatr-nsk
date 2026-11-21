@@ -2,7 +2,10 @@ name: Data refresh
 
 on:
   schedule:
-    - cron: '17 3 * * *' # ежедневно 03:17 UTC (10:17 НСК)
+    # Ежедневно 03:17 UTC (10:17 НСК). GitHub запускает расписание с задержкой (бывает несколько часов) и при нагрузке
+    # может пропустить запуск — второй прогон 15:47 UTC страхует. Если данные уже свежие, он ничего не коммитит
+    - cron: '17 3 * * *'
+    - cron: '47 15 * * *'
   workflow_dispatch:
 
 # contents: write — коммит данных; actions: write — запуск деплоя (пуш от GITHUB_TOKEN сам workflow не запускает)
@@ -17,6 +20,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       # Секрет доступен шагам только через env; в лог он не печатается (GitHub маскирует значение)
       WORDSTAT_TOKEN: ${{ secrets.WORDSTAT_TOKEN }}
@@ -30,11 +34,13 @@ jobs:
       # Сбой источника не валит джоб: скрипт сам оставляет прежние данные и ставит stale
       - name: Курсы ЦБ РФ
         continue-on-error: true
+        timeout-minutes: 3
         run: node scripts/fetch-cbr.mjs
 
       # Новости отрасли (RSS: Минкультуры РФ и НСО, Правительство НСО, УФНС по НСО). Записи копятся 60 дней (не больше 40);
       # сбой лент не валит джоб — прежние записи остаются, при полном сбое ставится stale:true. Файл не переписывается,
-      # если по существу ничего не изменилось, — пустых коммитов не будет. Коммит ниже берёт весь data/, news.json в том числе
+      # если по существу ничего не изменилось, — пустых коммитов не будет. Сайты ведомств РФ часто не отвечают серверам
+      # GitHub (502 / таймаут) — тогда в сводке будет ::warning, а свежие записи даст локальный прогон scripts/refresh-local.mjs
       - name: Новости отрасли
         continue-on-error: true
         timeout-minutes: 5
@@ -44,43 +50,60 @@ jobs:
       - name: Спрос Wordstat
         if: ${{ env.WORDSTAT_TOKEN != '' }}
         continue-on-error: true
+        timeout-minutes: 3
         run: node scripts/fetch-wordstat.mjs
 
-      # Каждый день: валидность JSON и напоминание (::warning) о незагруженном календаре каникул — прогон не падает
-      - name: Напоминание о календаре каникул
-        run: node scripts/touch-meta.mjs
-
-      # fetch-cbr.mjs не сдвигает fetched_at, если курс и дата ЦБ те же и stale нет — тогда diff пуст и коммита не будет
+      # Изменились ли данные по существу (до любых меток времени)
       - name: Проверить, изменились ли данные
         id: diff
         run: |
           if git diff --quiet -- data/; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Данные не изменились — коммит не нужен"
+            echo "Данные не изменились"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # Метка времени и проверка JSON — только при реальных изменениях; тесты — страховка от битых данных
-      - name: Проверка и метка времени
+      # Данные изменились: метка релиза (generated_at + checked_at), аудит свежести (::warning) и тесты — страховка от битых данных
+      - name: Метка времени и тесты
         if: steps.diff.outputs.changed == 'true'
         run: |
           node scripts/touch-meta.mjs --stamp
           node --test
 
+      # Данные те же: валидность JSON, аудит свежести (::warning о каникулах, грантах, лентах) и, раз в 2 дня,
+      # метка checked_at — «проверено», если ЦБ ответил. Без неё в праздники без новых курсов сайт решил бы, что данные устарели
+      - name: Аудит свежести и отметка проверки
+        if: steps.diff.outputs.changed != 'true'
+        run: node scripts/touch-meta.mjs --heartbeat
+
+      - name: Есть что коммитить?
+        id: commit
+        run: |
+          if git diff --quiet -- data/; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            echo "Коммит не нужен"
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Коммит и пуш
-        if: steps.diff.outputs.changed == 'true'
+        if: steps.commit.outputs.needed == 'true'
         run: |
           git config user.name "data-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data/
-          git commit -m "data: обновление источников $(date -u +%F)"
+          if [ "${{ steps.diff.outputs.changed }}" = "true" ]; then
+            git commit -m "data: обновление источников $(date -u +%F)"
+          else
+            git commit -m "data: источники проверены $(date -u +%F)"
+          fi
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push
 
       # Пуш от GITHUB_TOKEN не запускает deploy.yml — запускаем явно, чтобы сайт получил свежие данные
       - name: Пересобрать сайт
-        if: steps.diff.outputs.changed == 'true'
+        if: steps.commit.outputs.needed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run deploy.yml --ref "${GITHUB_REF_NAME}"

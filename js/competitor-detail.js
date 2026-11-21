@@ -1,157 +1,145 @@
-/* competitor-detail.js — модалка «Схема по блокам» для карточки конкурента.
-   Четыре блока: Что проводят · Цена билета · Аренда площадки · Ориентировочная выручка.
-   Правило данных: только то, что есть в data/*.json или введено Юлией; нет значения — «нет данных».
-   «Ориентировочная выручка» — это ОЦЕНКА МОДЕЛИ ПРОЕКТА (travelCalc по цене билета конкурента),
-   а не данные конкурента: помечено в интерфейсе. Афиша — прямая ссылка на источник (авто-скрейп
-   афиш запрещён условиями площадок), рядом «проверено X дней назад» из недельного fetch-competitors. */
-import { $, fmt, ic, icons, isStale } from './ui/helpers.js';
+/* competitor-detail.js — окно «Подробно» по конкуренту.
+   Блоки: Что организуют (кейсы с датой и источником) · Цены по типам (билет / выезд за ребёнка / пакет / час / абонемент —
+   каждый тип отдельно, «от» сохраняется, у каждой цены дата и ссылка) · Автопроверка сайта · «Если бы вы продавали
+   по его цене» — оценка по ВАШЕЙ модели выезда, не выручка конкурента (подписано, формула простыми словами).
+   Правило данных: только data/competitors.json и ручной ввод Юлии; нет значения — «нет данных», не ноль.
+   Закрытие: ✕, Esc, клик по фону и «назад» телефона (своя запись истории без смены адреса — с сайта не выкидывает). */
+import { fmt, ic, icons, isStale } from './ui/helpers.js';
 import { state } from './state.js';
 import { travelCalc } from './calculators/travel.js';
+import { KINDS, groupPrices, priceText, ruDate as isoRu, safeUrl, ticketPriceOf as tpOf, observedCompare, revenueEstimate as revEst } from './competitor-prices.js';
 
-const ruDate = d => { try { return new Date(d).toLocaleDateString('ru-RU'); } catch (e) { return '—'; } };
-
-const NBSP = ' ';
-const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ruDate = d => isoRu(d) || '—';
 const THRESHOLD = () => (state.DATA && state.DATA.rates && state.DATA.rates.thresholds_days) || { prices: 30 };
+const CONF = { model: 'ориентир плана, не оферта', manual: 'введено вами', no_data: 'нет данных', high: 'официальный источник', medium: 'вторичный источник', low: 'не подтверждено' };
+const link = (u, text = 'источник') => { const s = safeUrl(u); return s ? `<a href="${esc(s)}" target="_blank" rel="noopener noreferrer">${text} ${ic('external-link')}</a>` : ''; };
+const badge = conf => `<span class="cd-badge${conf === 'no_data' ? ' none' : ''}">${esc(CONF[conf] || conf)}</span>`;
 
-/* Цена билета: ручной ввод Юлии → подтверждённая цена карточки → наблюдение с сайта → null */
-export function ticketPriceOf(c, manual) {
-  const m = manual && Number.isFinite(manual.value) ? manual : null;
-  const listed = (c.prices || []).filter(p => Number.isFinite(p.value));
-  const obs = c.observed && c.observed.price && Number.isFinite(c.observed.price.value) ? c.observed.price : null;
-  const first = listed[0] || null;
-  const chosen = m || first || obs;
-  return {
-    value: chosen ? chosen.value : null,
-    source: m ? 'введено вами' : first ? 'из исследования рынка' : obs ? 'найдено на сайте (авто)' : null,
-    date: (m && m.date) || (first && first.date) || (obs && c.checked_at) || c.fetched_at || null,
-    qualifier: chosen && chosen.qualifier ? chosen.qualifier : null
-  };
+/* Цена за человека для сравнения (переэкспорт для обратной совместимости) */
+export const ticketPriceOf = (c, manual) => tpOf(c, manual);
+
+/* Оценка кассы по модели проекта при цене конкурента — тем же калькулятором выезда, что у Юлии */
+export const revenueEstimate = (c, cfg, manual) => revEst(c, cfg, manual, travelCalc);
+
+/* ---------- Разметка блоков ---------- */
+
+/* Что организуют: программа, реальные кейсы с датой и ссылкой, возраст, заметки */
+function whatHTML(c) {
+  const cases = (Array.isArray(c.cases) ? c.cases : []).filter(k => k && k.text);
+  const head = c.program ? `<p class="cd-prog">${esc(c.program)}</p>` : '';
+  const list = cases.length
+    ? `<ul class="cd-cases">${cases.map(k => `<li><span>${esc(k.text)}</span><small>${k.date ? `<b>${ruDate(k.date)}</b> · ` : ''}${link(k.source_url) || 'источник не указан'}${k.fetched_at ? ` · проверено ${ruDate(k.fetched_at)}` : ''}</small></li>`).join('')}</ul>`
+    : '<p class="cd-none-line"><b class="cd-none">Нет проверенных кейсов</b> — по открытым источникам не найдено.</p>';
+  const extra = [c.age ? `возраст: ${esc(c.age)}` : '', c.note ? esc(c.note) : ''].filter(Boolean).map(t => `<p class="cd-note">${t}</p>`).join('');
+  return `<section class="cd-block"><h4>Что организуют</h4>${head}${list}${extra}</section>`;
 }
 
-/* Аренда площадки: только проверенные ориентиры из data/*.json; нет данных — честная пометка.
-   Схема 70/30 для ДК и аренда 1 000 ₽/м² — допущения проекта (confidence: model). */
-export function rentInfoOf(c, cfg) {
-  const t = c.type;
-  if (t === 'outbound') {
-    return { title: 'Аренда площадки', items: [
-      { k: 'Зал ДК (сценарий проекта)', v: `доля площадки ${cfg.venue_share.dk}% от кассы`, note: 'схема 70/30 — не публичный тариф', confidence: 'model' },
-      { k: 'Сад / школа', v: `оргсбор ${cfg.venue_share.school_garden}% от кассы`, note: 'зал даёт учреждение', confidence: 'model' }
-    ] };
-  }
-  if (t === 'party') {
-    const rest = (c.prices || []).filter(p => Number.isFinite(p.value));
-    return { title: 'Аренда / тарифы площадки', items: rest.length
-      ? rest.map(p => ({ k: p.label || 'Тариф', v: `${fmt(p.value)} ${p.unit || '₽'}`, note: p.qualifier || null, confidence: c.confidence || 'medium' }))
-      : [{ k: 'Тарифы', v: null, note: 'нет данных — прайс не опубликован, запросить КП', confidence: 'no_data' }] };
-  }
-  if (t === 'studio') {
-    return { title: 'Стоимость занятий (ориентир)', items: [
-      { k: 'Соцформат ДДК', v: '1 500 ₽/мес.', note: 'архивная запись 2019 года', confidence: 'low' },
-      { k: 'Частные студии района', v: '4 800–8 100 ₽/мес.', note: 'ориентиры бизнес-плана, не оферта', confidence: 'model' }
-    ] };
-  }
-  return { title: 'Аренда площадки', items: [{ k: 'Стационарная площадка', v: null, note: 'условия аренды — только по запросу КП', confidence: 'no_data' }] };
+/* Цены по типам: каждая группа — свой подзаголовок; внутри — подпись, цена с «от», дата, источник, надёжность */
+function pricesHTML(c, manual) {
+  const groups = groupPrices(c, manual);
+  const body = groups.length ? groups.map(g => `<div class="cd-kind"><h5>${esc(g.label)}<small>${esc(g.per)}</small></h5>${g.items.map(p => {
+    const stale = !p.manual && p.confidence !== 'model' && p.fetched_at && isStale(p.fetched_at, THRESHOLD().prices);
+    return `<div class="cd-row"><span class="cd-k">${esc(p.label || 'Тариф')}</span><span class="cd-v"><b>${esc(priceText(p))}</b><small>${p.fetched_at ? `${p.manual ? 'введено' : 'проверено'} ${ruDate(p.fetched_at)}` : 'дата не указана'}${p.valid_from ? ` · действует с ${ruDate(p.valid_from)}` : ''}${p.source_url ? ' · ' + link(p.source_url) : ''} ${badge(p.manual ? 'manual' : p.confidence || 'medium')}${stale ? ' <span class="cd-badge stale">устарело</span>' : ''}</small></span></div>`;
+  }).join('')}</div>`).join('')
+    : `<div class="cd-row"><span class="cd-k">Цена</span><span class="cd-v"><b class="cd-none">нет данных</b><small>«нет данных» не значит «бесплатно» — запросите КП или введите цену в карточке</small></span></div>`;
+  const note = c.price_note ? `<p class="cd-note">${esc(c.price_note)}</p>` : '';
+  // значения прежнего исследования, не подтверждённые при сверке — показываем честно, но в сравнение не берём
+  const un = (Array.isArray(c.unconfirmed_prices) ? c.unconfirmed_prices : []).filter(p => Number.isFinite(p.value));
+  const unHTML = un.length ? `<details class="cd-more"><summary>Не подтверждено (${un.length}) — в сравнение не входит</summary>${un.map(p => `<div class="cd-row"><span class="cd-k">${esc(p.label || 'Тариф')}</span><span class="cd-v"><b class="cd-strike">${esc(priceText(p))}</b><small>${esc(p.reason || 'не подтверждено')}</small></span></div>`).join('')}</details>` : '';
+  return `<section class="cd-block"><h4>Цены по типам</h4><p class="cd-note cd-note-top">Сравнивайте только цены одного типа: билет в зал, выезд за ребёнка, пакет праздника, час аренды и абонемент — разные вещи.</p>${body}${note}${unHTML}</section>`;
 }
 
-/* Ориентировочная выручка: оценка модели проекта при цене билета конкурента.
-   Считаем тем же калькулятором выезда, которым Юлия считает свои сценарии. */
-export function revenueEstimate(c, cfg, manual) {
-  const tp = ticketPriceOf(c, manual);
-  if (!Number.isFinite(tp.value) || tp.value <= 0) return { available: false, reason: 'нет подтверждённой цены билета' };
-  const audiences = [30, 60, 100];
-  const dk = c.type === 'party' || c.format && /ДК|зал/i.test(c.format) ? 1 : 0;
-  const rows = audiences.map(n => {
-    const r = travelCalc({ n, p: tp.value, k: 1, r: 0, dk: 0, own: 0 }, cfg);
-    return { n, gross: r.gross, profit: r.profit, be: r.be };
-  });
-  return { available: true, price: tp, rows, note: dk ? 'при залe ДК считайте отдельную калькуляцию (доля 30%)' : null };
+/* Автопроверка сайта (еженедельно): статус страницы и найденная цена с типом */
+function observedHTML(c, manual) {
+  const st = c.check_status;
+  if (!st) return '';
+  const when = c.checked_at ? ruDate(c.checked_at) : '—';
+  const stale = c.checked_at && isStale(c.checked_at, THRESHOLD().prices);
+  const text = { ok: 'страница доступна', changed: 'страница изменилась — проверьте цены вручную', unavailable: 'страница недоступна, показаны прежние данные', robots_disallowed: 'сайт запрещает автопроверку (robots.txt)', skipped_policy: 'площадка запрещает автоматический сбор — проверяется только вручную', skipped: 'нет ссылки для проверки' }[st] || st;
+  const oc = observedCompare(c, manual);
+  const price = oc ? `<div class="cd-row"><span class="cd-k">Найдено на сайте (${esc(oc.kindLabel)})</span><span class="cd-v"><b>${esc(priceText(oc.price, false))}</b><small>${oc.differs ? '<span class="cd-badge stale">отличается от карточки</span> ' : ''}${oc.comparable ? '' : 'в карточке нет цены этого типа · '}${badge('low')}</small></span></div>` : '';
+  return `<section class="cd-block"><h4>Автопроверка сайта</h4><div class="cd-row"><span class="cd-k">${when}</span><span class="cd-v"><b>${esc(text)}</b>${stale ? '<small><span class="cd-badge stale">проверка устарела</span></small>' : ''}</span></div>${price}</section>`;
 }
 
-/* Модель экрана: блоки для разметки */
-export function detailModel(c, cfg, manual) {
-  const g = c.format || '';
-  const src = safeSrc(c.source_url);
-  const checked = c.checked_at ? { date: c.checked_at, stale: isStale(c.checked_at, THRESHOLD().prices), status: c.check_status } : null;
-  return {
-    name: c.name, format: g, district: c.district, address: c.address, status: c.status,
-    program: c.program || null,
-    age: c.age || null,
-    note: c.note || null,
-    ticket: ticketBlock(c, cfg, manual),
-    rent: rentInfoOf(c, cfg),
-    revenue: revenueEstimate(c, cfg, manual),
-    source: { url: c.source_url, name: c.source_name || 'источник', fetchedAt: c.fetched_at, checked },
-    manual
-  };
-}
-function safeSrc(u) { return /^https?:\/\//.test(String(u || '')) ? u : null; }
-
-function ticketBlock(c, cfg, manual) {
-  const tp = ticketPriceOf(c, manual);
-  const rest = (c.prices || []).filter(p => Number.isFinite(p.value));
-  const items = [];
-  if (tp.value != null) items.push({ k: 'Цена билета', v: `${tp.qualifier ? tp.qualifier + ' ' : ''}${fmt(tp.value)} ₽`, note: tp.source ? tp.source + (tp.date ? ' · ' + ruDate(tp.date) : '') : null, confidence: mConf(c, manual) });
-  rest.slice(tp.value != null ? 1 : 0).forEach(p => items.push({ k: p.label || 'Тариф', v: `${p.qualifier ? p.qualifier + ' ' : ''}${fmt(p.value)} ${p.unit || '₽'}`, note: null, confidence: c.confidence || 'medium' }));
-  if (!items.length) items.push({ k: 'Цена билета', v: null, note: 'нет данных — «нет данных» не значит «бесплатно»', confidence: 'no_data' });
-  return { title: 'Цена билета', items };
-}
-function mConf(c, manual) { return manual ? 'manual' : (c.confidence || 'medium'); }
-
-/* ---------- Разметка и диалог ---------- */
-
-function blockHTML(title, items) {
-  const rows = items.map(it => `<div class="cd-row"><span class="cd-k">${esc(it.k)}</span><span class="cd-v">${it.v != null ? `<b>${esc(it.v)}</b>` : '<b class="cd-none">нет данных</b>'}${it.note ? `<small>${esc(it.note)}${it.confidence ? badge(it.confidence) : ''}</small>` : (it.confidence ? `<small>${badge(it.confidence)}</small>` : '')}</span></div>`).join('');
-  return `<div class="cd-block"><h4>${esc(title)}</h4>${rows}</div>`;
-}
-function badge(conf) {
-  const m = { model: 'допущение проекта', manual: 'введено вами', no_data: 'нет данных', high: 'официальный источник', medium: 'вторичный источник', low: 'низкая надёжность' };
-  return ` <span class="cd-badge${conf === 'no_data' ? ' none' : ''}">${m[conf] || conf}</span>`;
+/* «Если бы вы продавали по его цене»: только при цене за человека; явная подпись и формула */
+function revenueHTML(c, manual) {
+  const rev = revenueEstimate(c, state.CFG, manual);
+  if (!rev.available) return `<section class="cd-block"><h4>Ваша касса по цене конкурента</h4><div class="cd-row"><span class="cd-k">Оценка</span><span class="cd-v"><b class="cd-none">не считается</b><small>${esc(rev.reason)}</small></span></div></section>`;
+  const p = rev.price;
+  return `<section class="cd-block"><h4>Ваша касса по цене конкурента</h4>
+    <p class="cd-warn">${ic('circle-help')}<span>Оценка по <b>вашей</b> модели выезда, а не выручка конкурента: его расходы и число зрителей неизвестны.</span></p>
+    <p class="cd-note cd-note-top">Цена: <b>${esc(priceText(p, false))}</b> (${esc(KINDS[p.kind] ? KINDS[p.kind].short : 'за человека')}, ${esc(p.source)}${p.date ? ', ' + ruDate(p.date) : ''}).${rev.fromPrice ? ' Это цена «от» — минимальная, реальная может быть выше.' : ''}</p>
+    <div class="cd-tablebox"><table class="cd-table"><thead><tr><th scope="col">Зрителей</th><th scope="col">Касса</th><th scope="col">Вам чистыми</th></tr></thead>
+    <tbody>${rev.rows.map(r => `<tr><td>${r.n}</td><td>${fmt(r.gross)} ₽</td><td><b>${r.profit >= 0 ? '+' : '−'}${fmt(Math.abs(r.profit))} ₽</b></td></tr>`).join('')}</tbody></table></div>
+    <p class="cd-note">Как считается: касса = зрители × цена. Вам чистыми = касса минус ваши расходы на один показ в городе из калькулятора выезда (гонорары и взносы, бензин, износ, печать, оргсбор сада или школы, налог). Окупается от ${rev.rows[0].be} зрителей.</p></section>`;
 }
 
+function statusWord(s) { return { public: '<span class="stat st-public">публичное предложение</span>', historical: '<span class="stat st-historical">прошлый выезд</span>', mixed: '<span class="stat st-mixed">разночтения</span>', reference: '<span class="stat st-reference">ориентир</span>', plan_benchmark: '<span class="stat st-plan_benchmark">ориентир бизнес-плана</span>' }[s] || ''; }
+
+/* Полная разметка окна */
 export function detailHTML(c, cfg, manual) {
-  const m = detailModel(c, cfg, manual);
-  const rev = m.revenue;
-  const revHTML = rev.available
-    ? `<div class="cd-row"><span class="cd-k">Выручка дня при цене ${fmt(rev.price.value)} ₽</span></div>
-       <table class="cd-table"><thead><tr><th>Зрителей</th><th>Касса дня</th><th>Чистыми (модель)</th></tr></thead>
-       <tbody>${rev.rows.map(r => `<tr><td>${r.n}</td><td>${fmt(r.gross)} ₽</td><td><b>${r.profit >= 0 ? '+' : '−'}${fmt(Math.abs(r.profit))} ₽</b></td></tr>`).join('')}</tbody></table>
-       <p class="cd-note">Оценка модели проекта (гонорары, взносы, дорога, налог — как в калькуляторе выезда), не данные конкурента. Безубыточность: ${rev.rows[0].be} зрителей за день.${rev.note ? ' ' + esc(rev.note) : ''}</p>`
-    : `<div class="cd-row"><span class="cd-k">Ориентировочная выручка</span><span class="cd-v"><b class="cd-none">нет данных</b><small>${esc(rev.reason)}</small></span></div>`;
-  const checked = m.source.checked;
-  const checkedHTML = checked
-    ? `<span class="cd-badge${checked.stale ? ' stale' : ''}">проверено ${ruDate(checked.date)}${checked.stale ? ' · устарело' : ''}</span>`
-    : `<span class="cd-badge">срез ${ruDate(m.source.fetchedAt)}</span>`;
+  const src = safeUrl(c.source_url);
   return `
     <div class="cd-head">
-      <div><h3>${esc(m.name)}</h3><p class="tiny">${esc(m.format || '')}${m.district && m.district !== '—' ? ' · ' + esc(m.district) : ''}${m.address ? ' · ' + esc(m.address) : ''}</p></div>
-      <button type="button" class="ghostbtn" data-cd-close aria-label="Закрыть схему">✕</button>
+      <div class="cd-title"><h3 id="cdTitle">${esc(c.name)}</h3><p class="tiny">${esc(c.format || '')}${c.district && c.district !== '—' ? ' · ' + esc(c.district) : ''}</p>${c.address ? `<p class="tiny cd-addr">${esc(c.address)}</p>` : ''}</div>
+      <button type="button" class="cd-x" data-cd-close aria-label="Закрыть">${ic('x')}</button>
     </div>
-    <div class="cd-status">${statusWord(m.status)} ${checkedHTML}${m.source.url ? ` <a class="chip" href="${esc(m.source.url)}" target="_blank" rel="noopener noreferrer">Афиша и цены на источнике ↗</a>` : ''}</div>
+    <div class="cd-status">${statusWord(c.status)}${c.verified_at ? `<span class="cd-badge">сверено с источником ${ruDate(c.verified_at)}</span>` : `<span class="cd-badge">срез ${ruDate(c.fetched_at)}</span>`}${src ? `<a class="chip cd-src" href="${esc(src)}" target="_blank" rel="noopener noreferrer">Сайт или страница ${ic('external-link')}</a>` : ''}</div>
     <div class="cd-blocks">
-      <div class="cd-block"><h4>Что проводят</h4><div class="cd-row"><span class="cd-v">${m.program ? `<b>${esc(m.program)}</b>` : '<b class="cd-none">нет данных</b>'}${m.age ? `<small>возраст: ${esc(m.age)}</small>` : ''}${m.note ? `<small>${esc(m.note)}</small>` : ''}</span></div></div>
-      ${blockHTML(m.ticket.title, m.ticket.items)}
-      ${blockHTML(m.rent.title, m.rent.items)}
-      <div class="cd-block"><h4>Ориентировочная выручка с мероприятия</h4>${revHTML}</div>
+      ${whatHTML(c)}
+      ${pricesHTML(c, manual)}
+      ${observedHTML(c, manual)}
+      ${revenueHTML(c, manual)}
     </div>
-    <p class="cd-foot">Источник: ${esc(m.source.name)} · срез ${ruDate(m.source.fetchedAt)}. Недельная автопроверка сайтов — scripts/fetch-competitors.mjs (robots.txt соблюдается; 2ГИС/VK/Яндекс не сканируются по их правилам).</p>`;
+    <p class="cd-foot">Источник карточки: ${esc(c.source_name || 'исследование рынка')}${c.verify_note ? '. ' + esc(c.verify_note) : ''}. Сайты конкурентов проверяются раз в неделю с соблюдением robots.txt; 2ГИС, VK и Яндекс автоматически не сканируются по их правилам.</p>`;
 }
-function statusWord(s) { return { public: '<span class="stat st-public">публичное предложение</span>', historical: '<span class="stat st-historical">прошлый выезд</span>', mixed: '<span class="stat st-mixed">разночтения</span>', reference: '<span class="stat st-reference">ориентир</span>' }[s] || ''; }
 
-let dlg = null, lastFocus = null;
+/* ---------- Диалог ---------- */
+
+let dlg = null, lastFocus = null, pushed = false;
+
+/* Закрытие из любого пути (✕, фон, Esc, «назад»): снимаем свою запись истории, если она ещё наша */
+function closeDetail() {
+  if (!dlg || !dlg.open) return;
+  dlg.close();
+}
+function onClose() {
+  if (pushed) { pushed = false; try { if (history.state && history.state.cdOpen) history.back(); } catch (e) { /* file:// */ } }
+  const back = lastFocus; lastFocus = null;
+  if (back && document.contains(back)) back.focus({ preventScroll: true });
+}
+/* «Назад» телефона: браузер уже снял запись — просто закрываем окно без второго back() */
+function onPop() { if (dlg && dlg.open && pushed) { pushed = false; dlg.close(); } }
+
+function ensureDialog() {
+  if (dlg && document.contains(dlg)) return dlg;
+  dlg = document.createElement('dialog');
+  dlg.className = 'cd-dialog';
+  dlg.setAttribute('aria-labelledby', 'cdTitle');
+  document.body.appendChild(dlg);
+  // клик по фону (сам dialog) закрывает; нажатие, начатое внутри окна, — нет
+  let downOnDlg = false;
+  dlg.addEventListener('pointerdown', e => { downOnDlg = e.target === dlg; });
+  dlg.addEventListener('click', e => {
+    if (e.target === dlg && downOnDlg) return closeDetail();
+    if (e.target.closest('[data-cd-close]')) closeDetail();
+  });
+  dlg.addEventListener('close', onClose);
+  addEventListener('popstate', onPop);
+  return dlg;
+}
+
 export function openCompetitorDetail(c, manual) {
-  const cfg = state.CFG;
-  if (!dlg || !document.contains(dlg)) {
-    dlg = document.createElement('dialog');
-    dlg.className = 'cd-dialog';
-    dlg.setAttribute('aria-label', 'Схема по блокам: конкурент');
-    document.body.appendChild(dlg);
+  const d = ensureDialog();
+  d.innerHTML = detailHTML(c, state.CFG, manual);
+  if (!d.open) {
+    if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', '');
+    try { history.pushState({ ...(history.state || {}), cdOpen: true }, '', location.href); pushed = true; } catch (e) { pushed = false; }
   }
-  dlg.innerHTML = detailHTML(c, cfg, manual) || '';
-  dlg.querySelector('[data-cd-close]').addEventListener('click', () => dlg.close());
-  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); }, { once: true });
-  if (typeof dlg.showModal === 'function') dlg.showModal();
+  d.scrollTop = 0;
   icons();
-  const back = lastFocus; dlg.addEventListener('close', () => { if (back) back.focus(); }, { once: true });
+  const x = d.querySelector('[data-cd-close]'); if (x) x.focus({ preventScroll: true });
 }
 export function setDetailFocus(el) { lastFocus = el; }
+

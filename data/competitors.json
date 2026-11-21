@@ -1,6 +1,6 @@
 {
- "$schema_note": "Конкуренты из исследования рынка (срез 18.11.2026). status: public=публичное предложение, historical=подтверждённый прошлый выезд, mixed=разночтения, reference=справочный/ценовой ориентир. «Нет данных» означает отсутствие проверенного значения, а не бесплатную услугу. Поле type — группа для фильтра (outbound/studio/party/benchmark). prices[] — только подтверждённые значения с источником; chart=true — попадает в диаграмму цен билетов. Цены не скрейпятся: обновляются вручную (порог устаревания — data/rates.json → thresholds_days.prices).",
- "fetched_at": "2026-11-18",
+ "$schema_note": "Конкуренты Новосибирска и области. status: public=публичное предложение, historical=подтверждённый прошлый выезд, mixed=разночтения, reference=справочный ориентир, plan_benchmark=ориентир бизнес-плана. «Нет данных» — отсутствие проверенного значения, а не бесплатная услуга. type — группа фильтра. prices[] — только подтверждённые значения с источником и датой; kind — ТИП цены (ticket=билет в зал, per_child=выезд за ребёнка, party_package=пакет праздника, hour=час аренды, subscription=абонемент/месяц, other=прочее) — сравниваются только цены одного типа; qualifier «от» сохраняется. chart=true — цена попадает в диаграмму «за человека». unconfirmed_prices[] — значения прежнего исследования, не подтверждённые при проверке (в сравнение не входят). cases[] — что конкурент реально организует, с источником и датой проверки. verified_at — дата ручной сверки с источником. Цены вручную сверяются с официальными сайтами; недельный scripts/fetch-competitors.mjs пишет только observed (наблюдение сайта) и никогда не меняет prices[].",
+ "fetched_at": "2026-11-21",
  "groups": [
   {
    "type": "outbound",
@@ -51,9 +51,9 @@
    "status": "public",
    "district": "—",
    "address": "nsk.nik-show.ru, +7 (383) 287-89-17",
-   "program": "Научные программы, включая варианты для малышей и социальные по ЗОЖ",
+   "program": "Научные шоу: дни рождения, праздники в школе и детсаду, выпускные, новогодние, шоу для большой аудитории, программы по ЗОЖ",
    "prices": [],
-   "price_note": "Московские цены сети нельзя использовать как местный прайс",
+   "price_note": "На nsk.nik-show.ru цены не опубликованы (проверено 21.11.2026) — только по звонку. Московские цены сети как местный прайс не используем.",
    "note": "Воздушная пушка, сухой лёд, гидрофобный песок",
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://nsk.nik-show.ru/show/",
@@ -69,7 +69,22 @@
     "hash_at": "2026-11-21T03:22:02.004Z",
     "last_ok_at": "2026-11-21T03:22:02.004Z",
     "price": null
-   }
+   },
+   "cases": [
+    {
+     "text": "Шоу: «Школа экспериментов», «4 стихии», шоу с жидким азотом, «Яркая химия», «Для самых маленьких», «Новогоднее шоу», «Летнее шоу»",
+     "date": null,
+     "source_url": "https://nsk.nik-show.ru/show/",
+     "fetched_at": "2026-11-21"
+    },
+    {
+     "text": "Поводы: детский день рождения, праздник в школе, выпускной в школе и детсаду, 1 сентября, 23 февраля и 8 марта; социальные программы по ЗОЖ для малышей и подростков",
+     "date": null,
+     "source_url": "https://nsk.nik-show.ru/show/",
+     "fetched_at": "2026-11-21"
+    }
+   ],
+   "verified_at": "2026-11-21"
   },
   {
    "id": "classvr",
@@ -81,8 +96,8 @@
    "address": "Дуси Ковальчук, 378а, +7 (383) 312-01-69",
    "program": "Образовательные VR-представления: космос, природа, безопасность",
    "prices": [],
-   "price_note": "30 зрителей — синхронный показ, не подтверждённый минимум заказа",
-   "note": "Показ в классе, группе или актовом зале",
+   "price_note": "На странице цены не показаны — только по телефону (проверено 21.11.2026).",
+   "note": "Синхронный показ на 30 зрителей; минимальный заказ на сайте не указан",
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://nsk-warstation.ru/classvr",
    "fetched_at": "2026-11-18",
@@ -97,7 +112,22 @@
     "hash_at": "2026-11-21T03:22:02.004Z",
     "last_ok_at": "2026-11-21T03:22:02.004Z",
     "price": null
-   }
+   },
+   "cases": [
+    {
+     "text": "VR-фильмы 360° одновременно для 30 детей: космос, океан, природа, достопримечательности, патриотические, ПДД; после показа — викторина и обсуждение",
+     "date": null,
+     "source_url": "https://nsk-warstation.ru/classvr",
+     "fetched_at": "2026-11-21"
+    },
+    {
+     "text": "Где проводят: класс или актовый зал школы, группа или зал детсада, лагерь, музей, офис",
+     "date": null,
+     "source_url": "https://nsk-warstation.ru/classvr",
+     "fetched_at": "2026-11-21"
+    }
+   ],
+   "verified_at": "2026-11-21"
   },
   {
    "id": "planetary-sugit",
@@ -107,22 +137,49 @@
    "status": "public",
    "district": "—",
    "address": "Пархоменко, 9, ауд. 536; 8 (952) 942-85-67",
-   "program": "Регулярные выезды в школы Новосибирска",
+   "program": "Лекции о космосе в куполе (детям, для всех, взрослым) и выездные мероприятия в школы Новосибирска",
    "prices": [
     {
-     "label": "Лекции (цена выезда не подтверждена)",
+     "label": "Лекция в куполе, детский билет",
      "value": 300,
-     "unit": "₽/чел.",
-     "qualifier": "от",
+     "unit": "₽/билет",
+     "qualifier": null,
+     "kind": "ticket",
      "chart": true,
-     "source_name": "Исследование рынка (срез 18.11.2026)",
-     "source_url": "https://unc-planetary.ru/",
-     "fetched_at": "2026-11-18",
+     "source_name": "Сайт мобильного планетария СГУГиТ, раздел «Цены»",
+     "source_url": "https://unc-planetary.ru/prices",
+     "fetched_at": "2026-11-21",
      "valid_from": null,
-     "confidence": "low"
+     "confidence": "high"
+    },
+    {
+     "label": "Лекция в куполе, взрослый билет",
+     "value": 350,
+     "unit": "₽/билет",
+     "qualifier": null,
+     "kind": "ticket",
+     "chart": false,
+     "source_name": "Сайт мобильного планетария СГУГиТ, раздел «Цены»",
+     "source_url": "https://unc-planetary.ru/prices",
+     "fetched_at": "2026-11-21",
+     "valid_from": null,
+     "confidence": "high"
+    },
+    {
+     "label": "Льготный билет (соцгруппы)",
+     "value": 150,
+     "unit": "₽/билет",
+     "qualifier": null,
+     "kind": "ticket",
+     "chart": false,
+     "source_name": "Сайт мобильного планетария СГУГиТ, раздел «Цены»",
+     "source_url": "https://unc-planetary.ru/prices",
+     "fetched_at": "2026-11-21",
+     "valid_from": null,
+     "confidence": "high"
     }
    ],
-   "price_note": "Лекции «от 300 ₽» — не подтверждённая цена выезда",
+   "price_note": "Это билеты на лекции в куполе СГУГиТ. Цена выезда в школу на сайте не указана — запрашивать.",
    "note": "Размеры купола и требования к помещению запрашивать",
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://unc-planetary.ru/",
@@ -147,19 +204,34 @@
      "confidence": "low",
      "method": "auto-regex"
     }
-   }
+   },
+   "cases": [
+    {
+     "text": "Лекции детям: «Планеты малышам», «Космонавты России»; для всех: «Спутники планет», «Животные в космосе» — в афише «от 300 руб.»",
+     "date": null,
+     "source_url": "https://unc-planetary.ru/",
+     "fetched_at": "2026-11-21"
+    },
+    {
+     "text": "На сайте: регулярно проводит выездные мероприятия в школы города (цена выезда не опубликована)",
+     "date": null,
+     "source_url": "https://unc-planetary.ru/",
+     "fetched_at": "2026-11-21"
+    }
+   ],
+   "verified_at": "2026-11-21"
   },
   {
    "id": "skazki-lukomorya",
    "type": "outbound",
-   "format": "Выездной спектакль (прошлый выезд)",
+   "format": "Выездной кукольный театр (прошлые выезды)",
    "name": "«Сказки лукоморья»",
    "status": "historical",
    "district": "Кольцово",
    "address": "Детсад «Совёнок»",
    "program": "«Царевна-лягушка», «Бычок — смоляной бочок»; приезды 30.01.2024 и 19.03.2024",
    "prices": [],
-   "price_note": null,
+   "price_note": "Цены не публиковались",
    "note": "Положительная оценка декораций педагогами",
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://sovenok.edusite.ru/magicpage.html?page=971598",
@@ -175,7 +247,22 @@
     "hash_at": "2026-11-21T03:22:02.004Z",
     "last_ok_at": "2026-11-21T03:22:02.004Z",
     "price": null
-   }
+   },
+   "cases": [
+    {
+     "text": "«Царевна-лягушка» в детсаду «Совёнок» (Кольцово)",
+     "date": "2024-01-30",
+     "source_url": "https://sovenok.edusite.ru/magicpage.html?page=971598",
+     "fetched_at": "2026-11-21"
+    },
+    {
+     "text": "«Бычок — смоляной бочок» там же",
+     "date": "2024-03-19",
+     "source_url": "https://sovenok.edusite.ru/magicpage.html?page=971598",
+     "fetched_at": "2026-11-21"
+    }
+   ],
+   "verified_at": "2026-11-21"
   },
   {
    "id": "iskra",
@@ -203,7 +290,8 @@
     "hash_at": "2026-11-21T03:22:02.004Z",
     "last_ok_at": "2026-11-21T03:22:02.004Z",
     "price": null
-   }
+   },
+   "verify_note": "Запись из исследования 18.11.2026; 21.11.2026 на главной странице сайта детсада № 428 не найдена (новости старше 2024 г. не проверены)."
   },
   {
    "id": "zazerkalye",
@@ -220,7 +308,8 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": null,
    "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "confidence": "medium",
+   "verify_note": "Запись из исследования 18.11.2026; 21.11.2026 на главной странице сайта детсада № 428 не найдена (новости старше 2024 г. не проверены)."
   },
   {
    "id": "multi-pulti",
@@ -237,7 +326,8 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": null,
    "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "confidence": "medium",
+   "verify_note": "Запись из исследования 18.11.2026; 21.11.2026 на главной странице сайта детсада № 428 не найдена (новости старше 2024 г. не проверены)."
   },
   {
    "id": "kukly-smeyutsya",
@@ -273,11 +363,12 @@
      "unit": "₽/билет",
      "qualifier": "от",
      "chart": true,
-     "source_name": "Исследование рынка (срез 18.11.2026)",
+     "source_name": "Яндекс Афиша (срез исследования 18.11.2026)",
      "source_url": "https://afisha.yandex.ru/novosibirsk/theatre/places/oblastnoi-teatr-kukol",
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "medium"
+     "confidence": "medium",
+     "kind": "ticket"
     },
     {
      "label": "Ряд постановок",
@@ -285,20 +376,48 @@
      "unit": "₽/билет",
      "qualifier": "от",
      "chart": false,
-     "source_name": "Исследование рынка (срез 18.11.2026)",
+     "source_name": "Яндекс Афиша (срез исследования 18.11.2026)",
      "source_url": "https://afisha.yandex.ru/novosibirsk/theatre/places/oblastnoi-teatr-kukol",
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "medium"
+     "confidence": "medium",
+     "kind": "ticket"
     }
    ],
-   "price_note": "Билеты 350–400 ₽ и выше («Гуси-лебеди» — 350, ряд постановок от 400)",
-   "source_name": "Исследование рынка (срез 18.11.2026)",
-   "source_url": "https://afisha.yandex.ru/novosibirsk/theatre/places/oblastnoi-teatr-kukol",
-   "fetched_at": "2026-11-18",
-   "confidence": "medium",
-   "checked_at": "2026-11-21T04:02:48.801Z",
-   "check_status": "skipped_policy"
+   "price_note": "На официальном сайте цен нет — только кнопка «Купить билет». Цены — из Яндекс Афиши на 18.11.2026; автоматически не перепроверяются (правила площадки). Часть спектаклей — по «Пушкинской карте».",
+   "source_name": "Официальный сайт театра (афиша)",
+   "source_url": "https://puppets-nsk.ru/",
+   "fetched_at": "2026-11-21",
+   "confidence": "high",
+   "status": "public",
+   "program": "Спектакли 0+ и 6+ в зрительном зале и «Комнате сказок»; гастроли по области",
+   "cases": [
+    {
+     "text": "«Гуси-лебеди» 0+ на выезде: РДК Искитим",
+     "date": "2026-11-21",
+     "source_url": "https://puppets-nsk.ru/",
+     "fetched_at": "2026-11-21"
+    },
+    {
+     "text": "«Гуси-лебеди» 0+ на выезде: ДК «Кольцово»",
+     "date": "2026-11-22",
+     "source_url": "https://puppets-nsk.ru/",
+     "fetched_at": "2026-11-21"
+    },
+    {
+     "text": "«Мойдодыр» 0+ на выезде: Дом учёных Академгородка",
+     "date": "2026-11-28",
+     "source_url": "https://puppets-nsk.ru/",
+     "fetched_at": "2026-11-21"
+    },
+    {
+     "text": "В здании: «Три кота», «Айболит», «Теремок» (Комната сказок), «Приключения Буратино», «Волк и семеро козлят», «Остров сокровищ» 6+",
+     "date": null,
+     "source_url": "https://puppets-nsk.ru/",
+     "fetched_at": "2026-11-21"
+    }
+   ],
+   "verified_at": "2026-11-21"
   },
   {
    "id": "planetary-bolshoy",
@@ -308,32 +427,41 @@
    "address": "Ключ-Камышенское плато, 1/1",
    "prices": [
     {
-     "label": "Тематические сеансы",
-     "value": 300,
-     "unit": "₽/билет",
-     "qualifier": null,
-     "chart": true,
-     "source_name": "Исследование рынка (срез 18.11.2026)",
-     "source_url": null,
-     "fetched_at": "2026-11-18",
-     "valid_from": null,
-     "confidence": "medium"
-    },
-    {
-     "label": "Полнокупольные, дети 4–17",
+     "label": "Полнокупольная программа, детский билет",
      "value": 322,
      "unit": "₽/билет",
      "qualifier": null,
+     "kind": "ticket",
      "chart": true,
-     "source_name": "Исследование рынка (срез 18.11.2026)",
-     "source_url": null,
-     "fetched_at": "2026-11-18",
-     "valid_from": null,
-     "confidence": "medium"
+     "source_name": "Сайт планетария nebo-nsk.ru, новость от 13.08.2026",
+     "source_url": "https://www.nebo-nsk.ru/news/4987",
+     "fetched_at": "2026-11-21",
+     "valid_from": "2026-08-14",
+     "confidence": "high"
     },
     {
-     "label": "Полнокупольные, взрослые",
+     "label": "Полнокупольная программа, взрослый билет",
      "value": 380,
+     "unit": "₽/билет",
+     "qualifier": null,
+     "kind": "ticket",
+     "chart": false,
+     "source_name": "Сайт планетария nebo-nsk.ru, новость от 13.08.2026",
+     "source_url": "https://www.nebo-nsk.ru/news/4987",
+     "fetched_at": "2026-11-21",
+     "valid_from": "2026-08-14",
+     "confidence": "high"
+    }
+   ],
+   "price_note": "С 14.08.2026 полнокупольные: детский 322 ₽, взрослый 380 ₽. В разделе «Вопросы» сайта ещё старые 310/365 ₽. Тематические и театрализованные — по телефону.",
+   "source_name": "Официальный сайт планетария",
+   "source_url": "https://www.nebo-nsk.ru/",
+   "fetched_at": "2026-11-21",
+   "confidence": "high",
+   "unconfirmed_prices": [
+    {
+     "label": "Тематические сеансы",
+     "value": 300,
      "unit": "₽/билет",
      "qualifier": null,
      "chart": false,
@@ -341,7 +469,9 @@
      "source_url": null,
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "medium"
+     "confidence": "medium",
+     "kind": "ticket",
+     "reason": "На сайте планетария цены тематических и театрализованных программ не публикуются («узнать по телефону»); 21.11.2026 не подтверждено"
     },
     {
      "label": "Театрализованные",
@@ -353,14 +483,20 @@
      "source_url": null,
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "medium"
+     "confidence": "medium",
+     "kind": "ticket",
+     "reason": "На сайте планетария цены тематических и театрализованных программ не публикуются («узнать по телефону»); 21.11.2026 не подтверждено"
     }
    ],
-   "price_note": "Тематические 300 ₽; полнокупольные 322 ₽ (дети 4–17) / 380 ₽ взрослые; театрализованные от 600 ₽",
-   "source_name": "Исследование рынка (срез 18.11.2026)",
-   "source_url": null,
-   "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "cases": [
+    {
+     "text": "Полнокупольные программы в куполе для детей и взрослых; тематические и театрализованные программы (цены — по телефону)",
+     "date": null,
+     "source_url": "https://nebo-nsk.ru/node/2017",
+     "fetched_at": "2026-11-21"
+    }
+   ],
+   "verified_at": "2026-11-21"
   },
   {
    "id": "prosto-fizika",
@@ -368,7 +504,13 @@
    "format": "Научные занятия",
    "name": "«Просто физика»",
    "address": "Пролетарская, 2, «Умная школа»",
-   "prices": [
+   "prices": [],
+   "price_note": "Нет подтверждённой цены. Научные занятия — другой ценовой сегмент, с билетом не сравнивать.",
+   "source_name": "Исследование рынка (срез 18.11.2026)",
+   "source_url": null,
+   "fetched_at": "2026-11-18",
+   "confidence": "low",
+   "unconfirmed_prices": [
     {
      "label": "5–6 лет, 2 часа",
      "value": 2300,
@@ -379,14 +521,12 @@
      "source_url": null,
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "medium"
+     "confidence": "medium",
+     "kind": "other",
+     "reason": "Источник не указан; дата «29.11.2026» позже среза; 21.11.2026 в открытых источниках не найдено"
     }
    ],
-   "price_note": "На 29.11.2026: 5–6 лет, 2 часа, от 2 300 ₽ — другой ценовой сегмент Дата «29.11.2026» позже даты среза (18.11.2026) — проверить по источнику.",
-   "source_name": "Исследование рынка (срез 18.11.2026)",
-   "source_url": null,
-   "fetched_at": "2026-11-18",
-   "confidence": "low"
+   "verify_note": "Сайт или страница с ценами 21.11.2026 не найдены"
   }
  ],
  "studio_scene": [
@@ -415,7 +555,13 @@
    "status": "reference",
    "address": "Театральная, 1",
    "age": "14–18 лет",
-   "prices": [
+   "prices": [],
+   "price_note": "Нет подтверждённой цены; набор «не идёт»",
+   "source_name": "Исследование рынка (срез 18.11.2026)",
+   "source_url": null,
+   "fetched_at": "2026-11-18",
+   "confidence": "low",
+   "unconfirmed_prices": [
     {
      "label": "Месячная плата",
      "value": 1500,
@@ -426,14 +572,12 @@
      "source_url": null,
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "low"
+     "confidence": "low",
+     "kind": "subscription",
+     "reason": "В исследовании без ссылки на источник; 21.11.2026 в открытых источниках не найдено"
     }
    ],
-   "price_note": "Каталог; набор «не идёт»; не абонемент 4/8",
-   "source_name": "Исследование рынка (срез 18.11.2026)",
-   "source_url": null,
-   "fetched_at": "2026-11-18",
-   "confidence": "low"
+   "verify_note": "Страница студии с ценой 21.11.2026 не найдена"
   },
   {
    "id": "klyaksa",
@@ -499,7 +643,8 @@
      "source_url": null,
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "model"
+     "confidence": "model",
+     "kind": "subscription"
     },
     {
      "label": "8 занятий",
@@ -511,7 +656,8 @@
      "source_url": null,
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "model"
+     "confidence": "model",
+     "kind": "subscription"
     }
    ],
    "price_note": "Ориентир бизнес-плана, не оферта",
@@ -539,7 +685,8 @@
      "source_url": null,
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "model"
+     "confidence": "model",
+     "kind": "subscription"
     }
    ],
    "price_note": "Ориентир бизнес-плана, не оферта",
@@ -567,7 +714,8 @@
      "source_url": null,
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "model"
+     "confidence": "model",
+     "kind": "subscription"
     }
    ],
    "price_note": "Ориентир бизнес-плана, не оферта",
@@ -595,7 +743,8 @@
      "source_url": null,
      "fetched_at": "2026-11-18",
      "valid_from": null,
-     "confidence": "model"
+     "confidence": "model",
+     "kind": "subscription"
     }
    ],
    "price_note": "Ориентир бизнес-плана; набор уточнить",
@@ -615,71 +764,102 @@
    "address": "Богдана Хмельницкого, 2; +7 (913) 004-77-01",
    "prices": [
     {
-     "label": "Час аренды",
+     "label": "Аренда пространства (без большого поля)",
      "value": 5000,
      "unit": "₽/час",
      "qualifier": null,
+     "kind": "hour",
      "chart": false,
-     "source_name": "Исследование рынка (срез 18.11.2026)",
+     "source_name": "Официальный сайт PlayPanda",
      "source_url": "https://playpanda.ru/",
-     "fetched_at": "2026-11-18",
+     "fetched_at": "2026-11-21",
      "valid_from": null,
-     "confidence": "medium"
+     "confidence": "high"
     },
     {
-     "label": "Пакет «Стартовая лига»",
+     "label": "Пакет «Стартовая лига», 3 ч",
      "value": 21000,
      "unit": "₽/пакет",
      "qualifier": null,
+     "kind": "party_package",
      "chart": false,
-     "source_name": "Исследование рынка (срез 18.11.2026)",
+     "source_name": "Официальный сайт PlayPanda",
      "source_url": "https://playpanda.ru/",
-     "fetched_at": "2026-11-18",
+     "fetched_at": "2026-11-21",
      "valid_from": null,
-     "confidence": "medium"
+     "confidence": "high"
     },
     {
-     "label": "Пакет «Высшая лига»",
+     "label": "Пакет «Высшая лига», 3 ч, пиньята",
      "value": 24500,
      "unit": "₽/пакет",
      "qualifier": null,
+     "kind": "party_package",
      "chart": false,
-     "source_name": "Исследование рынка (срез 18.11.2026)",
+     "source_name": "Официальный сайт PlayPanda",
      "source_url": "https://playpanda.ru/",
-     "fetched_at": "2026-11-18",
+     "fetched_at": "2026-11-21",
      "valid_from": null,
-     "confidence": "medium"
+     "confidence": "high"
     },
     {
-     "label": "Пакет «Большой матч» (3 ч в осн. пространстве + 1 ч на поле, всего 4 ч)",
+     "label": "Пакет «Большой матч», 3 ч, банкет на 20 мест",
      "value": 26000,
      "unit": "₽/пакет",
      "qualifier": null,
+     "kind": "party_package",
      "chart": false,
-     "source_name": "Исследование рынка (срез 18.11.2026)",
+     "source_name": "Официальный сайт PlayPanda",
      "source_url": "https://playpanda.ru/",
-     "fetched_at": "2026-11-18",
+     "fetched_at": "2026-11-21",
      "valid_from": null,
-     "confidence": "medium"
+     "confidence": "high"
     },
     {
-     "label": "Предоплата",
+     "label": "Пакет «Лига чемпионов», 3 ч, пиньята",
+     "value": 29500,
+     "unit": "₽/пакет",
+     "qualifier": null,
+     "kind": "party_package",
+     "chart": false,
+     "source_name": "Официальный сайт PlayPanda",
+     "source_url": "https://playpanda.ru/",
+     "fetched_at": "2026-11-21",
+     "valid_from": null,
+     "confidence": "high"
+    },
+    {
+     "label": "Доп. час на подготовку и украшение",
+     "value": 2500,
+     "unit": "₽/час подготовки",
+     "qualifier": null,
+     "kind": "other",
+     "chart": false,
+     "source_name": "Официальный сайт PlayPanda",
+     "source_url": "https://playpanda.ru/",
+     "fetched_at": "2026-11-21",
+     "valid_from": null,
+     "confidence": "high"
+    },
+    {
+     "label": "Предоплата за бронь даты",
      "value": 2000,
      "unit": "₽",
      "qualifier": null,
+     "kind": "other",
      "chart": false,
-     "source_name": "Исследование рынка (срез 18.11.2026)",
+     "source_name": "Официальный сайт PlayPanda",
      "source_url": "https://playpanda.ru/",
-     "fetched_at": "2026-11-18",
+     "fetched_at": "2026-11-21",
      "valid_from": null,
-     "confidence": "medium"
+     "confidence": "high"
     }
    ],
-   "price_note": null,
+   "price_note": "Пакеты — за весь праздник (3 ч), число детей на сайте не указано: с билетом «за человека» не сравнивать.",
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://playpanda.ru/",
-   "fetched_at": "2026-11-18",
-   "confidence": "medium",
+   "fetched_at": "2026-11-21",
+   "confidence": "high",
    "checked_at": "2026-11-21T03:22:02.004Z",
    "check_status": "ok",
    "observed": {
@@ -690,7 +870,22 @@
     "hash_at": "2026-11-21T03:22:02.004Z",
     "last_ok_at": "2026-11-21T03:22:02.004Z",
     "price": null
-   }
+   },
+   "cases": [
+    {
+     "text": "Футбольные дни рождения: 3 часа в пространстве «Панда», 4 пакета от 21 000 до 29 500 ₽",
+     "date": null,
+     "source_url": "https://playpanda.ru/",
+     "fetched_at": "2026-11-21"
+    },
+    {
+     "text": "По выходным — пакет «Больше футбола»: +1 ч на большом поле с судьёй (цена на сайте не указана)",
+     "date": null,
+     "source_url": "https://playpanda.ru/",
+     "fetched_at": "2026-11-21"
+    }
+   ],
+   "verified_at": "2026-11-21"
   },
   {
    "id": "starkids",

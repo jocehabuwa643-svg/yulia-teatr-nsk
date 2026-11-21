@@ -1,6 +1,8 @@
 {
-  "updated_at": "2026-11-21T11:00:21.444Z",
+  "updated_at": "2026-11-21T14:37:46.505Z",
   "stale": false,
+  "sources_total": 5,
+  "sources_failed": 0,
   "keep_days": 60,
   "max_items": 40,
   "sources": [
@@ -8,49 +10,64 @@
       "name": "Минкультуры Новосибирской области",
       "url": "https://mk.nso.ru/",
       "feed_url": "https://mk.nso.ru/rss.xml",
-      "fetched_at": "2026-11-21T11:00:21.444Z",
-      "status": "error",
-      "items": 0,
-      "error": "robots.txt недоступен: https://mk.nso.ru/robots.txt: HTTP 502"
+      "fetched_at": "2026-11-21T14:37:46.505Z",
+      "status": "ok",
+      "items": 4,
+      "total": 10,
+      "last_ok_at": "2026-11-21T14:37:46.505Z"
     },
     {
       "name": "Правительство Новосибирской области",
       "url": "https://www.nso.ru/",
       "feed_url": "https://www.nso.ru/rss.xml",
-      "fetched_at": "2026-11-21T11:00:21.444Z",
-      "status": "error",
-      "items": 0,
-      "error": "robots.txt недоступен: https://www.nso.ru/robots.txt: HTTP 502"
+      "fetched_at": "2026-11-21T14:37:46.505Z",
+      "status": "ok",
+      "items": 2,
+      "total": 10,
+      "last_ok_at": "2026-11-21T14:37:46.505Z"
     },
     {
       "name": "ФНС России (УФНС по Новосибирской области)",
       "url": "https://www.nalog.gov.ru/rn54/",
       "feed_url": "https://www.nalog.gov.ru/rn54/rss/",
-      "fetched_at": "2026-11-21T11:00:21.444Z",
+      "fetched_at": "2026-11-21T14:37:46.505Z",
       "status": "empty",
       "items": 0,
-      "total": 6
+      "total": 2,
+      "last_ok_at": "2026-11-21T14:37:46.505Z"
     },
     {
       "name": "Минкультуры России — новости министерства",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=2&lang=ru&TYPE=ministry&LIMIT=40&SECTION_ID=30",
-      "fetched_at": "2026-11-21T11:00:21.444Z",
-      "status": "error",
-      "items": 0,
-      "error": "robots.txt недоступен: https://culture.gov.ru/robots.txt: таймаут 10000 мс"
+      "fetched_at": "2026-11-21T14:37:46.505Z",
+      "status": "ok",
+      "items": 2,
+      "total": 40,
+      "last_ok_at": "2026-11-21T14:37:46.505Z"
     },
     {
       "name": "Минкультуры России — культурная жизнь регионов",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=34&lang=ru&TYPE=news&LIMIT=40",
-      "fetched_at": "2026-11-21T11:00:21.444Z",
-      "status": "error",
-      "items": 0,
-      "error": "robots.txt недоступен: https://culture.gov.ru/robots.txt: таймаут 10000 мс"
+      "fetched_at": "2026-11-21T14:37:46.505Z",
+      "status": "ok",
+      "items": 1,
+      "total": 40,
+      "last_ok_at": "2026-11-21T14:37:46.505Z"
     }
   ],
   "items": [
+    {
+      "id": "a31f4eb6e802",
+      "title": "Концерт Молодежного духового оркестра",
+      "summary": "Концерт Молодежного духового оркестра Новосибирской государственной консерватории имени М. И. Глинки под управлением Игоря Шаталова объединяет академическую и популярную музыку – от торжественных…",
+      "url": "https://culture.gov.ru/press/culture_life/kontsert_molodezhnogo_dukhovogo_orkestra_20261121012213_6b00c815b7344/",
+      "source_name": "Минкультуры России — культурная жизнь регионов",
+      "source_url": "https://culture.gov.ru/press/news/",
+      "published_at": "2026-11-21T14:35:07.000Z",
+      "topic": "culture"
+    },
     {
       "id": "f5af3db2e052",
       "title": "Моноспектакль «Неглавный герой»",
@@ -109,7 +126,7 @@
       "source_name": "Минкультуры России — новости министерства",
       "source_url": "https://culture.gov.ru/press/news/",
       "published_at": "2026-11-18T09:01:51.000Z",
-      "topic": "culture"
+      "topic": "industry"
     },
     {
       "id": "851e8ebff9b7",

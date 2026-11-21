@@ -1,4 +1,5 @@
-/* market.js — раздел «Навигатор рынка»: карточки конкурентов с фильтрами по группам, диаграмма цен билетов,
+/* market.js — раздел «Навигатор рынка»: карточки конкурентов с фильтрами по группам («что организуют» с источниками,
+   цены по ТИПАМ — билет / выезд за ребёнка / пакет / час / абонемент, логика в competitor-prices.js), диаграмма цен за человека,
    спрос (только ручной ввод, без симуляции), сезонность и каникулы (модель проекта), образовательная сеть.
    Все числа берутся из data/*.json или вводятся пользователем; ничего не придумывается.
    Анимации — только transform/opacity (появление, рост столбцов); reduced-motion оставляет конечное состояние. */
@@ -6,6 +7,7 @@ import { $, $$, fmt, ic, icons, toast, store, isStale, enter, counter } from './
 import { state } from './state.js';
 import { monthWindow, windowTitle, holidayStatus, holidayEndedInMonth } from './calendar.js';
 import { openCompetitorDetail, setDetailFocus } from './competitor-detail.js';
+import { KINDS, groupPrices, groupSummary, groupDate, observedCompare, perPersonRows, otherKindRows, priceText } from './competitor-prices.js';
 
 /* ---------- Общие утилиты ---------- */
 
@@ -60,14 +62,14 @@ let COMP = { groups: [] };      // competitors.json
 let ALL = [];                    // плоский список карточек
 let CFG = null;
 let activeType = 'all';
-const MANUAL_KEY = 'market.prices';     // { [id]: { value, date, url } }
+const MANUAL_KEY = 'market.prices';     // { [id]: { value, date, url, kind } } — старые записи без kind считаются билетом
 const DEMAND_KEY = 'market.demand';     // [ { id, q, shows, date, url } ]
 
 const GROUPS_FALLBACK = [
   { type: 'outbound', label: 'Выездные', icon: 'drama' }, { type: 'studio', label: 'Студии', icon: 'users' },
   { type: 'party', label: 'Праздники и лофты', icon: 'cake' }, { type: 'benchmark', label: 'Ориентиры', icon: 'ticket' }
 ];
-const STATUS = { public: 'Публичное предложение', historical: 'Прошлый выезд', mixed: 'Разночтения', reference: 'Ориентир', plan_benchmark: 'Ориентир плана' };
+const STATUS = { public: 'Публичное предложение', historical: 'Прошлый выезд', mixed: 'Разночтения', reference: 'Ориентир', plan_benchmark: 'Ориентир бизнес-плана' };
 const manualAll = () => { const v = store.get(MANUAL_KEY, {}); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; };
 const groupsList = () => (COMP.groups && COMP.groups.length ? COMP.groups : GROUPS_FALLBACK);
 
@@ -80,13 +82,11 @@ function flatten(c) {
 }
 const groupOf = type => groupsList().find(g => g.type === type) || { type, label: type, icon: 'tag' };
 
-/* Числовая цена карточки с учётом ручного ввода: ручное значение главнее данных */
-function priceOf(c) {
-  const m = manualAll()[c.id];
-  if (m && Number.isFinite(m.value)) return { manual: true, value: m.value, date: m.date, url: m.url };
-  const p = (c.prices || []).find(x => Number.isFinite(x.value));
-  return p ? { manual: false, ...p } : null;
-}
+/* Есть ли у карточки хоть одна цена (подтверждённая или введённая Юлией) */
+const hasPrice = c => groupPrices(c, manualAll()[c.id]).length > 0;
+
+/* Ссылка «источник» с иконкой; без ссылки — пусто */
+const srcLink = (u, text = 'источник') => { const s = safeUrl(u); return s ? `<a href="${esc(s)}" target="_blank" rel="noopener noreferrer">${text} ${ic('external-link')}</a>` : ''; };
 
 /* ---------- Вход ---------- */
 
@@ -112,15 +112,15 @@ export function initMarket(cfg, competitors, market) {
 
 function renderKpis() {
   const total = ALL.length;
-  const priced = ALL.filter(c => priceOf(c)).length;
+  const priced = ALL.filter(hasPrice).length;
   const fetched = COMP.fetched_at;
   const stale = fetched && isStale(fetched, thresholdDays('prices'));
   const tile = (icon, label, val, sub) => `<div class="mk-kpi"><span class="mk-kpi-ic">${ic(icon)}</span><small>${label}</small><b data-target="${val}">${val}</b><span class="mk-kpi-sub">${sub}</span></div>`;
   $('marketKpis').innerHTML =
     tile('users', 'В справочнике', total, 'конкурентов и ориентиров') +
-    tile('tag', 'Есть цена', priced, 'подтверждена или введена вами') +
+    tile('tag', 'Есть цена', priced, 'с источником или введена вами') +
     tile('circle-help', 'Нет данных', total - priced, 'это не «бесплатно»') +
-    `<div class="mk-kpi"><span class="mk-kpi-ic">${ic('calendar-days')}</span><small>Срез данных</small><b class="d">${ruDate(fetched)}</b><span class="mk-kpi-sub">${stale ? 'Данные устарели' : `свежие, порог ${thresholdDays('prices')} дн.`}</span></div>`;
+    `<div class="mk-kpi"><span class="mk-kpi-ic">${ic('calendar-days')}</span><small>Сверка с источниками</small><b class="d">${ruDate(fetched)}</b><span class="mk-kpi-sub">${stale ? 'Данные устарели' : `свежие, порог ${thresholdDays('prices')} дн.`}</span></div>`;
   $$('#marketKpis b[data-target]').forEach(b => enter(b, () => counter(b)));
   armReveal($('marketKpis'), '.mk-kpi');
 }
@@ -145,48 +145,44 @@ function renderFilters() {
 
 const statusLine = c => STATUS[c.status] ? `<span class="stat st-${esc(c.status)}">${STATUS[c.status]}</span>` : '';
 
-/* Недельная автопроверка сайта конкурента (scripts/fetch-competitors.mjs): компактная строка под ценой.
-   «На сайте: от 300 ₽ · проверено дата» — только если скрипт однозначно нашёл ценник (confidence:low);
-   при расхождении с ценой карточки — «цена на сайте изменилась». Без цены — «страница доступна / изменилась / недоступна». */
-const OBS_TEXT = { ok: 'страница доступна', changed: 'страница изменилась', unavailable: 'страница недоступна', robots_disallowed: 'сайт не разрешает автопроверку' };
+/* Недельная автопроверка сайта конкурента (scripts/fetch-competitors.mjs): компактная строка под ценами.
+   Найденная на сайте цена подписана своим типом и сравнивается ТОЛЬКО с ценами карточки того же типа;
+   расхождение — «цена на сайте другая». Без цены — «страница доступна / изменилась / недоступна». */
+const OBS_TEXT = { ok: 'страница доступна', changed: 'страница изменилась', unavailable: 'страница недоступна', robots_disallowed: 'сайт запрещает автопроверку' };
 function observedLine(c) {
-  const o = c.observed, st = c.check_status;
+  const st = c.check_status;
   if (!st || st === 'skipped' || st === 'skipped_policy') return '';
   const checked = ruDate(c.checked_at);
-  const op = o && o.price && Number.isFinite(o.price.value) ? o.price : null;
-  if (op) {
-    const link = safeUrl(op.source_url);
-    // расхождение: цены сайта нет ни среди ручной цены, ни среди цен карточки (у карточки может быть несколько тарифов)
-    const m = manualAll()[c.id];
-    const known = [m && m.value, ...(c.prices || []).map(x => x.value)].filter(Number.isFinite);
-    const diff = (known.length > 0 && !known.includes(op.value)) || !!(o.prev_price && o.prev_price.value !== op.value);
-    const was = o.prev_price && o.prev_price.value !== op.value ? ` (раньше ${fmt(o.prev_price.value)} ₽)` : '';
-    return `<p class="obs obs-price"><span>на сайте: <b>${op.qualifier ? esc(op.qualifier) + ' ' : ''}${fmt(op.value)} ₽</b>${was} · проверено ${checked}${link ? ` · <a href="${esc(link)}" target="_blank" rel="noopener noreferrer">страница ${ic('external-link')}</a>` : ''}${st === 'unavailable' ? ' · сейчас недоступна' : ''}</span>${diff ? '<span class="fbadge stale" title="Цена, найденная на сайте, отличается от цены в карточке — проверьте вручную">цена на сайте изменилась</span>' : ''}</p>`;
+  const oc = observedCompare(c, manualAll()[c.id]);
+  if (oc) {
+    const was = oc.prev ? ` (раньше ${fmt(oc.prev.value)} ₽)` : '';
+    const link = srcLink(oc.price.source_url, 'страница');
+    return `<p class="obs obs-price"><span>автопроверка сайта ${checked}: <b>${esc(priceText(oc.price, false))}</b> · ${esc(oc.kindLabel)}${was}${link ? ' · ' + link : ''}${st === 'unavailable' ? ' · сейчас недоступна' : ''}</span>${oc.differs ? '<span class="fbadge stale" title="Цена, найденная на сайте, отличается от цены того же типа в карточке — проверьте вручную">цена на сайте другая</span>' : ''}</p>`;
   }
   const t = OBS_TEXT[st];
   if (!t) return '';
+  const o = c.observed;
   const when = st === 'changed' && o && o.changed_at ? ` ${ruDate(o.changed_at)}` : '';
-  return `<p class="obs obs-${esc(st)}">${t}${when} · проверено ${checked}</p>`;
+  return `<p class="obs obs-${esc(st)}">автопроверка: ${t}${when} · ${checked}</p>`;
 }
 
-/* Блок цены: подтверждённая / введённая вручную / «нет данных» + строка автопроверки сайта */
+/* Цены карточки по типам: одна строка на тип — «Билет · от 350 ₽/билет · 18.11.2026 · источник».
+   «от» сохраняется, «нет данных» — не ноль; ручная цена помечена «введено вами». */
 function priceBlock(c) {
-  return priceBase(c) + observedLine(c);
-}
-function priceBase(c) {
-  const p = priceOf(c);
-  const src = safeUrl(p && p.manual ? p.url : (p && p.source_url) || c.source_url);
-  const a = src ? `<a href="${esc(src)}" target="_blank" rel="noopener noreferrer">источник ${ic('external-link')}</a>` : '';
-  if (!p) {
-    // нет цены — компактная строка без плитки; ввести значение можно в «Ввести цену вручную» ниже
-    return `<p class="pnone"><b>Цена: нет данных</b>${c.price_note && String(c.price_note).length <= 70 ? ` · ${esc(c.price_note)}` : ''}</p>`;
+  const groups = groupPrices(c, manualAll()[c.id]).filter(g => g.kind !== 'other');
+  if (!groups.length) {
+    return `<p class="pnone"><b>Цена: нет данных</b>${c.price_note && String(c.price_note).length <= 90 ? ` · ${esc(c.price_note)}` : ''}</p>` + observedLine(c);
   }
-  const q = p.qualifier ? esc(p.qualifier) + ' ' : '';
-  if (p.manual) {
-    const stale = isStale(p.date, thresholdDays('prices'));
-    return `<div class="pbox manual"><span class="pv">${fmt(p.value)} ₽</span><span class="ps">введено вручную · ${ruDate(p.date)} · ${a || 'ссылка не указана'}</span>${stale ? '<span class="fbadge stale">Данные устарели</span>' : ''}</div>`;
-  }
-  return `<div class="pbox"><span class="pv">${q}${fmt(p.value)} ${esc(p.unit)}</span><span class="ps">${esc(p.label || '')}${a ? ' · ' + a : ''}</span>${freshBadge(p)}</div>`;
+  const rows = groups.map(g => {
+    const s = groupSummary(g);
+    const first = g.items.find(p => p.manual) || g.items[0];
+    const date = ruDate(groupDate(g));
+    const conf = first.manual ? '<span class="stat st-manual">введено вами</span>' : first.confidence === 'model' ? '<span class="stat st-model">ориентир плана</span>' : '';
+    const stale = !first.manual && first.confidence !== 'model' && groupDate(g) && isStale(groupDate(g), thresholdDays('prices')) ? '<span class="fbadge stale">устарело</span>' : '';
+    const link = srcLink(first.source_url);
+    return `<li class="pk"><span class="pk-k">${esc(KINDS[g.kind].short)}</span><b class="pk-v">${esc(s.text)}${s.note ? `<small>${esc(s.note)} · всего ${s.count} ${plural(s.count, ['тариф', 'тарифа', 'тарифов'])}</small>` : s.count > 1 ? `<small>${s.count} ${plural(s.count, ['тариф', 'тарифа', 'тарифов'])}</small>` : ''}</b><span class="pk-m">${conf}${date !== '—' ? `<span>проверено ${date}</span>` : ''}${link}${stale}</span></li>`;
+  }).join('');
+  return `<ul class="pkinds" aria-label="Цены по типам">${rows}</ul>` + observedLine(c);
 }
 
 /* Абзац карточки: короткий — как есть, длинный — вложенный <details>, чтобы не раздувать карточку */
@@ -196,40 +192,49 @@ function longP(label, text) {
   return `<details class="mk-more mk-sub"><summary>${label}</summary><p>${esc(text)}</p></details>`;
 }
 
+/* Подпись даты события кейса: «21.11.2026» или пусто */
+const caseLine = k => `<li><span>${esc(k.text)}</span><small>${k.date ? ruDate(k.date) + ' · ' : ''}${srcLink(k.source_url) || 'источник не указан'}</small></li>`;
+
+/* Варианты типа для ручного ввода цены */
+const KIND_OPTIONS = ['ticket', 'per_child', 'party_package', 'hour', 'subscription'];
+
 function cardHtml(c) {
   const g = groupOf(c.type);
   const manual = manualAll()[c.id];
-  const link = safeUrl(c.source_url);
-  const rest = (c.prices || []).filter(p => Number.isFinite(p.value));
+  const mk = manual && KINDS[manual.kind] ? manual.kind : 'ticket';
+  const cases = Array.isArray(c.cases) ? c.cases.filter(k => k && k.text) : [];
   const details = [
     longP('Программа', c.program),
     longP('Заметка', c.note),
     longP('О цене', c.price_note),
     c.age ? `<p><b>Возраст:</b> ${esc(c.age)}</p>` : '',
-    rest.length ? `<ul class="plist">${rest.map(p => `<li><span>${esc(p.label)}</span><b>${p.qualifier ? esc(p.qualifier) + ' ' : ''}${fmt(p.value)} ${esc(p.unit)}</b></li>`).join('')}</ul>` : ''
+    c.verify_note ? `<p class="tiny">${esc(c.verify_note)}</p>` : ''
   ].join('');
   return `<article class="card rival" data-id="${esc(c.id)}" data-type="${esc(c.type)}">
     <div class="rv-top">
       <span class="rv-ic">${ic(g.icon)}</span>
       <div class="rv-t"><h4>${esc(c.name)}</h4><span class="tiny">${esc(c.format || g.label)}${c.district && c.district !== '—' ? ' · ' + esc(c.district) : ''}</span></div>
     </div>
-    <div class="rv-st">${statusLine(c)}${manual ? '<span class="stat st-manual">введено вручную</span>' : ''}</div>
+    <div class="rv-st">${statusLine(c)}${c.verified_at ? `<span class="stat">сверено ${ruDate(c.verified_at)}</span>` : ''}</div>
     ${c.address ? `<p class="rv-addr">${ic('map-pin')}<span>${esc(c.address)}</span></p>` : ''}
+    ${cases.length ? `<div class="rv-cases"><b>Что организуют</b><ul>${cases.slice(0, 1).map(caseLine).join('')}</ul>${cases.length > 1 ? `<small class="tiny">ещё ${cases.length - 1} — в «Подробно»</small>` : ''}</div>` : ''}
     ${priceBlock(c)}
     ${details ? `<details class="mk-more"><summary>Подробнее</summary><div>${details}</div></details>` : ''}
-    <details class="mk-more manual-form"><summary>Ввести цену вручную</summary>
+    <details class="mk-more manual-form"><summary>${manual ? 'Изменить мою цену' : 'Ввести цену вручную'}</summary>
       <form class="mform" data-id="${esc(c.id)}" novalidate>
+        <label class="mf"><span>Что это за цена</span><select name="kind">${KIND_OPTIONS.map(k => `<option value="${k}"${k === mk ? ' selected' : ''}>${esc(KINDS[k].label)}</option>`).join('')}</select></label>
         <div class="mrow">
-          <label class="mf"><span>Цена, ₽ за человека</span><input name="value" type="number" inputmode="decimal" min="1" step="1" required value="${manual ? esc(manual.value) : ''}"></label>
+          <label class="mf"><span>Цена, ₽</span><input name="value" type="number" inputmode="decimal" min="1" step="1" required value="${manual ? esc(manual.value) : ''}"></label>
           <label class="mf"><span>Дата проверки</span><input name="date" type="date" max="${today()}" required value="${esc(manual ? manual.date : today())}"></label>
         </div>
         <label class="mf"><span>Ссылка на источник</span><input name="url" type="url" inputmode="url" placeholder="https://…" value="${manual ? esc(manual.url || '') : ''}"></label>
+        <p class="tiny">Сохраняется только в этом браузере и везде помечается «введено вами».</p>
         <p class="ferr" role="alert" hidden></p>
         <div class="toolrow"><button type="submit" class="btn small primary">Сохранить</button>${manual ? '<button type="button" class="btn small secondary" data-clear>Убрать</button>' : ''}</div>
       </form>
     </details>
-    <button type="button" class="btn small primary rv-scheme" data-detail="${esc(c.id)}">${ic('layout-grid')}<span>Схема по блокам</span></button>
-    ${link ? `<a class="btn small secondary rv-src" target="_blank" rel="noopener noreferrer" href="${esc(link)}">Источник ${ic('external-link')}</a>` : ''}
+    <button type="button" class="btn small primary rv-scheme" data-detail="${esc(c.id)}">${ic('layout-dashboard')}<span>Подробно: что делают и цены</span></button>
+    ${safeUrl(c.source_url) ? `<a class="btn small secondary rv-src" target="_blank" rel="noopener noreferrer" href="${esc(safeUrl(c.source_url))}">Источник ${ic('external-link')}</a>` : ''}
   </article>`;
 }
 
@@ -244,7 +249,7 @@ function renderCards(first) {
   const box = $('marketCards');
   box.innerHTML = (list.map(cardHtml).join('') || '<div class="nodata"><strong>Нет данных</strong><span>В этой группе пока нет записей.</span></div>') +
     (rest > 0 ? `<button type="button" class="btn secondary rv-more" data-more>Показать ещё ${rest} ${ic('chevron-right')}</button>` : '');
-  $('rivalsMeta').textContent = `Показано ${list.length} из ${all.length} · «нет данных» — не бесплатно`;
+  $('rivalsMeta').textContent = `Показано ${list.length} из ${all.length} · цены сравниваются только одного типа`;
   icons();
   // при смене фильтра карточки уже на экране — каскад сразу; при первой загрузке — по мере прокрутки
   if (first) armReveal(box, '.rival');
@@ -265,7 +270,7 @@ function refreshAfterManual(id) {
 
 function bindCards() {
   const box = $('marketCards');
-  // Схема по блокам: модалка конкурента (что проводят / цена / аренда / выручка-оценка)
+  // «Подробно»: модалка конкурента (что организуют / цены по типам / условия / оценка по модели)
   box.addEventListener('click', e => {
     const b = e.target.closest('[data-detail]'); if (!b) return;
     e.preventDefault();
@@ -279,10 +284,11 @@ function bindCards() {
     const err = f.querySelector('.ferr');
     const fail = msg => { err.textContent = msg; err.hidden = false; };
     const v = Number(f.value.value), date = f.date.value, url = f.url.value.trim();
+    const kind = KIND_OPTIONS.includes(f.kind.value) ? f.kind.value : 'ticket';
     if (f.value.value === '' || !Number.isFinite(v) || v <= 0) return fail('Введите цену числом больше нуля.');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > today()) return fail('Укажите дату проверки не позже сегодняшней.');
     if (url && !safeUrl(url)) return fail('Ссылка должна начинаться с http:// или https://');
-    const all = manualAll(); all[f.dataset.id] = { value: Math.round(v), date, url: url || null };
+    const all = manualAll(); all[f.dataset.id] = { value: Math.round(v), date, url: url || null, kind };
     if (!store.set(MANUAL_KEY, all)) return fail('Браузер не дал сохранить данные (приватный режим?).');
     toast('Цена сохранена в этом браузере');
     refreshAfterManual(f.dataset.id);
@@ -306,43 +312,38 @@ function bindCards() {
   });
 }
 
-/* ---------- Диаграмма цен билетов ---------- */
-
-function priceRows() {
-  const rows = [];
-  ALL.forEach(c => {
-    const m = manualAll()[c.id];
-    const tp = (c.prices || []).filter(p => p.chart && Number.isFinite(p.value));
-    if (m && Number.isFinite(m.value)) {
-      rows.push({ name: c.name, sub: 'введено вручную · ' + ruDate(m.date), value: m.value, tag: 'manual', stale: isStale(m.date, thresholdDays('prices')) });
-    } else if (tp.length) {
-      tp.forEach(p => rows.push({ name: c.name, sub: p.label, value: p.value, q: p.qualifier, tag: p.confidence === 'low' ? 'low' : '', stale: p.stale === true || (!!p.fetched_at && isStale(p.fetched_at, thresholdDays('prices'))) }));
-    } else if (c.type === 'outbound' || c.type === 'benchmark') {
-      rows.push({ name: c.name, sub: c.type === 'outbound' ? 'выездной' : 'площадка-ориентир', value: null });
-    }
-  });
-  return rows;
-}
+/* ---------- Диаграмма цен «за человека» + отдельные таблицы других типов ---------- */
 
 function renderPriceChart() {
   const tk = CFG && CFG.ticket;
   const unwrap = v => (v && typeof v === 'object' && 'value' in v) ? v.value : v; // значение может быть с провенансом
   const t = tk ? { min: unwrap(tk.min), max: unwrap(tk.max) } : null;
-  const all = priceRows();
-  const priced = all.filter(r => r.value != null).sort((a, b) => b.value - a.value);
-  const empty = all.filter(r => r.value == null);
-  const max = Math.max(1, ...priced.map(r => r.value), t && t.max ? t.max : 0);
-  const li = (r, cls, valHtml, fill) => `<li class="prow ${cls}"><div class="pname">${esc(r.name)}<small>${esc(r.sub || '')}</small></div><div class="ptrack" aria-hidden="true">${fill}</div><div class="pval">${valHtml}</div></li>`;
+  const man = manualAll();
+  const pp = perPersonRows(ALL, man);
+  // общая шкала для обеих групп «за человека», чтобы столбцы можно было сопоставить глазами
+  const max = Math.max(1, ...pp.ticket.map(r => r.value), ...pp.per_child.map(r => r.value), t && t.max ? t.max : 0);
+  const bar = v => `<span class="pw" style="width:${v / max * 100}%"><span class="pfill"></span></span>`;
+  const li = r => {
+    const tag = r.manual ? 'manual' : r.confidence === 'low' ? 'low' : '';
+    const stale = !r.manual && r.date && isStale(r.date, thresholdDays('prices'));
+    const sub = [r.label, ruDate(r.date) !== '—' ? ruDate(r.date) : ''].filter(Boolean).join(' · ');
+    const link = srcLink(r.url);
+    return `<li class="prow ${tag}"><div class="pname">${esc(r.name)}<small>${esc(sub)}${link ? ' · ' + link : ''}</small></div><div class="ptrack" aria-hidden="true">${bar(r.value)}</div><div class="pval">${r.qualifier ? esc(r.qualifier) + ' ' : ''}${fmt(r.value)} ₽${r.manual ? '<small>введено вами</small>' : r.confidence === 'low' ? '<small>не подтверждено</small>' : ''}${stale ? '<small class="stl">устарело</small>' : ''}</div></li>`;
+  };
   const mine = t && t.min && t.max
-    ? li({ name: 'Ваш билет', sub: 'предположение проекта' }, 'mine', `${fmt(t.min)}–${fmt(t.max)} ₽<small>предположение</small>`, `<span class="pw" style="width:${t.max / max * 100}%"><span class="pfill assume"></span></span>`) : '';
-  const rows = priced.map(r => li(r, r.tag, `${r.q ? esc(r.q) + ' ' : ''}${fmt(r.value)} ₽${r.tag === 'manual' ? '<small>вручную</small>' : r.tag === 'low' ? '<small>не подтверждено</small>' : ''}${r.stale ? '<small class="stl">устарело</small>' : ''}`, `<span class="pw" style="width:${r.value / max * 100}%"><span class="pfill"></span></span>`));
-  // строки без цены не рисуют пустые дорожки: одна компактная строка-перечень под графиком
-  const nod = empty.length
-    ? `<p class="pnod"><b>Нет данных о цене (${empty.length}):</b> ${empty.map(r => esc(r.name)).join(', ')}</p>` : '';
+    ? `<li class="prow mine"><div class="pname">Ваш билет<small>план проекта, не рынок</small></div><div class="ptrack" aria-hidden="true"><span class="pw" style="width:${t.max / max * 100}%"><span class="pfill assume"></span></span></div><div class="pval">${fmt(t.min)}–${fmt(t.max)} ₽<small>ваш план</small></div></li>` : '';
+  const grp = (title, note, rows, extra = '') => `<div class="pgrp"><h4 class="pgrp-h">${title}</h4><p class="pgrp-n">${note}</p><ul class="pbars" aria-label="${esc(title)}, рублей">${extra}${rows.map(li).join('')}</ul>${!rows.length ? '<p class="pnone"><b>Нет данных</b> · конкуренты не публикуют цену — запросите КП или введите вручную в карточке.</p>' : ''}</div>`;
+  const nod = pp.none.length
+    ? `<details class="mk-more wide"><summary>Без цены за человека (${pp.none.length})</summary><p class="pnod">${pp.none.map(esc).join(', ')}. «Нет данных» — не 0 ₽.</p></details>` : '';
+  // другие типы цен — компактные таблицы, каждая сравнивается только внутри себя
+  const other = otherKindRows(ALL, man);
+  const otherHtml = ['party_package', 'hour', 'subscription'].filter(k => other[k].length).map(k => `<div class="pgrp pgrp-o"><h4 class="pgrp-h">${esc(KINDS[k].label)}</h4><ul class="plist">${other[k].map(r => `<li><span>${esc(r.name)}<small>${r.manual ? 'введено вами' : r.confidence === 'model' ? 'ориентир бизнес-плана, не оферта' : ''}${ruDate(r.date) !== '—' ? (r.manual || r.confidence === 'model' ? ' · ' : '') + ruDate(r.date) : ''}${r.url ? ' · ' + srcLink(r.url) : ''}</small></span><b>${esc(r.text)}</b></li>`).join('')}</ul></div>`).join('');
   const box = $('priceChart');
-  box.innerHTML = `<ul class="pbars" aria-label="Цены билетов у конкурентов в рублях">${mine}${rows.join('')}</ul>${nod}`;
-  const stale = COMP.fetched_at && isStale(COMP.fetched_at, thresholdDays('prices'));
-  $('priceMeta').innerHTML = `${freshBadge({ fetched_at: COMP.fetched_at, confidence: 'medium', source_name: 'Исследование рынка (срез 18.11.2026)', stale })}<span>«Нет данных» — не 0 ₽.</span>`;
+  box.innerHTML = grp('Выездной спектакль, за ребёнка', 'Цена за одного зрителя на выезде в сад, школу или ДК.', pp.per_child, mine) +
+    grp('Билет на спектакль или сеанс в зале', 'Билет у стационарных площадок — не выезд, но ориентир того, сколько семья платит за ребёнка.', pp.ticket) +
+    nod +
+    (otherHtml ? `<details class="mk-more wide"><summary>Другие типы цен — сравнивать только между собой</summary>${otherHtml}</details>` : '');
+  $('priceMeta').innerHTML = `${freshBadge({ fetched_at: COMP.fetched_at, confidence: 'high', source_name: 'Сверка с сайтами конкурентов' })}<span>«от» — минимальная цена. «Нет данных» — не 0 ₽.</span>`;
   growOnEnter(box);
 }
 

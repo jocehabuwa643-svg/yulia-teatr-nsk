@@ -13,8 +13,10 @@ const STATUSES = [
   ['refused', 'Отказ']
 ];
 const SEARCHES = [
-  { name: 'Авито · Богдана Хмельницкого', url: 'https://www.avito.ru/novosibirsk/kvartiry/prodam-ASgBAgICAUSSA8YQ?pmax=90&q=%D0%91%D0%BE%D0%B3%D0%B4%D0%B0%D0%BD%D0%B0+%D0%A5%D0%BC%D0%B5%D0%BB%D1%8C%D0%BD%D0%B8%D1%86%D0%BA%D0%BE%D0%B3%D0%BE' },
-  { name: 'Авито · нежилые помещения НСК', url: 'https://www.avito.ru/novosibirsk/kommercheskaya_nedvizhimost/prodam-ASgBAgICAkDgB~JU?pmax=130&s=104&pmin=40' },
+  /* Аренда коммерческих помещений (раньше ссылки вели на ПРОДАЖУ квартир и помещений — не тот поиск).
+     Категория «Коммерческая недвижимость → Сдам» проверена 21.11.2026 (ответ 200, объявления аренды). */
+  { name: 'Авито · аренда у Богдана Хмельницкого', url: 'https://www.avito.ru/novosibirsk/kommercheskaya_nedvizhimost/sdam-ASgBAgICAUSwCNRW?q=%D0%91%D0%BE%D0%B3%D0%B4%D0%B0%D0%BD%D0%B0+%D0%A5%D0%BC%D0%B5%D0%BB%D1%8C%D0%BD%D0%B8%D1%86%D0%BA%D0%BE%D0%B3%D0%BE' },
+  { name: 'Авито · аренда помещений НСК', url: 'https://www.avito.ru/novosibirsk/kommercheskaya_nedvizhimost/sdam-ASgBAgICAUSwCNRW' },
   { name: 'ЦИАН · Калининский район', url: 'https://www.cian.ru/cat.php?deal_type=lease&engine_version=2&offer_type=offices&region=4908&room1=1' },
   { name: 'Яндекс Недвижимость · аренда НСК', url: 'https://realty.ya.ru/arenda/kommercheskaya/' }
 ];

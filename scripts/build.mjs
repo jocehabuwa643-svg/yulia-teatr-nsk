@@ -17,6 +17,7 @@
 import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, '_site');
@@ -118,10 +119,44 @@ async function minifyBoot(esbuild) {
 /* Загрузчик приложения: assets/app.js запрашивается ПОСЛЕ первой отрисовки (событие paint + 600 мс — главный заголовок успевает
    отрисоваться как LCP-кандидат; запасной таймер 1500 мс).
    Первый экран (шапка, hero, заставка) — статический HTML + CSS, ему скрипты не нужны; тяжёлый бандл и 8 файлов данных
-   не конкурируют за канал с первой отрисовкой. Порядок исполнения не важен: бандл самодостаточный классический скрипт. */
-const APP_LOADER = '<script>(function(){var d=0;function go(){if(d)return;d=1;var s=document.createElement("script");s.src="assets/app.js";s.defer=true;document.head.appendChild(s)}' +
+   не конкурируют за канал с первой отрисовкой. Порядок исполнения не важен: бандл самодостаточный классический скрипт.
+   src — адрес бандла с меткой версии (?b=…): новая страница никогда не возьмёт из кэша сервис-воркера старый бандл. */
+const appLoader = src => '<script>(function(){var d=0;function go(){if(d)return;d=1;var s=document.createElement("script");s.src="' + src + '";s.defer=true;document.head.appendChild(s)}' +
   'try{new PerformanceObserver(function(l,o){if(l.getEntriesByName("first-contentful-paint").length){o.disconnect();setTimeout(go,600)}}).observe({type:"paint",buffered:true})}catch(e){}' +
   'setTimeout(go,1500)})()</script>';
+
+/* ---------- PWA: манифест, иконки, сервис-воркер ---------- */
+const shortHash = (...parts) => {
+  const h = createHash('sha256');
+  for (const p of parts) h.update(p);
+  return h.digest('hex').slice(0, 12);
+};
+const PWA_FILES = ['manifest.webmanifest', 'offline.html']; // плюс каталог icons/
+
+/* Копирует манифест, офлайн-страницу и иконки; собирает sw.js: версия кэша = хэш итоговых файлов,
+   список предзагрузки = оболочка приложения этой сборки. Возвращает версию */
+function buildPwa(indexOut, assetUrls) {
+  for (const f of PWA_FILES) cpSync(join(ROOT, f), join(OUT, f));
+  const iconsDir = join(ROOT, 'icons');
+  if (!existsSync(iconsDir)) fail('нет каталога icons/ (иконки приложения)');
+  cpSync(iconsDir, join(OUT, 'icons'), { recursive: true });
+  const icons = readdirSync(iconsDir).filter(f => f.endsWith('.png')).sort().map(f => 'icons/' + f);
+  if (!icons.length) fail('в icons/ нет PNG-иконок');
+
+  const precache = ['./', 'offline.html', 'manifest.webmanifest', ...(existsSync(join(OUT, 'favicon.svg')) ? ['favicon.svg'] : []), ...icons, ...assetUrls];
+  const version = shortHash(indexOut, ...PWA_FILES.map(read), ...icons.map(f => readFileSync(join(ROOT, f))), assetUrls.join('|'));
+
+  let sw = read('sw.js');
+  let n = 0;
+  sw = sw.replace(/const VERSION = '__BUILD_VERSION__';/, () => { n++; return `const VERSION = '${version}';`; });
+  if (n !== 1) fail("в sw.js не найдено const VERSION = '__BUILD_VERSION__'");
+  n = 0;
+  sw = sw.replace(/\/\*PRECACHE\*\/[\s\S]*?\/\*END\*\//, () => { n++; return JSON.stringify(precache); });
+  if (n !== 1) fail('в sw.js не найден список /*PRECACHE*/[…]/*END*/');
+  writeFileSync(join(OUT, 'sw.js'), sw);
+  console.log(`sw.js: версия ${version}, предзагрузка ${precache.length} файлов`);
+  return version;
+}
 
 /* ---------- Данные для офлайн-версии ---------- */
 function collectData() {
@@ -144,7 +179,8 @@ function collectData() {
 
 /* ---------- Офлайн-страница ---------- */
 function buildOffline(indexHtml, bundleJs) {
-  let html = indexHtml;
+  // 0) установка как приложение по file:// невозможна: манифест и PNG-иконки (их рядом нет) из офлайн-файла убираем
+  let html = indexHtml.replace(/<link rel="(?:manifest|apple-touch-icon)"[^>]*>\r?\n?|<link rel="icon" type="image\/png"[^>]*>\r?\n?/g, '');
   let n;
 
   // 1) boot.js → встроенный классический скрипт
@@ -213,24 +249,30 @@ async function main() {
 
   // Скрипты приложения: бандл (основной путь) или копия модулей (запасной)
   let indexOut = indexSrc;
+  let assetUrls = []; // адреса бандлов с меткой версии — в список предзагрузки sw.js
   if (bundleJs) {
     mkdirSync(join(OUT, 'assets'), { recursive: true });
     writeFileSync(join(OUT, 'assets', 'app.js'), bundleJs);
+    // Стили: критическая часть встраивается на месте первой ссылки, остальное — assets/rest.css (грузится без блокировки)
+    const { critical, rest, hrefs } = await bundleCss(esbuild, indexSrc);
+    writeFileSync(join(OUT, 'assets', 'rest.css'), rest);
+    // метка версии бандлов: меняется только когда меняется их содержимое
+    const b = shortHash(bundleJs, rest);
+    const appUrl = `assets/app.js?b=${b}`, restUrl = `assets/rest.css?b=${b}`;
+    assetUrls = [appUrl, restUrl];
+
     let n = 0;
-    indexOut = indexSrc.replace(/<script type="module" src="js\/app\.js"><\/script>/, () => { n++; return APP_LOADER; });
+    indexOut = indexSrc.replace(/<script type="module" src="js\/app\.js"><\/script>/, () => { n++; return appLoader(appUrl); });
     if (n !== 1) fail('в index.html не найден <script type="module" src="js/app.js"> для подмены');
     console.log(`assets/app.js: ${kb(Buffer.byteLength(bundleJs))}`);
 
-    // Стили: критическая часть встраивается на месте первой ссылки, остальное — assets/rest.css (грузится без блокировки)
-    const { critical, rest, hrefs } = await bundleCss(esbuild, indexOut);
-    writeFileSync(join(OUT, 'assets', 'rest.css'), rest);
     let first = true;
     indexOut = indexOut.replace(/<link rel="stylesheet" href="css\/[^"]+">\r?\n?/g, () => {
       if (!first) return '';
       first = false;
       return `<style>${critical}</style>\n` +
-        '<link rel="stylesheet" href="assets/rest.css" media="print" onload="this.media=\'all\'">\n' +
-        '<noscript><link rel="stylesheet" href="assets/rest.css"></noscript>\n';
+        `<link rel="stylesheet" href="${restUrl}" media="print" onload="this.media='all'">\n` +
+        `<noscript><link rel="stylesheet" href="${restUrl}"></noscript>\n`;
     });
     console.log(`css: критический ${kb(Buffer.byteLength(critical))} (в HTML) + assets/rest.css ${kb(Buffer.byteLength(rest))}; склеено файлов: ${hrefs.length}`);
 
@@ -243,7 +285,11 @@ async function main() {
     cpSync(join(ROOT, 'css'), join(OUT, 'css'), { recursive: true });
     cpSync(join(ROOT, 'js'), join(OUT, 'js'), { recursive: true });
   }
-  writeFileSync(join(OUT, 'index.html'), bundleJs ? minifyHtml(indexOut) : indexOut);
+  const indexFinal = bundleJs ? minifyHtml(indexOut) : indexOut;
+  writeFileSync(join(OUT, 'index.html'), indexFinal);
+
+  // PWA: манифест, иконки, офлайн-страница и sw.js с версией этой сборки
+  buildPwa(indexFinal, assetUrls);
 
   // Офлайн-версия
   if (bundleJs) {

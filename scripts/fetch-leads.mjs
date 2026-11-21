@@ -249,6 +249,7 @@ export function leadsStale(doc, now = Date.now()) {
 
 /* Паузы между повторами к перегруженному Overpass: у публичных серверов очередь из слотов, короткий backoff их не ждёт */
 const OVERPASS_RETRY_WAIT_MS = [12_000, 30_000];
+const SECOND_PASS_WAIT_MS = 60_000; // пауза перед вторым кругом по местам, которые не ответили в первом
 
 /* Один запрос к Overpass с переключением между эндпоинтами и терпеливыми повторами (до 3 попыток на эндпоинт).
    Возвращает разобранный результат или бросает Error */
@@ -290,21 +291,40 @@ export async function run({ now = new Date() } = {}) {
   const oldDoc = existsSync(file) ? (() => { try { return readJson(file); } catch { return null; } })() : null;
   const oldById = new Map(((oldDoc && oldDoc.places) || []).map(p => [p.id, p]));
   const deadline = Date.now() + DEADLINE_MS;
-  const results = [];
   let osmBase = null;
-  for (const def of PLACES) {
+  /* Одно место: запрос, проверка на «подозрительно пусто», сборка. Ошибка не бросается — возвращается в результате */
+  const queryOne = async def => {
     try {
       const { parsed, osmBase: base } = await queryPlace(def, deadline);
-      if (looksBroken(oldById.get(def.id), parsed)) throw new Error('ответ пуст или заметно меньше прежнего — похоже на сбой источника');
+      if (looksBroken(oldById.get(def.id), parsed)) throw Object.assign(new Error('ответ пуст или заметно меньше прежнего — похоже на сбой источника'), { suspicious: true });
       osmBase = base || osmBase;
       const place = buildPlace(def, parsed, nowIso);
-      results.push({ def, place });
       console.log(`[leads] ${def.name}: школ ${place.school}, садов ${place.kindergarten}, ДК/клубов ${place.culture}${place.districts ? `, районов ${place.districts.length}` : ''}`);
+      return { def, place };
     } catch (e) {
-      results.push({ def, place: null, error: e.message });
-      console.error(`[leads] ${def.name}: оставляю прежние данные — ${e.message}`);
+      return { def, place: null, error: e.message, retryable: !e.suspicious };
     }
+  };
+  const results = [];
+  for (const def of PLACES) {
+    results.push(await queryOne(def));
     await wait(PAUSE_MS);
+  }
+  /* Второй круг для мест, где Overpass не дал слот (502/504/таймаут): зеркало перегружено волнами, через минуту
+     запрос часто проходит. Только сетевые сбои и только в пределах общего бюджета времени */
+  const failed = results.map((r, i) => (r.place || !r.retryable ? -1 : i)).filter(i => i >= 0);
+  if (failed.length && Date.now() + SECOND_PASS_WAIT_MS < deadline) {
+    console.error(`[leads] второй круг через ${SECOND_PASS_WAIT_MS / 1000} с: ${failed.map(i => results[i].def.name).join(', ')}`);
+    await wait(SECOND_PASS_WAIT_MS);
+    for (const i of failed) {
+      if (Date.now() > deadline) break;
+      const again = await queryOne(results[i].def);
+      if (again.place) results[i] = again;
+      await wait(PAUSE_MS);
+    }
+  }
+  for (const r of results) {
+    if (!r.place) console.error(`[leads] ${r.def.name}: оставляю прежние данные — ${r.error}`);
   }
   const prevSource = ((oldDoc && oldDoc.sources) || [])[0] || {};
   const doc = buildDoc(oldDoc, results, {

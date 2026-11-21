@@ -31,7 +31,7 @@ jobs:
       # ставится stale и причина; сбой всего шага не валит джоб (continue-on-error)
       - name: Потенциальные клиенты (OpenStreetMap)
         continue-on-error: true
-        timeout-minutes: 40
+        timeout-minutes: 45
         run: node scripts/fetch-leads.mjs
 
       # robots.txt проверяется перед каждым сайтом; 2ГИС / VK / Яндекс не запрашиваются; пауза 2,5 с между запросами к хосту
@@ -40,7 +40,9 @@ jobs:
         timeout-minutes: 10
         run: node scripts/fetch-competitors.mjs
 
-      # Валидность JSON и ::warning о просроченных недельных данных
+      # Валидность JSON и аудит свежести (scripts/data-freshness.mjs): ::warning о просроченных недельных данных,
+      # «открытых» грантах с прошедшим сроком, незагруженных каникулах. Если Overpass не дал слот ни одному месту —
+      # прежние числа остаются со stale, а свежие можно получить локально: node scripts/refresh-local.mjs --weekly
       - name: Проверка данных
         run: node scripts/touch-meta.mjs
 

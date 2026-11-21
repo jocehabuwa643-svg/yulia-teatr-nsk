@@ -430,12 +430,24 @@ export async function fetchSource(source, now = Date.now()) {
 }
 
 /* Сравнение без меток времени: если по существу ничего не изменилось, файл не переписываем (нет пустых коммитов бота) */
-function essence(doc) {
+export function essence(doc) {
   return JSON.stringify({
     stale: doc.stale,
-    sources: (doc.sources || []).map(({ fetched_at, ...s }) => s),
+    sources_failed: doc.sources_failed || 0,
+    // last_ok_at успешной ленты сдвигается каждый прогон — как и fetched_at, это не изменение «по существу»
+    sources: (doc.sources || []).map(({ fetched_at, last_ok_at, ...s }) => s),
     items: doc.items
   });
+}
+
+/* Когда лента последний раз отвечала успешно (ok или empty). Сбой — переносим прежнее значение из прошлого файла
+   (сопоставление по адресу ленты); у файла старого формата без last_ok_at берём fetched_at прошлого успешного прогона */
+export function sourceLastOk(status, prevSources, nowIso) {
+  if (status.status !== 'error') return nowIso;
+  const old = (Array.isArray(prevSources) ? prevSources : []).find(s => s && s.feed_url === status.feed_url);
+  if (!old) return null;
+  if (old.last_ok_at) return old.last_ok_at;
+  return old.status && old.status !== 'error' ? old.fetched_at || null : null;
 }
 
 /* Собирает итоговый документ из результатов лент и прежнего файла (чистая функция) */
@@ -444,12 +456,17 @@ export function buildDoc(results, prev, now = Date.now()) {
   const anyOk = results.some(r => r.status.status !== 'error');
   const fresh = results.flatMap(r => r.items);
   const prevItems = prev && Array.isArray(prev.items) ? prev.items : [];
+  const prevSources = prev && prev.sources;
+  // Частичный сбой честно виден в файле: сколько лент не ответило (весь файл при этом не stale — часть лент жива)
+  const failed = results.filter(r => r.status.status === 'error').length;
   const doc = {
     updated_at: anyOk ? nowIso : (prev && prev.updated_at) || null,
     stale: !anyOk,
+    sources_total: results.length,
+    sources_failed: failed,
     keep_days: KEEP_DAYS,
     max_items: MAX_ITEMS,
-    sources: results.map(r => r.status),
+    sources: results.map(r => ({ ...r.status, last_ok_at: sourceLastOk(r.status, prevSources, nowIso) })),
     items: mergeItems(fresh, prevItems, now)
   };
   if (!anyOk) {
@@ -486,6 +503,12 @@ async function main() {
   }
 
   const doc = buildDoc(results, prev, now);
+  // Недоступные ленты — заметная строка в сводке GitHub Actions: сайты ведомств РФ часто не отвечают зарубежным серверам GitHub
+  // (502 / таймаут). Тогда помогает локальный прогон из российской сети: node scripts/refresh-local.mjs (см. DATA_SOURCES.md)
+  if (doc.sources_failed && process.env.GITHUB_ACTIONS) {
+    const names = results.filter(r => r.status.status === 'error').map(r => r.status.name).join('; ');
+    console.log(`::warning file=data/news.json::Не ответили ${doc.sources_failed} из ${doc.sources_total} лент: ${names}. Прежние записи сохранены; обновить из российской сети — node scripts/refresh-local.mjs`);
+  }
   if (prev && essence(prev) === essence(doc)) {
     console.log(`news.json: без изменений по существу (${doc.items.length} записей)`);
     return;

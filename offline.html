@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0A">
+<title>Нет сети · Бизнес-помощник Юлии</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<style>
+/* Офлайн-страница сервис-воркера (sw.js): показывается, только если нет сети и сохранённой копии приложения ещё нет.
+   Самодостаточная: стили встроены, внешних запросов нет. Палитра — токены проекта (css/tokens.css), обе темы. */
+:root{--bg:#F5F5F7;--card:#FFFFFF;--text:#1C1C1E;--muted:#2C2C2E;--line:#E5E5EA;--solid:#1C1C1E;--on-solid:#FFFFFF;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#0A0A0A;--card:#1C1C1E;--text:#F5F5F7;--muted:#AEAEB2;--line:#2C2C2E;--solid:#F5F5F7;--on-solid:#0A0A0A}}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+main{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px 16px;box-sizing:border-box}
+.card{max-width:420px;width:100%;box-sizing:border-box;padding:28px 22px;border-radius:24px;background:var(--card);border:1px solid var(--line);text-align:center}
+img{width:72px;height:72px;border-radius:18px}
+h1{font-size:22px;line-height:1.3;margin:16px 0 8px}
+p{margin:0 0 20px;color:var(--muted)}
+button{min-height:44px;padding:0 22px;border:0;border-radius:999px;background:var(--solid);color:var(--on-solid);font:700 15px/1 inherit;font-family:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--text);outline-offset:3px}
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <img src="icons/icon-192.png" alt="" width="72" height="72">
+    <h1>Нет подключения к интернету</h1>
+    <p>Помощник откроется, как только появится сеть. В следующий раз он запомнит последние данные и будет открываться и без интернета.</p>
+    <button type="button" id="retry">Попробовать снова</button>
+  </div>
+</main>
+<script>
+  // Повтор: просто перезагружаем — сервис-воркер снова попробует сеть
+  document.getElementById('retry').addEventListener('click', function () { location.reload(); });
+  // Сеть вернулась — открываем приложение сами
+  addEventListener('online', function () { location.reload(); });
+</script>
+</body>
+</html>

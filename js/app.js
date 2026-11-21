@@ -20,6 +20,7 @@ import { initPresetCards } from './preset-cards.js';
 import { initPremises } from './premises.js';
 import { buildEntryCard } from './clients-view.js';
 import { initLiveData } from './live-data.js';
+import './pwa.js'; // самоподключаемый: сервис-воркер, плашка «Установить приложение», «Доступна новая версия»
 import './afford.js'; // самоподключаемый: «пальчик»-пульс на главных кнопках при первом входе
 import { initReveal, enter, whenIdle } from './ui/helpers.js';
 import { lazyChartLib } from './charts.js';

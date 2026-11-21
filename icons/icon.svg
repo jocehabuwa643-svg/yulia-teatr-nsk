@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Ярлык приложения «Бизнес-помощник Юлии»: фирменный знак из шапки (сердце + дуги сцены) и искра из заставки.
+       Монохромная палитра Apple проекта: graphite #2C2C2E → void #0A0A0A, линии paper #F5F5F7.
+       Из этого файла рендерятся PNG в icons/ (192, 512, maskable 512, apple-touch 180, favicon 32). -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2C2C2E"/>
+      <stop offset="1" stop-color="#0A0A0A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="46%" r="50%">
+      <stop offset="0" stop-color="#F5F5F7" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#F5F5F7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#bg)"/>
+  <rect x="3" y="3" width="506" height="506" rx="111" stroke="#F5F5F7" stroke-opacity=".10" stroke-width="6"/>
+  <circle cx="256" cy="244" r="210" fill="url(#glow)"/>
+  <g transform="translate(80 92) scale(11)" stroke="#F5F5F7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 27C12 24 3 18.5 3 10.5 3 6.2 6.2 3.4 10 3.4c2.6 0 4.9 1.5 6 3.9 1.1-2.4 3.4-3.9 6-3.9 3.8 0 7 2.8 7 7.1 0 8-9 13.5-13 16.5Z" stroke-width="1.8"/>
+    <path d="M11.5 22.5a4.5 4.5 0 0 1 9 0M13.5 22.5a2.5 2.5 0 0 1 5 0" stroke-width="1.6"/>
+  </g>
+  <path d="M404 92l6.5 17.5L428 116l-17.5 6.5L404 140l-6.5-17.5L380 116l17.5-6.5z" fill="#F5F5F7"/>
+</svg>

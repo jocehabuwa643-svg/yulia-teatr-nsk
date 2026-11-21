@@ -1,0 +1,92 @@
+/* ============================================================
+   pwa.css — плашка «Установить приложение», «Доступна новая версия», «Нет сети» и пункт меню (js/pwa.js).
+   Только семантические токены (обе темы). Анимируются transform/opacity, reduced-motion — без движения.
+   Тач-цели ≥ 44px. Узкий экран: внизу на всю ширину с отступами 16px; широкий: слева снизу
+   (справа снизу живёт плашка новостей .newsflash — не перекрываемся). z-index ниже новостей (1400) и тоста (1500).
+   Пункт в шапке нужен только на десктопе — остальное время он в мобильном меню, поэтому стиль шапки критический,
+   а плашка (появляется не раньше первого действия) уходит в отложенный CSS сборки.
+   ============================================================ */
+
+/* Кнопка «Установить» в шапке: только там, где нет бургер-меню. Круглая, только значок (подпись — aria-label и title),
+   чтобы не теснить название и меню шапки */
+.pwa-headbtn{flex:none;width:var(--tap);min-width:var(--tap);min-height:var(--tap);padding:0}
+.pwa-headbtn span{display:none}
+.pwa-headbtn .pwa-glyph{flex:none;width:16px;height:16px}
+/* до 1060px пункт живёт в мобильном меню; 1061–1199px — шапка и так впритык (горизонтальный скролл), кнопку не добавляем */
+@media (max-width:1199px){.pwa-headbtn{display:none}}
+
+/* @defer плашка и пункт мобильного меню */
+/* Пункт «Установить приложение» в мобильном меню — как ссылки меню, но с отделяющей линией сверху */
+.pwa-navbtn{
+  display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 16px;margin-top:4px;
+  border:0;border-top:1px solid var(--line);border-radius:0 0 16px 16px;background:none;
+  color:var(--text);font:600 15px/1.2 var(--font-text);text-align:left;cursor:pointer;
+  transition:transform .35s var(--spring);
+}
+.pwa-navbtn .pwa-glyph{width:18px;height:18px;flex:none}
+.pwa-navbtn:active{transform:scale(.97)}
+.pwa-navbtn:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:-2px}
+
+/* Сама плашка */
+.pwa-sheet{
+  position:fixed;left:24px;bottom:24px;z-index:1350;
+  width:min(380px,calc(100vw - 48px));max-height:min(80vh,560px);overflow:auto;overscroll-behavior:contain;
+  box-sizing:border-box;padding:16px 16px 14px;
+  background:var(--card);color:var(--text);
+  border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-lg);
+  font-family:var(--font-text);
+  opacity:0;transform:translateY(24px) scale(.97);transform-origin:bottom left;
+  transition:opacity .35s var(--spring),transform .6s var(--spring);
+}
+.pwa-sheet.show{opacity:1;transform:none}
+/* уступает место плашке новостей на телефоне: прячется, но остаётся в DOM */
+.pwa-sheet.show.pwa-yield{opacity:0;transform:translateY(24px) scale(.97);pointer-events:none}
+
+.pwa-row{display:flex;gap:12px;align-items:flex-start}
+.pwa-ic{flex:none;width:48px;height:48px;border-radius:12px;display:block}
+.pwa-ic-glyph{display:grid;place-items:center;background:var(--chip);color:var(--text)}
+.pwa-ic-glyph .pwa-glyph{width:22px;height:22px}
+.pwa-body{min-width:0}
+.pwa-title{margin:2px 0 4px;font-size:16px;line-height:1.3;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.pwa-text{margin:0;font-size:14px;line-height:1.45;color:var(--mutedS)}
+
+/* Шаги инструкции: номер + текст, значки в строке */
+.pwa-steps{margin:12px 0 0;padding:0;list-style:none;counter-reset:pwa;display:grid;gap:8px}
+.pwa-steps[hidden]{display:none}
+.pwa-steps li{
+  counter-increment:pwa;position:relative;padding:8px 10px 8px 40px;border-radius:var(--r-s);
+  background:var(--chip);font-size:14px;line-height:1.45;color:var(--text);overflow-wrap:anywhere;
+}
+.pwa-steps li::before{
+  content:counter(pwa);position:absolute;left:10px;top:8px;width:22px;height:22px;border-radius:999px;
+  display:grid;place-items:center;background:var(--solid);color:var(--on-solid);font-size:12px;font-weight:700;line-height:1;
+}
+.pwa-steps .pwa-glyph{width:18px;height:18px;display:inline-block;vertical-align:-4px;margin:0 2px}
+
+/* Кнопки: главная — заливка, второстепенная — контур; обе ≥ 44px */
+.pwa-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.pwa-btn{
+  flex:1 1 auto;min-height:var(--tap);padding:0 18px;border-radius:999px;cursor:pointer;
+  font:700 14px/1.2 var(--font-text);transition:transform .35s var(--spring);
+}
+.pwa-primary{border:0;background:var(--solid);color:var(--on-solid);box-shadow:var(--shadow)}
+.pwa-secondary{border:1px solid var(--line);background:none;color:var(--text)}
+.pwa-btn:active{transform:scale(.97)}
+.pwa-btn:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px}
+
+/* Узкие экраны: на всю ширину с отступами 16px, с учётом жестовой панели */
+@media (max-width:600px){
+  .pwa-sheet{
+    left:16px;right:16px;width:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));
+    max-height:min(70vh,520px);border-radius:20px;padding:14px 14px 12px;transform-origin:bottom center;
+  }
+}
+
+/* Без движения: появление и исчезновение — мгновенно */
+@media (prefers-reduced-motion:reduce){
+  .pwa-sheet,.pwa-sheet.show.pwa-yield,.pwa-btn,.pwa-navbtn{transition:none;transform:none}
+}
+
+/* Печать — не нужна */
+@media print{.pwa-sheet,.pwa-navbtn,.pwa-headbtn{display:none!important}}
+/* @end-defer */
