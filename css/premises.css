@@ -13,5 +13,10 @@
 .pr-tools .note-del:hover{border-color:var(--silver)}
 .pr-searches{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .pr-searches .chip{text-decoration:none}
+/* Инлайн-форма добавления (замена prompt(): браузер может блокировать нативные диалоги) */
+.pr-form{border:1px solid var(--silver);border-radius:var(--r-s);padding:14px;background:var(--card2);margin-top:10px}
+.pr-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.pr-form-grid .toolrow,.pr-form-grid .ferr{grid-column:1/-1}
+@media(max-width:640px){.pr-form-grid{grid-template-columns:1fr}}
 #liveDataBox{margin-top:6px}
 #liveDataBox .btn{min-height:var(--tap)}
