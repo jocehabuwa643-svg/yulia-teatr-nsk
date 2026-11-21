@@ -525,32 +525,30 @@ span.chip::before{display:none}
 .badge{border-color:transparent;background:transparent;padding-inline:0}
 button.chip,a.chip,.tab,.mmode,.periods button{cursor:pointer}
 
-/* Подсказка «пальчик / нажмите» (js/ui/tap-hints.js): рука поверх страницы у главной кнопки; двигается только transform/opacity.
-   Слой fixed + pointer-events:none — клики проходят насквозь, вёрстку не трогает. Цвета — токены обеих тем. */
-.tap-finger{position:fixed;left:0;top:0;z-index:1300;width:56px;height:56px;pointer-events:none;will-change:transform;
-  --tf-fill:var(--card);--tf-stroke:var(--text)}
-.tap-finger .tf-hand{position:relative;display:block;width:56px;height:56px;opacity:0;transform-origin:33% 8%;
-  filter:drop-shadow(0 6px 10px rgba(0,0,0,.22));animation:tftap 2.4s var(--spring) 1 forwards}
+/* Подсказка «пальчик» (js/ui/tap-hints.js): ОДИН палец на всю страницу обходит нажимаемые элементы раздела.
+   Слой fixed + pointer-events:none — клики проходят насквозь, вёрстку не трогает. Двигается только transform/opacity:
+   между кнопками перелетает transition'ом (.45 с, var(--spring)), на каждой — одно касание (tftap) с волной (tfring). Цвета — токены обеих тем. */
+.tap-finger{position:fixed;left:0;top:0;z-index:1300;width:56px;height:56px;pointer-events:none;will-change:transform,opacity;
+  opacity:0;visibility:hidden;--tf-fill:var(--card);--tf-stroke:var(--text);
+  transition:transform .45s var(--spring),opacity .22s linear,visibility 0s linear .22s}
+.tap-finger.on{opacity:1;visibility:visible;transition:transform .45s var(--spring),opacity .22s linear,visibility 0s}
+.tap-finger .tf-hand{position:relative;display:block;width:56px;height:56px;transform-origin:33% 8%;transform:translateY(8px);
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.22))}
+.tap-finger .tf-hand.tap{animation:tftap .52s ease-out 1 both}
 /* круг-«волна» от кончика пальца в момент касания */
 .tap-finger .tf-hand::after{content:"";position:absolute;left:33%;top:8%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;
-  border:2px solid var(--text);opacity:0;animation:tfring 2.4s ease-out 1 forwards}
+  border:2px solid var(--text);opacity:0}
+.tap-finger .tf-hand.tap::after{animation:tfring .52s ease-out 1 both}
 @keyframes tftap{
-  0%{opacity:0;transform:translateY(22px) scale(.92)}
-  16%{opacity:1;transform:translateY(8px) scale(1)}
-  30%{opacity:1;transform:translateY(-4px) scale(.92)}
-  42%{opacity:1;transform:translateY(8px) scale(1)}
-  56%{opacity:1;transform:translateY(-4px) scale(.92)}
-  68%{opacity:1;transform:translateY(8px) scale(1)}
-  88%{opacity:1;transform:translateY(8px) scale(1)}
-  100%{opacity:0;transform:translateY(16px) scale(.94)}
+  0%{transform:translateY(8px) scale(1)}
+  40%{transform:translateY(-4px) scale(.92)}
+  72%{transform:translateY(8px) scale(1)}
+  100%{transform:translateY(8px) scale(1)}
 }
 @keyframes tfring{
-  0%,28%{opacity:0;transform:scale(.4)}
-  32%{opacity:.45;transform:scale(.6)}
-  44%{opacity:0;transform:scale(1.5)}
-  54%{opacity:0;transform:scale(.4)}
-  58%{opacity:.45;transform:scale(.6)}
-  70%,100%{opacity:0;transform:scale(1.5)}
+  0%,34%{opacity:0;transform:scale(.4)}
+  42%{opacity:.5;transform:scale(.6)}
+  90%,100%{opacity:0;transform:scale(1.6)}
 }
 @media print,(prefers-reduced-motion:reduce){.tap-finger{display:none}}
 
@@ -586,6 +584,8 @@ a.chip{display:inline-flex;align-items:center;gap:6px}
    пропущенный блок остаётся в дереве и наблюдается IntersectionObserver. */
 .section,.footin{content-visibility:auto;overflow-clip-margin:48px}
 #calc{contain-intrinsic-size:auto 2200px}
+#profit{contain-intrinsic-size:auto 1300px}
+@media(max-width:700px){#profit{contain-intrinsic-size:auto 2600px}}
 #schemes{contain-intrinsic-size:auto 2000px}
 #market{contain-intrinsic-size:auto 6000px}
 #geo{contain-intrinsic-size:auto 1500px}

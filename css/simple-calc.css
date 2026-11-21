@@ -1,0 +1,154 @@
+/* simple-calc.css — раздел «Сколько я заработаю»: крупные поля (56px), один большой результат, липкая полоса итога на телефоне.
+   Цвета — только токены (tokens.css/themes.css); анимации — только transform/opacity (--spring);
+   prefers-reduced-motion — без анимаций; тач-цели ≥ 44px (поля и кнопки шагов — 56px). */
+
+#profitApp{min-height:520px}
+.sc{display:grid;gap:14px}
+.sc>*{min-width:0}
+
+/* ---------- Переключатель режима: две крупные кнопки ---------- */
+.sc-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sc-mode{
+  position:relative;isolation:isolate;display:grid;grid-template-columns:auto 1fr;grid-template-areas:"i t" "i s";column-gap:14px;align-items:center;text-align:left;
+  min-height:76px;padding:14px 18px;border-radius:var(--r);border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow);color:var(--text);
+  transition:scale .35s var(--spring),border-color .2s;
+}
+.sc-mode svg.lucide{grid-area:i;width:26px;height:26px;color:var(--muted)}
+.sc-mt{grid-area:t;font-size:17px;font-weight:700;letter-spacing:-.02em;line-height:1.25}
+.sc-mode small{grid-area:s;font-size:13px;font-weight:500;color:var(--mutedS);line-height:1.35}
+.sc-mode::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:var(--solid);opacity:0;transform:scale(.97);transition:opacity .3s var(--spring),transform .4s var(--spring);z-index:-1}
+.sc-mode.on::before{opacity:1;transform:none}
+.sc-mode.on{color:var(--on-solid);border-color:transparent}
+.sc-mode.on small{color:color-mix(in srgb,var(--on-solid) 78%,transparent)}
+.sc-mode.on svg.lucide{color:var(--on-solid)}
+.sc-mode:active{scale:.98}
+.sc-mode:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px}
+
+/* ---------- Раскладка: ввод слева, результат справа (на десктопе — липкий); на узких — столбиком ---------- */
+.sc-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;align-items:start}
+.sc-grid>.card{padding:clamp(18px,2.4vw,30px)}
+@media(min-width:1061px){.sc-out{position:sticky;top:80px}}
+@media(max-width:1060px){.sc-grid{grid-template-columns:1fr}}
+
+/* ---------- Поля ---------- */
+.sc-fields{display:grid;gap:26px}
+.sc-field{display:grid;gap:6px;min-width:0}
+.sc-label{font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--text);line-height:1.3}
+.sc-hint{font-size:13px;line-height:1.4;color:var(--mutedS);margin:0}
+.sc-row{display:grid;grid-template-columns:56px minmax(0,1fr) 56px;gap:10px;align-items:center;margin-top:4px}
+.sc-step{
+  width:56px;height:56px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid var(--line);background:var(--card);color:var(--text);box-shadow:var(--shadow-pill);transition:scale .3s var(--spring);
+}
+.sc-step svg.lucide{width:22px;height:22px}
+.sc-step:active{scale:.92}
+.sc-step:focus-visible,.sc-num:focus-visible,.sc-select:focus-visible,.sc-sticky:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px}
+.sc-numbox{position:relative;display:block;min-width:0}
+.sc-num{
+  width:100%;height:56px;min-height:56px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--text);
+  font-size:26px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-align:center;padding:0 54px 0 14px;
+}
+.sc-num::placeholder{color:var(--mutedS);font-weight:600;font-size:17px;letter-spacing:0;opacity:1}
+.sc-num::-webkit-outer-spin-button,.sc-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.sc-num{-moz-appearance:textfield;appearance:textfield}
+.sc-suf{position:absolute;right:14px;top:50%;translate:0 -50%;font-size:13px;font-weight:600;color:var(--mutedS);pointer-events:none;max-width:48px;overflow:hidden;white-space:nowrap}
+/* число без кнопок «−/+» (налог, расходы): во всю ширину */
+.sc-field>.sc-numbox .sc-num{text-align:left}
+.sc-select{
+  appearance:none;width:100%;height:56px;min-height:56px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--text);
+  font-size:16px;font-weight:600;padding:0 44px 0 16px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 16px center;
+}
+.sc-selbox{display:block;margin-top:4px}
+
+/* Ползунок: толще обычного, большая зона нажатия */
+.sc-range{-webkit-appearance:none;appearance:none;width:100%;height:44px;background:transparent;cursor:pointer;margin:0}
+.sc-range::-webkit-slider-runnable-track{height:10px;border-radius:6px;background:linear-gradient(var(--solid),var(--solid)) 0/var(--fill,0%) 100% no-repeat,var(--track)}
+.sc-range::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;margin-top:-10px;border-radius:50%;background:var(--card);border:2px solid var(--solid);box-shadow:var(--shadow)}
+.sc-range::-moz-range-track{height:10px;border-radius:6px;background:var(--track)}
+.sc-range::-moz-range-progress{height:10px;border-radius:6px;background:var(--solid)}
+.sc-range::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--card);border:2px solid var(--solid);box-shadow:var(--shadow)}
+.sc-range:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:4px;border-radius:8px}
+
+/* ---------- «Уточнить расчёт» ---------- */
+.sc-more{margin-top:22px;border-top:1px solid var(--line)}
+.sc-more>summary{font-size:16px;font-weight:700;padding:16px 0;min-height:56px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;color:var(--text)}
+.sc-more>summary small{font-size:13px;font-weight:500;color:var(--mutedS)}
+.sc-more[open]>summary{padding-bottom:6px}
+.sc-detail{margin-top:16px;gap:22px}
+.sc-detail .sc-label{font-size:15px}
+
+.sc-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.sc .scenlist{margin-top:18px}
+.sc-h{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS);font-family:var(--font-text);font-weight:700;margin:22px 0 6px}
+
+/* ---------- Результат ---------- */
+.sc-top{display:grid;gap:2px}
+.sc-statusrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.sc-status{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:999px;font-size:14px;font-weight:700;border:1.5px solid var(--text);color:var(--text)}
+.sc-status svg.lucide{width:18px;height:18px}
+.sc-status[data-s="plus"]{background:var(--solid);color:var(--on-solid);border-color:var(--solid)}
+.sc-status[data-s="minus"]{border-style:dashed}
+.sc-approx{font-size:13px;font-weight:600;color:var(--mutedS)}
+.sc-biglabel{margin-top:14px;font-size:16px;font-weight:700;color:var(--text2)}
+.sc-big{font-size:clamp(46px,9vw,76px);margin:2px 0;white-space:nowrap}
+.sc-sub{font-size:14px;color:var(--mutedS);margin:0}
+.sc-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0 4px}
+.sc-kpi{border:1px solid var(--line);border-radius:var(--r-s);background:var(--card2);padding:12px 14px;display:grid;gap:4px;align-content:start;min-width:0}
+.sc-kpi small{font-size:13px;font-weight:600;color:var(--mutedS)}
+.sc-kpi b{font-size:18px;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.25;overflow-wrap:anywhere}
+.sc-legend{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px;font-size:14px;color:var(--text)}
+.sc-legend li{display:flex;align-items:center;gap:8px;min-width:0}
+.sc-legend b{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:10px}
+.sc-legend .sw{flex:none;margin:0}
+.sc-legend .s5 .sw{background:color-mix(in srgb,var(--text) 22%,transparent)}
+.costbar .c5{background:color-mix(in srgb,var(--text) 22%,transparent)}
+.sc .advice p{margin:6px 0 0}
+.sc .advice p:first-of-type{margin-top:0}
+.sc-season{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;color:var(--mutedS);margin:14px 0 0}
+.sc-season svg.lucide{flex:none;width:18px;height:18px;margin-top:2px}
+.sc-honest{font-size:13px;line-height:1.55;color:var(--mutedS);margin:14px 0 0}
+.sc-src{margin-top:6px}
+.sc-src .methodlist{margin:6px 0 14px}
+.sc-cmp{padding:clamp(16px,2vw,26px)}
+.sc-printin{display:none}
+
+/* ---------- Липкая полоса итога (телефон и планшет, когда результат ниже экрана) ---------- */
+.sc-sticky{
+  position:sticky;bottom:10px;z-index:30;display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:6px 8px 6px 18px;
+  border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--text);box-shadow:var(--shadow-lg);text-align:left;
+  transition:transform .4s var(--spring),opacity .3s var(--spring);
+}
+.sc-sticky span{font-size:13px;font-weight:600;color:var(--mutedS)}
+.sc-sticky b{margin-left:auto;font-size:22px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sc-go{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--solid);color:var(--on-solid);font-style:normal}
+.sc-go svg.lucide{width:20px;height:20px}
+.sc-sticky.off{transform:translateY(140%);opacity:0;pointer-events:none}
+@media(min-width:1061px){.sc-sticky{display:none}}
+/* запас под полосой: поле в фокусе не прячется за ней */
+@media(max-width:1060px){.sc-num,.sc-select,.sc-range,.sc-step,.sc-more>summary{scroll-margin-bottom:96px}}
+
+/* ---------- Узкие экраны ---------- */
+@media(max-width:640px){
+  .sc-modes{grid-template-columns:1fr}
+  .sc-kpis{grid-template-columns:1fr}
+  .sc-kpi{grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:10px}
+  .sc-kpi b{text-align:right}
+  .sc-row{grid-template-columns:56px minmax(0,1fr) 56px;gap:8px}
+  .sc-num{font-size:24px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .sc-mode,.sc-mode::before,.sc-step,.sc-sticky{transition:none}
+}
+
+/* ---------- Печать: только этот раздел; поля и кнопки скрыты, результат и сравнение остаются ---------- */
+@media print{
+  #profitApp{min-height:0}
+  .sc-modes .sc-mode:not(.on),.sc-more,.sc-actions,.scenlist,.sc-sticky,.sc-fields,.sc-in{display:none!important}
+  .sc-grid{grid-template-columns:1fr}
+  .sc-src{display:block!important}
+  .sc-out{position:static}
+  .sc-printin{display:block;list-style:none;padding:0;margin:0 0 12px;font-size:12px;columns:2}
+}

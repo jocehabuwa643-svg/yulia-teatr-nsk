@@ -140,3 +140,55 @@
 
 /* Атрибут hidden должен побеждать display:grid у панелей и блока сравнения */
 .calcgrid[hidden],.compare[hidden],.scenlist[hidden]{display:none!important}
+
+/* ============================================================
+   «Все расчёты»: тише и крупнее. Лента переключателей без подписей, крупные поля и ползунки,
+   один главный результат, остальное — в свёрнутых блоках («О расчёте», «Подробнее», «Готовые кейсы»).
+   ============================================================ */
+
+/* ---------- Лента переключателей: иконка + короткое имя, переносится по строкам ---------- */
+#calcnav.modes{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 18px}
+#calcnav .mode{display:inline-flex;align-items:center;gap:8px;min-height:var(--tap);padding:8px 16px;border-radius:999px;box-shadow:none;font-size:14px;font-weight:600;flex:0 0 auto}
+#calcnav .mode svg.lucide{width:18px;height:18px}
+#calcnav .mode.on{box-shadow:var(--shadow-pill)}
+#calcnav .mode-t{white-space:nowrap}
+@media(max-width:640px){#calcnav.modes{gap:6px}#calcnav .mode{padding:8px 13px;font-size:13px}}
+
+/* ---------- Кейсы «за 5 секунд» — свёрнуты, не шумят над калькуляторами ---------- */
+.calc-cases{margin:0 0 4px}
+.calc-cases>summary{font-size:14px}
+.calc-cases #presetCards{margin-top:4px}
+
+/* ---------- Карточка калькулятора: заголовок, описание в сворачиваемом блоке ---------- */
+.calc-title{font-size:clamp(20px,2.2vw,24px);letter-spacing:-.03em;margin:0 0 2px}
+.calcmore{margin:0 0 6px}
+.calcmore>summary{font-size:13px;padding:8px 0;min-height:var(--tap);font-weight:500;color:var(--mutedS)}
+.calcmore .calcdesc{font-size:13px;margin:4px 0}
+.calcmore p{margin:4px 0 8px}
+
+/* ---------- Крупные поля: ≥ 52px, подпись 15px, ползунок с толстой дорожкой ---------- */
+.calcgrid .controls{grid-template-columns:1fr;gap:22px;margin:16px 0}
+.calcgrid .field label{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.calcgrid .fnum{min-height:52px;width:120px;font-size:18px;font-weight:800;border-radius:14px}
+.calcgrid .frow{grid-template-columns:minmax(0,1fr) 120px;gap:14px}
+.calcgrid .field select{min-height:52px;font-size:15px;font-weight:600;border-radius:14px}
+.calcgrid .field input[type=number]:not(.fnum){min-height:52px}
+.calcgrid .field .fv{font-size:12.5px}
+.calcgrid input[type=range]{height:48px}
+.calcgrid input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:5px}
+.calcgrid input[type=range]::-webkit-slider-thumb{width:28px;height:28px;margin-top:-10px;border-width:2px;border-color:var(--solid)}
+.calcgrid input[type=range]::-moz-range-track{height:8px;border-radius:5px}
+.calcgrid input[type=range]::-moz-range-progress{height:8px;border-radius:5px}
+.calcgrid input[type=range]::-moz-range-thumb{width:24px;height:24px;border-width:2px;border-color:var(--solid)}
+@media(max-width:640px){.calcgrid .frow{grid-template-columns:minmax(0,1fr) 104px;gap:10px}.calcgrid .fnum{width:104px}}
+.calcgrid .chips{margin:6px 0 4px}
+
+/* ---------- Результат: одна главная цифра, подробности — в «Подробнее» ---------- */
+.result .res-more{margin-top:10px;border-top:1px solid var(--line)}
+.result .res-more>summary{font-size:14px;font-weight:700;padding:14px 0;min-height:52px;color:var(--text)}
+.result .res-more[open]>summary{padding-bottom:4px}
+.result .big-num{font-size:clamp(44px,6vw,68px)}
+@media print{details.res-more{display:block!important}details.res-more>summary{display:none}}
+
+/* кнопка «Сбросить ручной ввод» скрыта атрибутом hidden, пока ручных значений нет (display:inline-flex у .btn его перебивал) */
+.calcglobal [hidden]{display:none!important}

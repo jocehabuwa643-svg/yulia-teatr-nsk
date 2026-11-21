@@ -10,6 +10,7 @@
     "market.json",
     "guide.json",
     "news.json",
+    "leads.json",
     "meta.json",
     "archive.html"
   ],
@@ -17,18 +18,22 @@
   "refresh_policy": {
     "automated": [
       "data/rates.json → scripts/fetch-cbr.mjs (Банк России)",
-      "data/news.json → scripts/fetch-news.mjs (RSS: Минкультуры РФ и НСО, Правительство НСО, УФНС по НСО; ежедневно, хранение 60 дней)"
+      "data/news.json → scripts/fetch-news.mjs (RSS: Минкультуры РФ и НСО, Правительство НСО, УФНС по НСО; ежедневно, хранение 60 дней)",
+      "data/leads.json → scripts/fetch-leads.mjs (OpenStreetMap / Overpass: школы, детские сады, ДК и клубы по населённым пунктам; еженедельно, понедельник)",
+      "data/competitors.json → scripts/fetch-competitors.mjs (недельная проверка публичных страниц конкурентов: доступность, изменение текста, найденный ценник как наблюдение confidence:low; ручные цены не меняются)"
     ],
     "manual": [
       "налоговые пороги и ставки (проверка по ссылкам в DATA_SOURCES.md)",
-      "цены конкурентов",
+      "цены конкурентов (автопроверка сайтов — только наблюдение, ручное значение главнее)",
       "сроки грантов"
     ],
     "stale_after_days": {
       "rates": 7,
       "prices": 30,
       "grants": 30,
-      "news": 14
+      "news": 14,
+      "leads": 10,
+      "competitors_check": 14
     }
   },
   "source_of_truth": "https://github.com/jocehabuwa643-svg/yulia-teatr-nsk"

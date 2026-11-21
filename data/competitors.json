@@ -39,7 +39,9 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://2gis.ru/novosibirsk/firm/70000001111770325/tab/prices",
    "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "confidence": "medium",
+   "checked_at": "2026-11-21T04:02:48.801Z",
+   "check_status": "skipped_policy"
   },
   {
    "id": "nikolya",
@@ -56,7 +58,18 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://nsk.nik-show.ru/show/",
    "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "confidence": "medium",
+   "checked_at": "2026-11-21T03:22:02.004Z",
+   "check_status": "ok",
+   "observed": {
+    "url": "https://nsk.nik-show.ru/show/",
+    "http_status": 200,
+    "content_hash": "d58e90aef08aae6a",
+    "text_length": 4567,
+    "hash_at": "2026-11-21T03:22:02.004Z",
+    "last_ok_at": "2026-11-21T03:22:02.004Z",
+    "price": null
+   }
   },
   {
    "id": "classvr",
@@ -73,7 +86,18 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://nsk-warstation.ru/classvr",
    "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "confidence": "medium",
+   "checked_at": "2026-11-21T03:22:02.004Z",
+   "check_status": "ok",
+   "observed": {
+    "url": "https://nsk-warstation.ru/classvr",
+    "http_status": 200,
+    "content_hash": "9d2f386c3f329011",
+    "text_length": 2349,
+    "hash_at": "2026-11-21T03:22:02.004Z",
+    "last_ok_at": "2026-11-21T03:22:02.004Z",
+    "price": null
+   }
   },
   {
    "id": "planetary-sugit",
@@ -103,7 +127,27 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://unc-planetary.ru/",
    "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "confidence": "medium",
+   "checked_at": "2026-11-21T04:02:48.801Z",
+   "check_status": "ok",
+   "observed": {
+    "url": "https://unc-planetary.ru/",
+    "http_status": 200,
+    "content_hash": "e36c98e613a2cec2",
+    "text_length": 4396,
+    "hash_at": "2026-11-21T03:22:02.004Z",
+    "last_ok_at": "2026-11-21T04:02:48.801Z",
+    "price": {
+     "value": 300,
+     "unit": "₽",
+     "qualifier": "от",
+     "snippet": "путников планет, а также самые интересные и необычные факты о них. Купить билет От 300 руб. Лекции для всех Подробнее Животные в космосе Лекция — истор",
+     "source_url": "https://unc-planetary.ru/",
+     "fetched_at": "2026-11-21T04:02:48.801Z",
+     "confidence": "low",
+     "method": "auto-regex"
+    }
+   }
   },
   {
    "id": "skazki-lukomorya",
@@ -120,7 +164,18 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://sovenok.edusite.ru/magicpage.html?page=971598",
    "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "confidence": "medium",
+   "checked_at": "2026-11-21T03:22:02.004Z",
+   "check_status": "ok",
+   "observed": {
+    "url": "https://sovenok.edusite.ru/magicpage.html?page=971598",
+    "http_status": 200,
+    "content_hash": "e9c349870233ed78",
+    "text_length": 36969,
+    "hash_at": "2026-11-21T03:22:02.004Z",
+    "last_ok_at": "2026-11-21T03:22:02.004Z",
+    "price": null
+   }
   },
   {
    "id": "iskra",
@@ -137,7 +192,18 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://ds428nsk.edusite.ru/",
    "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "confidence": "medium",
+   "checked_at": "2026-11-21T03:22:02.004Z",
+   "check_status": "ok",
+   "observed": {
+    "url": "https://ds428nsk.edusite.ru/",
+    "http_status": 200,
+    "content_hash": "ce9d08c122e44e8b",
+    "text_length": 165351,
+    "hash_at": "2026-11-21T03:22:02.004Z",
+    "last_ok_at": "2026-11-21T03:22:02.004Z",
+    "price": null
+   }
   },
   {
    "id": "zazerkalye",
@@ -188,7 +254,9 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://vk.ru/kuklysmeutsa",
    "fetched_at": "2026-11-18",
-   "confidence": "low"
+   "confidence": "low",
+   "checked_at": "2026-11-21T04:02:48.801Z",
+   "check_status": "skipped_policy"
   }
  ],
  "stationary_benchmarks": [
@@ -228,7 +296,9 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://afisha.yandex.ru/novosibirsk/theatre/places/oblastnoi-teatr-kukol",
    "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "confidence": "medium",
+   "checked_at": "2026-11-21T04:02:48.801Z",
+   "check_status": "skipped_policy"
   },
   {
    "id": "planetary-bolshoy",
@@ -333,7 +403,9 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://2gis.ru/novosibirsk/search/%D0%9E%D0%B1%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20%D1%82%D0%B0%D0%BD%D1%86%D0%B0%D0%BC",
    "fetched_at": "2026-11-18",
-   "confidence": "low"
+   "confidence": "low",
+   "checked_at": "2026-11-21T04:02:48.801Z",
+   "check_status": "skipped_policy"
   },
   {
    "id": "ognenny-cvetok",
@@ -607,7 +679,18 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://playpanda.ru/",
    "fetched_at": "2026-11-18",
-   "confidence": "medium"
+   "confidence": "medium",
+   "checked_at": "2026-11-21T03:22:02.004Z",
+   "check_status": "ok",
+   "observed": {
+    "url": "https://playpanda.ru/",
+    "http_status": 200,
+    "content_hash": "56a63343590de333",
+    "text_length": 7021,
+    "hash_at": "2026-11-21T03:22:02.004Z",
+    "last_ok_at": "2026-11-21T03:22:02.004Z",
+    "price": null
+   }
   },
   {
    "id": "starkids",
@@ -621,7 +704,9 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://2gis.ru/novosibirsk/firm/70000001066510068",
    "fetched_at": "2026-11-18",
-   "confidence": "low"
+   "confidence": "low",
+   "checked_at": "2026-11-21T04:02:48.801Z",
+   "check_status": "skipped_policy"
   },
   {
    "id": "lisichka",
@@ -635,7 +720,9 @@
    "source_name": "Исследование рынка (срез 18.11.2026)",
    "source_url": "https://zoon.ru/nsk/entertainment/mesto_semejnyh_torzhestv_i_detskij_loft_lisichka/price/",
    "fetched_at": "2026-11-18",
-   "confidence": "low"
+   "confidence": "low",
+   "checked_at": "2026-11-21T04:02:48.801Z",
+   "check_status": "skipped_policy"
   }
  ],
  "hypothesis": "Кукольная студия с подтверждённым набором в коридоре Учительская — Сухой Лог не установлена: это пробел проверки, не доказанная монополия."

@@ -8,6 +8,7 @@ import { initTheme } from './theme.js';
 import { initNav } from './router.js';
 import { initOverview } from './overview.js';
 import { initCalc, applyOverrides } from './calc-panel.js';
+import { initSimpleCalc } from './simple-calc-ui.js';
 import { initMarket } from './market.js';
 import { initMap, setMapConfig } from './map.js';
 import { initGuide } from './guide.js';
@@ -60,7 +61,7 @@ function asyncSafe(name, fn) {
    • первое действие пользователя (клавиатура, колесо, касание, клик) — остальное достраивается в простое по одному;
    • печать (калькулятор нужен в документе).
    Первый экран (шапка, hero, KPI, графики) не ждёт эти разделы: меньше работы до первой отрисовки и интерактивности. */
-const LAZY_ORDER = ['calc', 'schemes', 'market', 'geo', 'guide', 'launch']; // порядок разделов на странице
+const LAZY_ORDER = ['profit', 'calc', 'schemes', 'market', 'geo', 'guide', 'launch']; // порядок разделов на странице
 
 function lazySections(jobs) {
   const done = new Set();
@@ -150,7 +151,7 @@ async function main() {
 
   if (!hasCoreData()) {
     dataBanner('Данные не загрузились', 'Не удалось прочитать data/config.json и data/rates.json. Если страница открыта двойным кликом, браузер блокирует чтение файлов: откройте офлайн-версию (yulia-offline.html) или запустите «npx serve .». Заставка, справочник-архив и чек-лист продолжают работать.');
-    ['kpis', 'calcpanels', 'cashTable', 'budget', 'stages'].forEach(id => sectionNoData(id, 'расчёты и обзор'));
+    ['kpis', 'calcpanels', 'profitApp', 'cashTable', 'budget', 'stages'].forEach(id => sectionNoData(id, 'расчёты и обзор'));
     safe('Чек-лист', () => initChecklist({ checklist_30d: [] }));
     asyncSafe('Заметки', initNotes);
     startToday(DATA, []);
@@ -173,6 +174,7 @@ async function main() {
 
   // Остальное — по требованию (см. lazySections)
   lazySections({
+    profit: () => safe('Сколько я заработаю', initSimpleCalc),
     calc: () => {
       safe('Калькуляторы', () => initCalc(CFG));
       asyncSafe('Кейс-карточки', () => initPresetCards(CFG));

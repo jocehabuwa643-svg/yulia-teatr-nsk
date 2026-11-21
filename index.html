@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="css/today.css">
 <link rel="stylesheet" href="css/splash.css">
 <link rel="stylesheet" href="css/calc.css">
+<link rel="stylesheet" href="css/simple-calc.css">
 <link rel="stylesheet" href="css/market.css">
 <link rel="stylesheet" href="css/guide.css">
 <link rel="stylesheet" href="css/news.css">
@@ -35,13 +36,15 @@
 @media print{
   @page{margin:14mm}
   :root,:root[data-theme="dark"]{--bg:var(--white);--card:var(--white);--card2:var(--paper);--text:var(--void);--text2:var(--ink);--mutedS:var(--graphite);--muted:var(--graphite);--line:var(--silver);--chip:var(--paper);--seg:var(--hair);--track:var(--hair);--solid:var(--ink);--on-solid:var(--white);--shadow:none;--shadow-lg:none;color-scheme:light}
-  #veil,.skip,.top,#mobnav,.toast,.databanner,#overview,.section:not(#calc),.footin,.hero-cta,#calcnav,.toolrow,.filters,.periods,details,.analytics,.noscript{display:none!important}
+  #veil,.skip,.top,#mobnav,.toast,.databanner,#overview,.section:not(#calc):not(#profit),.footin,.hero-cta,#calcnav,.toolrow,.filters,.periods,details,.analytics,.noscript{display:none!important}
   html,body{background:var(--white)!important;color:var(--void)!important}
   *,*::before,*::after{animation:none!important;transition:none!important}
   .rv,.js-ready .rv{opacity:1!important;transform:none!important}
   .lift::after,.btn::after,.mode::after{display:none}
   .section{padding-top:0}
   .card{box-shadow:none;border:1px solid var(--silver);break-inside:avoid}
+  /* что печатаем, решает кнопка «Печать»: в «Сколько я заработаю» — body[data-print=profit], в «Все расчёты» — по умолчанию */
+  body[data-print="profit"] #calc,body:not([data-print="profit"]) #profit{display:none!important}
   #calcpanels>div[hidden]{display:none!important}
   #calcpanels>div:not([hidden]){display:block!important}
   .calcgrid{grid-template-columns:1fr 1fr}
@@ -180,7 +183,7 @@
   <h1>Детский театр и студия — от первого зала до своей сцены</h1>
   <p class="lead" id="lead">Выезды с декабря 2026, своя база на Богдашке — с февраля 2027.</p>
   <div class="hero-cta">
-    <a class="btn primary" href="#calc"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 7h.01"/><rect width="8" height="8" x="13" y="3" rx="2"/><path d="M17 7h.01"/><rect width="8" height="8" x="3" y="13" rx="2"/><path d="M7 17h.01"/><rect width="8" height="8" x="13" y="13" rx="2"/><path d="M17 17h.01"/></svg>Открыть калькуляторы</a>
+    <a class="btn primary" href="#profit"><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 7h.01"/><rect width="8" height="8" x="13" y="3" rx="2"/><path d="M17 7h.01"/><rect width="8" height="8" x="3" y="13" rx="2"/><path d="M7 17h.01"/><rect width="8" height="8" x="13" y="13" rx="2"/><path d="M17 17h.01"/></svg>Сколько я заработаю</a>
     <a class="btn secondary" href="#launch">План на 30 дней<svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
   </div>
   <p class="datastat" id="dataStatus"></p>
@@ -222,17 +225,29 @@
   </div>
 </section>
 
-<!-- ===== Калькуляторы ===== -->
-<section id="calc" class="section" aria-label="Калькуляторы">
+<!-- ===== Сколько я заработаю: главный простой калькулятор (js/simple-calc-ui.js, css/simple-calc.css) ===== -->
+<section id="profit" class="section" aria-label="Сколько я заработаю">
   <div class="secthead">
     <div>
-      <span class="badge"><span class="dotp"></span>Калькуляторы бизнеса Юлии · живой расчёт</span>
-      <h2>Просчитай любой сценарий за 5 секунд</h2>
+      <span class="badge"><span class="dotp"></span>Приблизительная доходность · живой расчёт</span>
+      <h2>Сколько я заработаю</h2>
     </div>
-    <p class="tiny">Ставки — из data/*.json с источником и датой. Сценарии можно сохранять, сравнивать и печатать.</p>
+    <p class="tiny">Введите несколько цифр — получите чистый доход в месяц и за год. Ориентировочно; ставки — из data/*.json.</p>
   </div>
-  <div id="presetCards" aria-label="Кейсы «Рассчитай за 5 секунд»"></div>
-  <div class="modes" id="calcnav" role="tablist" aria-label="Калькуляторы"></div>
+  <div id="profitApp" aria-label="Калькулятор доходности"></div>
+</section>
+
+<!-- ===== Все расчёты: девять подробных калькуляторов ===== -->
+<section id="calc" class="section" aria-label="Все расчёты">
+  <div class="secthead">
+    <div>
+      <span class="badge"><span class="dotp"></span>Подробные калькуляторы</span>
+      <h2>Все расчёты</h2>
+    </div>
+    <p class="tiny">Выберите расчёт. Сценарии можно сохранять, сравнивать и печатать.</p>
+  </div>
+  <details class="calc-cases"><summary>Готовые кейсы: посчитать за 5 секунд</summary><div id="presetCards" aria-label="Кейсы «Рассчитай за 5 секунд»"></div></details>
+  <div class="modes" id="calcnav" role="tablist" aria-label="Расчёты"></div>
   <div id="calcpanels"></div>
 </section>
 

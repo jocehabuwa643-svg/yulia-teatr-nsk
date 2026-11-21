@@ -2,7 +2,7 @@
 import { $, $$, initUI } from './ui/helpers.js';
 
 const PAGES = [
-  ['overview', 'Обзор'], ['calc', 'Расчёты'], ['market', 'Навигатор'],
+  ['overview', 'Обзор'], ['profit', 'Заработок'], ['calc', 'Расчёты'], ['market', 'Навигатор'],
   ['geo', 'Карта'], ['guide', 'Справочник'], ['launch', 'Чек-лист']
 ];
 /* Раздел «Схемы» не вынесен в меню, но при его просмотре подсвечиваем соседний пункт — «Расчёты» */
@@ -49,7 +49,7 @@ export function initNav() {
   });
 
   /* ---------- scroll-spy ---------- */
-  const spyIds = ['overview', 'calc', 'schemes', 'market', 'geo', 'guide', 'launch']; // в порядке следования на странице
+  const spyIds = ['overview', 'profit', 'calc', 'schemes', 'market', 'geo', 'guide', 'launch']; // в порядке следования на странице
   let busy = false;
   function current() {
     const atBottom = innerHeight + scrollY >= document.documentElement.scrollHeight - 4;

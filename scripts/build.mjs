@@ -74,7 +74,7 @@ async function bundleApp(esbuild) {
    подключается без блокировки отрисовки (media=print → all по загрузке).
    Отложены файлы целиком (DEFER_FILES) и блоки в остальных файлах между CSS-комментариями-маркерами «@defer» и «@end-defer» (см. components.css). */
 // preset-cards.css и premises.css — стили блоков, которые строятся лениво вместе с разделами калькуляторов и карты
-const DEFER_FILES = new Set(['css/calc.css', 'css/market.css', 'css/guide.css', 'css/preset-cards.css', 'css/premises.css']);
+const DEFER_FILES = new Set(['css/calc.css', 'css/simple-calc.css', 'css/market.css', 'css/guide.css', 'css/preset-cards.css', 'css/premises.css']);
 
 /* Склеивает локальные таблицы стилей из index.html (в порядке подключения), делит на критические и отложенные,
    минифицирует. Возвращает { critical, rest, hrefs } */

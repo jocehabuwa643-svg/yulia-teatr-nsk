@@ -102,7 +102,8 @@ export function initMarket(cfg, competitors, market) {
   initDemand(mk.demand || {});
   renderSeason(mk.seasonality_model || { months: [] });
   renderHolidays(mk.school_calendar || { holidays: [] });
-  renderNetwork(mk.network_stats || []);
+  NET_ROWS = mk.network_stats || []; NET_NOTE = mk.network_stats_note || '';
+  renderLeads(NET_ROWS, NET_NOTE);
   icons();
 }
 
@@ -143,8 +144,35 @@ function renderFilters() {
 
 const statusLine = c => STATUS[c.status] ? `<span class="stat st-${esc(c.status)}">${STATUS[c.status]}</span>` : '';
 
-/* Блок цены: подтверждённая / введённая вручную / «нет данных» */
+/* Недельная автопроверка сайта конкурента (scripts/fetch-competitors.mjs): компактная строка под ценой.
+   «На сайте: от 300 ₽ · проверено дата» — только если скрипт однозначно нашёл ценник (confidence:low);
+   при расхождении с ценой карточки — «цена на сайте изменилась». Без цены — «страница доступна / изменилась / недоступна». */
+const OBS_TEXT = { ok: 'страница доступна', changed: 'страница изменилась', unavailable: 'страница недоступна', robots_disallowed: 'сайт не разрешает автопроверку' };
+function observedLine(c) {
+  const o = c.observed, st = c.check_status;
+  if (!st || st === 'skipped' || st === 'skipped_policy') return '';
+  const checked = ruDate(c.checked_at);
+  const op = o && o.price && Number.isFinite(o.price.value) ? o.price : null;
+  if (op) {
+    const link = safeUrl(op.source_url);
+    // расхождение: цены сайта нет ни среди ручной цены, ни среди цен карточки (у карточки может быть несколько тарифов)
+    const m = manualAll()[c.id];
+    const known = [m && m.value, ...(c.prices || []).map(x => x.value)].filter(Number.isFinite);
+    const diff = (known.length > 0 && !known.includes(op.value)) || !!(o.prev_price && o.prev_price.value !== op.value);
+    const was = o.prev_price && o.prev_price.value !== op.value ? ` (раньше ${fmt(o.prev_price.value)} ₽)` : '';
+    return `<p class="obs obs-price"><span>на сайте: <b>${op.qualifier ? esc(op.qualifier) + ' ' : ''}${fmt(op.value)} ₽</b>${was} · проверено ${checked}${link ? ` · <a href="${esc(link)}" target="_blank" rel="noopener noreferrer">страница ${ic('external-link')}</a>` : ''}${st === 'unavailable' ? ' · сейчас недоступна' : ''}</span>${diff ? '<span class="fbadge stale" title="Цена, найденная на сайте, отличается от цены в карточке — проверьте вручную">цена на сайте изменилась</span>' : ''}</p>`;
+  }
+  const t = OBS_TEXT[st];
+  if (!t) return '';
+  const when = st === 'changed' && o && o.changed_at ? ` ${ruDate(o.changed_at)}` : '';
+  return `<p class="obs obs-${esc(st)}">${t}${when} · проверено ${checked}</p>`;
+}
+
+/* Блок цены: подтверждённая / введённая вручную / «нет данных» + строка автопроверки сайта */
 function priceBlock(c) {
+  return priceBase(c) + observedLine(c);
+}
+function priceBase(c) {
   const p = priceOf(c);
   const src = safeUrl(p && p.manual ? p.url : (p && p.source_url) || c.source_url);
   const a = src ? `<a href="${esc(src)}" target="_blank" rel="noopener noreferrer">источник ${ic('external-link')}</a>` : '';
@@ -448,16 +476,150 @@ function renderHolidays(cal) {
   growOnEnter($('holidayCal'));
 }
 
-/* ---------- Образовательная сеть ---------- */
+/* ---------- Потенциальные клиенты (data/leads.json) + официальная сеть (market.json → network_stats) ---------- */
 
-function renderNetwork(rows) {
+const LEADS_KEY = 'market.leads';        // { [placeId]: { school, kindergarten, culture, date } } — ручные правки Юлии
+const LEADS_STALE_DAYS = 10;             // как в scripts/fetch-leads.mjs: старше — «Данные устарели»
+/* Запасной список мест, когда leads.json ещё не получен: только названия для ручного ввода, никаких чисел */
+const LEAD_PLACES_FALLBACK = [
+  { id: 'novosibirsk', name: 'Новосибирск' }, { id: 'berdsk', name: 'Бердск' }, { id: 'iskitim', name: 'Искитим' },
+  { id: 'kochenevo', name: 'Коченёво' }, { id: 'moshkovo', name: 'Мошково' }, { id: 'ordynskoe', name: 'Ордынское' }
+];
+let NET_ROWS = [], NET_NOTE = '';
+const leadsManual = () => { const v = store.get(LEADS_KEY, {}); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; };
+const hasNum = v => Number.isFinite(v) && v >= 0;
+const plural = (n, f) => { const a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 20 ? f[2] : b > 1 && b < 5 ? f[1] : b === 1 ? f[0] : f[2]; };
+
+/* Давность в днях и подпись «сегодня / вчера / N дн. назад» */
+function agoLabel(iso) {
+  const t = Date.parse(iso || '');
+  if (!Number.isFinite(t)) return null;
+  const d = Math.max(0, Math.floor((Date.now() - t) / 864e5));
+  return { days: d, text: d === 0 ? 'сегодня' : d === 1 ? 'вчера' : `${d} ${plural(d, ['день', 'дня', 'дней'])} назад` };
+}
+
+/* Эффективная строка места: ручная правка главнее данных; без чисел — строка «нет данных» */
+function leadRow(p) {
+  const m = leadsManual()[p.id];
+  if (m && hasNum(m.school) && hasNum(m.kindergarten) && hasNum(m.culture)) {
+    return { id: p.id, name: p.name, school: m.school, kindergarten: m.kindergarten, culture: m.culture, potential: m.school + m.kindergarten, manual: true, date: m.date, districts: null, stale: false };
+  }
+  if (hasNum(p.school)) return { ...p, potential: p.school + p.kindergarten, manual: false };
+  return { id: p.id, name: p.name, nodata: true, reason: p.stale_reason || null };
+}
+
+/* Ячейка с числом: подпись для узкого экрана берётся из data-l (таблица раскладывается карточками) */
+const leadCell = (label, v, cls = '') => `<td data-l="${label}" class="ld-c ${cls}">${hasNum(v) ? fmt(v) : '—'}</td>`;
+
+function leadRowHtml(r) {
+  if (r.nodata) return `<tr class="ld-empty"><th scope="row" class="ld-n"><span>${esc(r.name)}</span></th><td class="ld-nd" colspan="4">Нет данных${r.reason ? ` · ${esc(String(r.reason).slice(0, 90))}` : ''}</td></tr>`;
+  const tag = r.manual
+    ? `<span class="stat st-manual">вручную · ${ruDate(r.date)}</span>`
+    : r.stale ? `<span class="fbadge stale" title="${esc(r.stale_reason || 'Не удалось обновить — показаны прежние данные')}">не обновилось</span>` : '';
+  const dist = Array.isArray(r.districts) && r.districts.length
+    ? `<details class="mk-more mk-sub ld-dist"><summary>По районам (${r.districts.length})</summary><ul class="ld-dl"><li class="ld-dh"><span></span><b>школ</b><b>садов</b><b>ДК</b></li>${r.districts.map(d => `<li><span>${esc(String(d.name).replace(/\s*район$/i, ''))}</span><b>${fmt(d.school)}</b><b>${fmt(d.kindergarten)}</b><b>${fmt(d.culture)}</b></li>`).join('')}</ul></details>` : '';
+  return `<tr><th scope="row" class="ld-n"><span>${esc(r.name)}</span>${tag}${dist}</th>${leadCell('Школы', r.school)}${leadCell('Сады', r.kindergarten)}${leadCell('ДК и клубы', r.culture)}${leadCell('Для выезда', r.potential, 'pot')}</tr>`;
+}
+
+/* Форма ручной правки: выбор места и три числа; при смене места значения подставляются из текущей строки */
+function leadFormHtml(rows, open) {
+  const first = rows[0] || {};
+  const v = k => (hasNum(first[k]) ? first[k] : '');
+  return `<details class="mk-more manual-form ld-form"${open ? ' open' : ''}><summary>Скорректировать вручную</summary>
+    <form class="mform" id="leadForm" novalidate>
+      <label class="mf"><span>Населённый пункт</span><select name="place">${rows.map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select></label>
+      <div class="mrow ld-nums">
+        <label class="mf"><span>Школ</span><input name="school" type="number" inputmode="numeric" min="0" step="1" required value="${v('school')}"></label>
+        <label class="mf"><span>Детских садов</span><input name="kindergarten" type="number" inputmode="numeric" min="0" step="1" required value="${v('kindergarten')}"></label>
+        <label class="mf"><span>ДК и клубов</span><input name="culture" type="number" inputmode="numeric" min="0" step="1" required value="${v('culture')}"></label>
+      </div>
+      <p class="tiny">Числа сохраняются только в этом браузере и помечаются «вручную»; автоматические данные не меняются.</p>
+      <p class="ferr" role="alert" hidden></p>
+      <div class="toolrow"><button type="submit" class="btn small primary">Сохранить</button><button type="button" class="btn small secondary" data-lead-clear>Убрать правку места</button></div>
+    </form></details>`;
+}
+
+/* Официальная сеть (market.json → network_stats): проверенные вручную данные по территориям — под спойлером */
+function officialHtml(rows, note) {
+  if (!rows.length) return '';
   const body = rows.map(n => {
     const u = safeUrl(n.url);
     // длинная сводка (>60 знаков) делится по «;» на короткие строки: каждая — отдельный блок, а не абзац из 5–8 строк
     const stat = (String(n.stat).length <= 60 ? [String(n.stat)] : String(n.stat).split(/;\s*/)).filter(Boolean).map(t => `<span class="netline">${esc(t)}</span>`).join('');
     return `<tr role="row"><td role="cell">${esc(n.area)}</td><td role="cell">${n.confidence === 'no_data' ? '<span class="netline muted">Нет данных.</span>' : ''}${stat}</td><td role="cell">${freshBadge({ confidence: n.confidence, fetched_at: COMP.fetched_at, source_url: n.url, source_name: n.area })}${u ? ` <a href="${esc(u)}" target="_blank" rel="noopener noreferrer">источник ${ic('external-link')}</a>` : ''}</td></tr>`;
   }).join('');
-  $('networkStats').innerHTML = rows.length
-    ? `<div class="tablebox"><table class="net" role="table"><thead><tr role="row"><th scope="col" role="columnheader">Территория</th><th scope="col" role="columnheader">Подтверждённый масштаб</th><th scope="col" role="columnheader">Источник</th></tr></thead><tbody role="rowgroup">${body}</tbody></table></div>`
-    : '<div class="nodata"><strong>Нет данных</strong><span>Сеть учреждений не загружена.</span></div>';
+  return `<details class="mk-more wide ld-off"><summary>Официальные данные по территориям</summary>${note ? `<p class="tiny">${esc(note)}</p>` : ''}<div class="tablebox"><table class="net" role="table"><thead><tr role="row"><th scope="col" role="columnheader">Территория</th><th scope="col" role="columnheader">Подтверждённый масштаб</th><th scope="col" role="columnheader">Источник</th></tr></thead><tbody role="rowgroup">${body}</tbody></table></div></details>`;
+}
+
+/* Блок «Потенциальные клиенты»: итоги, давность, бейдж устаревания, охват, таблица по городам, ручная правка */
+function renderLeads(netRows, note) {
+  const box = $('networkStats');
+  const art = box.closest('article');
+  // заголовок и подпись блока задаёт JS: разметка index.html не меняется
+  const h = art && art.querySelector('h3'), sub = art && art.querySelector('.rowline .tiny');
+  if (h) h.textContent = 'Потенциальные клиенты';
+  if (sub) sub.textContent = 'школы, сады и ДК · обновляется раз в неделю';
+
+  const doc = state.DATA && state.DATA.leads;
+  const places = doc && Array.isArray(doc.places) && doc.places.length ? doc.places : LEAD_PLACES_FALLBACK;
+  const rows = places.map(leadRow);
+  const withNums = rows.filter(r => !r.nodata);
+  const off = officialHtml(netRows, note);
+
+  // нет ни автоматических, ни ручных данных — компактная строка и ручной ввод, без больших пустых плиток
+  if (!withNums.length) {
+    const why = doc && doc.stale_reason ? ` ${esc(String(doc.stale_reason).slice(0, 140))}` : '';
+    box.innerHTML = `<p class="pnone ld-none"><b>Нет данных</b> · автообновление раз в неделю ещё не получило данные (источник — OpenStreetMap).${why} Можно ввести числа вручную.</p>${leadFormHtml(rows, false)}${off}`;
+    bindLeads(rows); icons(); return;
+  }
+
+  const sum = k => withNums.reduce((s, r) => s + r[k], 0);
+  const ago = agoLabel(doc && doc.updated_at);
+  const stale = !!doc && (doc.stale === true || (ago ? ago.days > LEADS_STALE_DAYS : true));
+  const src = doc && Array.isArray(doc.sources) && doc.sources[0];
+  const srcUrl = safeUrl(src && src.url);
+  const anyManual = withNums.some(r => r.manual);
+  const partial = !!(doc && Array.isArray(doc.stale_places) && doc.stale_places.length && !doc.stale);
+  const tot = [['school', 'школ'], ['kindergarten', 'детсадов'], ['culture', 'ДК и клубов']].map(([k, l]) => `<div class="ld-t"><b>${fmt(sum(k))}</b><span>${l}</span></div>`).join('');
+  box.innerHTML = `<div class="ld-head">
+      <div class="ld-tot">${tot}<div class="ld-t pot"><b>${fmt(sum('potential'))}</b><span>учреждений для выезда</span></div></div>
+      <p class="ld-meta tiny">${ago ? `Обновлено ${ago.text}` : 'Дата обновления неизвестна'}${stale ? ' · <span class="fbadge stale" title="Автообновление не удалось или данные старше 10 дней — числа могли измениться">Данные устарели</span>' : ''}${partial ? ' · часть мест не обновилась' : ''} · ${srcUrl ? `<a href="${esc(srcUrl)}" target="_blank" rel="noopener noreferrer">OpenStreetMap ${ic('external-link')}</a>` : 'OpenStreetMap'} (ODbL)${anyManual ? ' · есть ручные правки' : ''}</p>
+      <p class="ld-cov tiny">По данным OpenStreetMap, возможны пропуски: реальных учреждений может быть больше. «Для выезда» = школы + детские сады; ДК и клубы — площадки, а не заказчики.</p>
+    </div>
+    <div class="tablebox ld-box"><table class="ld" role="table"><thead><tr><th scope="col">Населённый пункт</th><th scope="col">Школы</th><th scope="col">Сады</th><th scope="col">ДК и клубы</th><th scope="col">Для выезда</th></tr></thead><tbody>${rows.map(leadRowHtml).join('')}</tbody></table></div>
+    ${leadFormHtml(rows, false)}${off}`;
+  bindLeads(rows); icons();
+}
+
+/* Ручная правка: сохранение в localStorage и перерисовка блока; подстановка значений при смене места */
+function bindLeads(rows) {
+  const form = $('leadForm'); if (!form) return;
+  const byId = Object.fromEntries(rows.map(r => [r.id, r]));
+  const err = form.querySelector('.ferr');
+  const fail = msg => { err.textContent = msg; err.hidden = false; };
+  form.place.addEventListener('change', () => {
+    const r = byId[form.place.value] || {};
+    ['school', 'kindergarten', 'culture'].forEach(k => { form[k].value = hasNum(r[k]) ? r[k] : ''; });
+    err.hidden = true;
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const vals = {};
+    for (const k of ['school', 'kindergarten', 'culture']) {
+      const raw = form[k].value, v = Number(raw);
+      if (raw === '' || !Number.isInteger(v) || v < 0 || v > 100000) return fail('Введите целые числа от 0 — по одному для школ, садов и ДК.');
+      vals[k] = v;
+    }
+    const all = leadsManual(); all[form.place.value] = { ...vals, date: today() };
+    if (!store.set(LEADS_KEY, all)) return fail('Браузер не дал сохранить данные (приватный режим?).');
+    toast('Числа сохранены в этом браузере');
+    renderLeads(NET_ROWS, NET_NOTE);
+  });
+  form.querySelector('[data-lead-clear]').addEventListener('click', () => {
+    const all = leadsManual(), id = form.place.value;
+    if (!all[id]) return fail('Для этого места ручной правки нет.');
+    delete all[id]; store.set(LEADS_KEY, all);
+    toast('Ручная правка убрана');
+    renderLeads(NET_ROWS, NET_NOTE);
+  });
 }

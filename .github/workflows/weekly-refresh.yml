@@ -1,0 +1,79 @@
+name: Weekly refresh
+
+# Раз в неделю: «потенциальные клиенты» (школы, сады, ДК по OpenStreetMap) и проверка публичных страниц конкурентов.
+# Ежедневный data-refresh.yml (курсы ЦБ, новости) не затрагивается.
+on:
+  schedule:
+    - cron: '30 2 * * 1' # понедельник 02:30 UTC (09:30 НСК)
+  workflow_dispatch:
+
+# contents: write — коммит данных; actions: write — запуск деплоя (пуш от GITHUB_TOKEN сам workflow не запускает)
+permissions:
+  contents: write
+  actions: write
+
+# Та же группа, что у ежедневного обновления: два прогона не пушат в ветку одновременно
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Overpass (OpenStreetMap) нагружен: скрипт сам ждёт слот и пробует зеркало. Сбой места не затирает прежние данные —
+      # ставится stale и причина; сбой всего шага не валит джоб (continue-on-error)
+      - name: Потенциальные клиенты (OpenStreetMap)
+        continue-on-error: true
+        timeout-minutes: 40
+        run: node scripts/fetch-leads.mjs
+
+      # robots.txt проверяется перед каждым сайтом; 2ГИС / VK / Яндекс не запрашиваются; пауза 2,5 с между запросами к хосту
+      - name: Проверка сайтов конкурентов
+        continue-on-error: true
+        timeout-minutes: 10
+        run: node scripts/fetch-competitors.mjs
+
+      # Валидность JSON и ::warning о просроченных недельных данных
+      - name: Проверка данных
+        run: node scripts/touch-meta.mjs
+
+      - name: Проверить, изменились ли данные
+        id: diff
+        run: |
+          if git diff --quiet -- data/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Данные не изменились — коммит не нужен"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Метка времени и тесты — только при реальных изменениях (страховка от битых данных)
+      - name: Метка времени и тесты
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          node scripts/touch-meta.mjs --stamp
+          node --test
+
+      - name: Коммит и пуш
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "data-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/
+          git commit -m "data: недельное обновление (клиенты, конкуренты) $(date -u +%F)"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push
+
+      # Пуш от GITHUB_TOKEN не запускает deploy.yml — запускаем явно, чтобы сайт получил свежие данные
+      - name: Пересобрать сайт
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref "${GITHUB_REF_NAME}"

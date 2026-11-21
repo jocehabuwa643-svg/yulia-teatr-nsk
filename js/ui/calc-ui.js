@@ -441,7 +441,23 @@ R.grants = (input, cfg, r) =>
   tip(cfg, 'Совет помощника', r.conclusion) +
   (r.warning ? tip(cfg, 'Не закладывать в аренду', r.warning, 'warn') : '');
 
+/* Один главный результат: сверху остаются крупная цифра, ключевые показатели и «Совет помощника»;
+   графики, расходы, плашки и остальные советы уходят в свёрнутое «Подробнее» (раскрытое состояние хранит calc-panel) */
+function foldDetails(html) {
+  const box = document.createElement('template');
+  box.innerHTML = html;
+  const kids = [...box.content.children];
+  if (kids.length <= 3) return html;
+  const keep = new Set(kids.slice(0, 2));
+  const tip = kids.find(k => k.classList.contains('advice') && /Совет/.test((k.querySelector('strong') || {}).textContent || ''));
+  if (tip) keep.add(tip);
+  const rest = kids.filter(k => !keep.has(k));
+  if (!rest.length) return html;
+  return kids.filter(k => keep.has(k)).map(k => k.outerHTML).join('') +
+    `<details class="res-more"><summary>График, расходы и источники</summary>${rest.map(k => k.outerHTML).join('')}</details>`;
+}
+
 export function renderResult(mod, input, cfg, result, extra) {
   const fn = R[mod.meta.id] || (() => '<p class="hint">Рендер не определён</p>');
-  return fn(input, cfg, result, extra);
+  return foldDetails(fn(input, cfg, result, extra));
 }

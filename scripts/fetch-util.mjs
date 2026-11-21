@@ -51,8 +51,8 @@ export function readJson(file) {
 }
 
 /* Пишет JSON только если содержимое изменилось. Возвращает true, если файл перезаписан */
-export function writeJsonIfChanged(file, obj) {
-  const next = JSON.stringify(obj, null, 2) + '\n';
+export function writeJsonIfChanged(file, obj, indent = 2) {
+  const next = JSON.stringify(obj, null, indent) + '\n';
   const prev = existsSync(file) ? readFileSync(file, 'utf-8') : null;
   if (prev === next) return false;
   writeFileSync(file, next);
@@ -74,4 +74,64 @@ export function clearStale(block) {
   delete block.stale_since;
   delete block.stale_reason;
   return block;
+}
+
+/* ---------- Расширения для недельных скриптов (fetch-leads, fetch-competitors) ---------- */
+
+/* Единый User-Agent проекта для недельных проверок: называет проект и характер запросов, без личных данных */
+export const PROJECT_UA = 'yulia-teatr-nsk-data-bot/1.0 (open-data refresh; weekly, low volume)';
+
+/* Пауза (мс) — публичная версия внутреннего sleep */
+export const wait = sleep;
+
+/* Разбор robots.txt для группы User-agent: * : возвращает true, если путь разрешён.
+   Самое длинное правило побеждает, при равенстве выигрывает Allow; пустого правила нет → разрешено. */
+export function robotsAllowsPath(robotsTxt, pathWithQuery) {
+  /* экранирование спецсимволов RegExp посимвольно (без литералов с обратной косой) */
+  const BS = String.fromCharCode(92);
+  const esc = s => [...s].map(ch => ('.+?^${}()|[]'.includes(ch) || ch === BS) ? BS + ch : ch).join('');
+  const lines = String(robotsTxt || '').split(/\r?\n/).map(l => l.replace(/#.*/, '').trim());
+  const rules = [];
+  let inStar = false, lastWasAgent = false;
+  for (const line of lines) {
+    const m = line.match(/^([a-z-]+)\s*:\s*(.*)$/i);
+    if (!m) continue;
+    const field = m[1].toLowerCase(), value = m[2].trim();
+    if (field === 'user-agent') {
+      if (!lastWasAgent) inStar = false;
+      if (value === '*') inStar = true;
+      lastWasAgent = true;
+      continue;
+    }
+    lastWasAgent = false;
+    if (!inStar) continue;
+    if ((field === 'allow' || field === 'disallow') && value) rules.push({ allow: field === 'allow', pattern: value });
+  }
+  let best = null;
+  for (const r of rules) {
+    // «$» в конце правила — привязка к концу пути
+    const anchored = r.pattern.endsWith('$');
+    const body = anchored ? r.pattern.slice(0, -1) : r.pattern;
+    const re = new RegExp('^' + body.split('*').map(esc).join('.*') + (anchored ? '$' : ''));
+    if (!re.test(pathWithQuery)) continue;
+    if (!best || r.pattern.length > best.pattern.length || (r.pattern.length === best.pattern.length && r.allow)) best = r;
+  }
+  return best ? best.allow : true;
+}
+
+/* Возраст ISO-даты в днях относительно now (мс); Infinity, если даты нет или она битая */
+export function ageInDays(iso, now = Date.now()) {
+  const t = Date.parse(iso || '');
+  return Number.isFinite(t) ? (now - t) / 864e5 : Infinity;
+}
+
+/* Отступ существующего JSON-файла (число пробелов или таб): запись скриптом не переформатирует файл и не раздувает diff.
+   Нет файла или отступ не определён — 2 пробела, как у остальных data/*.json */
+export function detectIndent(file) {
+  if (!existsSync(file)) return 2;
+  const head = readFileSync(file, 'utf-8').slice(0, 400).split(/\r?\n/);
+  const line = head.find((l, i) => i > 0 && /^[ \t]+"/.test(l));
+  if (!line) return 2;
+  const ws = line.match(/^[ \t]+/)[0];
+  return ws.includes('\t') ? '\t' : ws.length;
 }

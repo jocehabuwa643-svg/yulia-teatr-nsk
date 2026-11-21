@@ -145,7 +145,7 @@ function syncGlobalBar() {
 export function initCalc(cfg) {
   const nav = $('calcnav');
   const panels = $('calcpanels');
-  nav.innerHTML = registry.map((m, i) => `<button type="button" id="tab-${m.meta.id}" class="mode ${i ? '' : 'on'}" role="tab" aria-controls="calc-${m.meta.id}" aria-selected="${i === 0}" aria-pressed="${i === 0}" tabindex="${i ? -1 : 0}">${ic(m.meta.icon)}${m.meta.title}<small>${m.meta.when}</small><span class="mode-go" aria-hidden="true">${ic('chevron-right')}</span></button>`).join('');
+  nav.innerHTML = registry.map((m, i) => `<button type="button" id="tab-${m.meta.id}" class="mode ${i ? '' : 'on'}" role="tab" aria-controls="calc-${m.meta.id}" aria-selected="${i === 0}" aria-pressed="${i === 0}" tabindex="${i ? -1 : 0}" title="${esc(m.meta.title)}">${ic(m.meta.icon)}<span class="mode-t">${esc(m.meta.short || m.meta.title)}</span></button>`).join('');
   nav.insertAdjacentHTML('beforebegin', `<div class="toolrow calcglobal" id="calcglobal">
       <button type="button" class="btn small secondary" data-gact="assume">${ic('sliders-horizontal')}<span>Допущения проекта</span></button>
       <button type="button" class="btn small secondary" id="calcResetManual" data-gact="resetmanual" hidden>${ic('rotate-ccw')}<span>Сбросить ручной ввод</span></button>
@@ -171,8 +171,8 @@ export function initCalc(cfg) {
     const fields = fieldsOf(m);
     return `<div id="calc-${m.meta.id}" class="calcgrid" role="tabpanel" aria-labelledby="tab-${m.meta.id}" ${i ? 'hidden' : ''}>
       <article class="card rv calc-in">
-        <div class="calcdesc"><span><b>Что считает:</b> ${m.meta.what.replace(/^Считает:\s*/, '')}</span><span><b>Когда:</b> ${m.meta.when.replace(/^Когда:\s*/, '')}</span></div>
-        ${m.meta.more ? `<details class="calcmore"><summary>Подробнее о расчёте</summary><p class="tiny">${m.meta.more}</p></details>` : ''}
+        <h3 class="calc-title">${esc(m.meta.title)}</h3>
+        <details class="calcmore"><summary>О расчёте: что считает и когда нужен</summary><div class="calcdesc"><span><b>Что считает:</b> ${m.meta.what.replace(/^Считает:\s*/, '')}</span><span><b>Когда:</b> ${m.meta.when.replace(/^Когда:\s*/, '')}</span></div>${m.meta.more ? `<p class="tiny">${m.meta.more}</p>` : ''}</details>
         ${presetChips(m, cfg)}
         <div class="controls">${fields.map(fieldHTML).join('')}</div>
         <div class="toolrow">
@@ -271,6 +271,11 @@ export function initCalc(cfg) {
   });
   syncGlobalBar();
   registry.forEach(m => { renderScenList(m.meta.id); rerender(m.meta.id); });
+
+  // печать: «Подробнее» результата раскрывается (график и расходы нужны в документе), после печати возвращается как было
+  let printOpened = [];
+  addEventListener('beforeprint', () => { printOpened = $$('details.res-more:not([open])'); printOpened.forEach(d => { d.open = true; }); });
+  addEventListener('afterprint', () => { printOpened.forEach(d => { d.open = false; }); printOpened = []; });
 }
 
 /* Пересчёт и перерисовка одного калькулятора */
@@ -283,9 +288,12 @@ export function rerender(id) {
   store.set('calc.in.' + id, inputs);
   const el = $('res-' + id);
   let result;
+  const wasOpen = !!el.querySelector('details.res-more[open]');      // раскрытое «Подробнее» остаётся раскрытым после пересчёта
   try {
     result = runCalc(mod, inputs, cfg, calcCtx());
     el.innerHTML = renderResult(mod, inputs, cfg, result, state.DATA);
+    const more = el.querySelector('details.res-more');
+    if (more && wasOpen) more.open = true;
   } catch (e) {
     console.error(`[калькулятор ${id}]`, e);
     el.innerHTML = `<div class="nodata"><strong>Не удалось построить результат</strong><span>${esc(e && e.message || e)}. Нажмите «Сбросить» или проверьте значения полей.</span></div>`;

@@ -2,10 +2,10 @@
    Никаких расчётов: только доставка данных и флаги свежести. */
 import { store, toast } from './ui/helpers.js';
 
-const FILES = ['rates', 'config', 'regions', 'competitors', 'market', 'meta', 'guide', 'seasonality', 'news'];
-/* Необязательные файлы (дайджест «Сегодня», новости): их отсутствие не повод для тоста «данные не загрузились» —
+const FILES = ['rates', 'config', 'regions', 'competitors', 'market', 'meta', 'guide', 'seasonality', 'news', 'leads'];
+/* Необязательные файлы (дайджест «Сегодня», новости, «потенциальные клиенты» leads.json): их отсутствие не повод для тоста «данные не загрузились» —
    блоки, которым они нужны, просто не показываются. Ошибка всё равно попадает в health.optional для отладки */
-const OPTIONAL = new Set(['seasonality', 'news']);
+const OPTIONAL = new Set(['seasonality', 'news', 'leads']);
 const DATA_VERSION = 2;
 const cacheKey = n => `data.v${DATA_VERSION}.${n}`;
 
@@ -28,7 +28,7 @@ async function fetchOne(name) {
   }
 }
 
-/* Возвращает { rates, config, regions, competitors, market, meta, guide, seasonality, news, health } */
+/* Возвращает { rates, config, regions, competitors, market, meta, guide, seasonality, news, leads, health } */
 export async function loadAll() {
   const entries = await Promise.all(FILES.map(fetchOne));
   const out = { health: { errors: [], cached: [], optional: [] } };
