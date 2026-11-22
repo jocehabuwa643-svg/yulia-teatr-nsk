@@ -18,7 +18,7 @@ import { fmt, ic, icons } from './ui/helpers.js';
 import { state } from './state.js';
 import { initPremises } from './premises.js';
 import { mountClientMap, showPlace, refreshClientMap, legendHTML } from './client-map.js';
-import { leadTotals, pickPlace, placeStat, districtRows, priceRows, confLabel, makeBackGuard } from './clients-model.js';
+import { leadTotals, pickPlace, placeStat, districtRows, priceRows, confLabel, makeBackGuard, leadsMetaLine, placeStaleNote } from './clients-model.js';
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ruDate = d => { const t = new Date(d); return Number.isFinite(t.getTime()) ? t.toLocaleDateString('ru-RU') : '—'; };
@@ -173,11 +173,11 @@ function showTab(id) {
 /* ---------- Данные вкладок ---------- */
 function fillMeta() {
   const leads = leadsNow();
-  const t = leadTotals(leads);
   const src = (leads && leads.sources) || [];
   const names = (Array.isArray(src) ? src : Object.values(src)).map(s => s && (s.name || s.id)).filter(Boolean).join(', ');
+  // вместо голого «данные устарели» — что именно не обновилось и от какой даты показаны данные
   dlg.querySelector('#clMeta').textContent = leads
-    ? `${names || 'OpenStreetMap'} · обновлено ${t.updated ? ruDate(t.updated) : '—'}${t.stale ? ' · данные устарели' : ''} · возможны пропуски`
+    ? leadsMetaLine(leads, names)
     : (leadsReq ? 'Загружаем данные…' : 'Данные о клиентах не загрузились — проверьте интернет и откройте раздел ещё раз.');
 }
 
@@ -206,12 +206,13 @@ function renderPlace(id) {
   if (!p) return;
   placeId = p.id;
   const s = placeStat(p);
+  const stale = placeStaleNote(p);
   dlg.querySelector('#clPlaceStat').innerHTML = `
     <span><b>${fmt(s.school)}</b><small>школ</small></span>
     <span><b>${fmt(s.kindergarten)}</b><small>детских садов</small></span>
     <span><b>${fmt(s.culture)}</b><small>ДК и клубов</small></span>
     <span class="cl-stat-sum"><b>${fmt(s.visit)}</b><small>потенциал выезда</small></span>
-    ${p.stale ? '<span class="cd-badge stale">данные места устарели</span>' : ''}`;
+    ${stale ? `<span class="cd-badge stale" title="${esc(stale.text)}">${esc(stale.badge)}</span><small class="cl-stale-note">${esc(stale.text)}</small>` : ''}`;
   dlg.querySelector('#clLegend').innerHTML = legendHTML(p);
   const ds = districtRows(p);
   dlg.querySelector('#clDistricts').innerHTML = ds.length ? `
@@ -258,6 +259,26 @@ function lockScroll(on) {
   }
 }
 
+/* Восстановление прокрутки браузером. При scrollRestoration='auto' Chrome на popstate сам выставляет прокрутку,
+   запомненную в записи истории, — в тот момент фон ещё заблокирован, и позиция главной «уезжала» (1662 → 1339).
+   Пока стоит наша запись — 'manual'; после снятия записи сами возвращаем scrollY0 и отдаём прежний режим. */
+const SCROLL_MODE0 = (() => { try { return typeof history !== 'undefined' && 'scrollRestoration' in history ? history.scrollRestoration : null; } catch (e) { return null; } })();
+let scrollHeld = false;
+function holdScrollRestore() {
+  if (SCROLL_MODE0 === null) return;
+  scrollHeld = true;
+  try { history.scrollRestoration = 'manual'; } catch (e) { /* не критично */ }
+}
+function releaseScrollRestore() {
+  if (!scrollHeld) return;
+  scrollHeld = false;
+  requestAnimationFrame(() => {
+    if (scrollHeld || (dlg && dlg.open)) return;           // подраздел успели открыть снова — режим не трогаем
+    if (Math.abs(window.scrollY - scrollY0) > 1) scrollTo({ top: scrollY0, left: 0, behavior: 'instant' });
+    try { history.scrollRestoration = SCROLL_MODE0; } catch (e) { /* не критично */ }
+  });
+}
+
 /* Ожидание снятия прошлой записи истории (быстрое повторное открытие): иначе запоздавший popstate
    закрыл бы только что открытый подраздел. Не дольше 500 мс. */
 function waitHistory() {
@@ -282,6 +303,7 @@ export async function openClients(fromEl) {
     if (!leadsNow()) loadLeads().then(() => { if (dlg.open) { fillMeta(); fillMapTab(); showTab(tab); } buildEntryCard(); });
     fillMeta(); fillMapTab(); fillPricesTab();
     lockScroll(true);
+    holdScrollRestore();
     if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
     if (guard) guard.push();
     showTab('map');
@@ -294,8 +316,10 @@ export function closeClients() { if (dlg && dlg.open) dlg.close(); }
 
 /* Любое закрытие диалога сходится сюда: снять запись истории (только если она наша), вернуть прокрутку и фокус */
 function onClosed() {
-  if (guard) guard.release();
+  const backPending = guard ? guard.release() : false;
   lockScroll(false);
+  // запись уже снята (или её не было) — режим прокрутки возвращаем сразу; иначе — после popstate от нашего back()
+  if (!backPending) releaseScrollRestore();
   if (lastFocus && document.contains(lastFocus)) lastFocus.focus({ preventScroll: true });
 }
 
@@ -304,6 +328,8 @@ if (typeof window !== 'undefined' && guard) {
   addEventListener('popstate', e => {
     if (guard.onPop(e.state) && dlg && dlg.open) dlg.close();
     else guard.scrub();   // «вперёд» в старую запись после закрытия — снимаем с неё нашу метку
+    // наша запись снята (системным «назад» или нашим back()) — вернуть позицию главной и режим прокрутки
+    if (!(dlg && dlg.open)) releaseScrollRestore();
   });
   // после перезагрузки или восстановления вкладки в истории может остаться наша старая метка
   guard.scrub();

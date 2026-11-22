@@ -208,3 +208,56 @@ export function makeBackGuard(hist, opts = {}) {
     }
   };
 }
+
+/* ---------- Пояснение «устарело» простыми словами ---------- */
+
+/* Дата и время по Новосибирску: «21.11.2026, 10:22»; плохая дата — null */
+export function nskDateTime(iso) {
+  const t = new Date(iso);
+  if (!iso || !Number.isFinite(t.getTime())) return null;
+  try {
+    return t.toLocaleString('ru-RU', { timeZone: 'Asia/Novosibirsk', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    // среда без базы часовых поясов — сдвиг UTC+7 вручную (в Новосибирске нет перехода на летнее время)
+    const n = new Date(t.getTime() + 7 * 3600e3), p = v => String(v).padStart(2, '0');
+    return `${p(n.getUTCDate())}.${p(n.getUTCMonth() + 1)}.${n.getUTCFullYear()}, ${p(n.getUTCHours())}:${p(n.getUTCMinutes())}`;
+  }
+}
+
+/* Причина сбоя для человека: 5xx/таймаут — «сервер карт не ответил», иначе — «ошибка загрузки» */
+export function staleReasonText(reason) {
+  if (!reason) return 'сервер карт не ответил';
+  return /\b5\d\d\b|timeout|таймаут|abort/i.test(String(reason)) ? 'сервер карт не ответил' : 'ошибка загрузки';
+}
+
+/* Подпись для места со stale:true: попытка обновления не удалась, показаны прежние данные от fetched_at.
+   Без stale — null */
+export function placeStaleNote(p) {
+  if (!p || !p.stale) return null;
+  const tried = nskDateTime(p.stale_since);
+  const from = nskDateTime(p.fetched_at);
+  return {
+    badge: 'последнее обновление не удалось',
+    text: `Последнее обновление${tried ? ` (${tried})` : ''} не удалось — ${staleReasonText(p.stale_reason)}. ${from ? `Показаны данные от ${from}` : 'Показаны прежние данные'}; следующая попытка — при еженедельном обновлении.`
+  };
+}
+
+/* Строка шапки подраздела: когда обновлялось и какие места не обновились при последней попытке.
+   names — подпись источников; пустой leads — null (решает вызывающий) */
+export function leadsMetaLine(leads, names) {
+  if (!leads) return null;
+  const places = Array.isArray(leads.places) ? leads.places : [];
+  const failed = places.filter(p => p && p.stale);
+  const when = nskDateTime(leads.updated_at);
+  const src = names || 'OpenStreetMap';
+  if (!failed.length && !leads.stale) return `${src} · обновлено ${when || '—'} · возможны пропуски`;
+  if (!failed.length) return `${src} · последнее обновление не удалось — показаны данные от ${when || '—'} · возможны пропуски`;
+  // самая ранняя дата прежних данных среди не обновившихся мест (сортировка по времени, не по строке)
+  const ts = failed.map(p => new Date(p.fetched_at).getTime()).filter(Number.isFinite).sort((a, b) => a - b);
+  const oldest = ts.length ? nskDateTime(new Date(ts[0]).toISOString()) : null;
+  const who = failed.map(p => p.name || p.id).join(', ');
+  const ok = places.length - failed.length;
+  // коротко для шапки (на 360 px — не больше трёх строк); причина сбоя — под выбранным местом
+  return `${src} · ${when || '—'}: ${ok ? `обновлено ${ok} из ${places.length} мест` : 'не обновилось ни одно место'}; ` +
+    `${who} — ${oldest ? `показаны данные от ${oldest}` : 'показаны прежние данные'}`;
+}

@@ -111,7 +111,7 @@
 
   /* ---------- Баннер «приложение не стартовало» ---------- */
   function showBootNotice() {
-    if ($('bootNotice')) return;
+    if ($('bootNotice') || window.__yuliaModuleOk) return; // приложение уже работает — баннер ложный
     var isFile = location.protocol === 'file:';
     var box = doc.createElement('div');
     box.id = 'bootNotice';
@@ -173,14 +173,86 @@
       else { doc.body.style.overflow = 'hidden'; setBackgroundInert(true); replayLogo(); }
     }
 
-    // Сторожевой таймер: основное приложение (ES-модули) должно подать признак жизни
-    setTimeout(function () { if (!window.__yuliaModuleOk) showBootNotice(); }, 3500);
+    startWatchdog();
   }
 
-  // Ошибка загрузки/парсинга модуля — не ждём таймера, если уже ясно, что приложение не стартует
+  /* ---------- Сторожевой таймер запуска приложения ----------
+     Раньше баннер показывался через фиксированные 3,5 с. На телефоне с медленной сетью бандл (~0,5 МБ)
+     грузится 8–12 с, поэтому баннер «не удалось загрузить» появлялся при КАЖДОМ запуске и так и висел.
+     Теперь сбой определяется по фактам:
+     1) у <script> приложения сработал onerror — файл не загрузился (ловится сразу);
+     2) скрипт загрузился, но приложение не подало признак жизни за 2 с — ошибка исполнения/старый браузер;
+     3) запасной вариант: после window.load прошло 15 с, признака жизни нет и скрипт приложения не «висит» в загрузке
+        (пока скрипт ещё качается — ждём дальше, но не дольше 90 с с начала).
+     Как только приложение стартовало, уже показанный баннер убирается (hideBootNotice). */
+  var APP_RE = /(?:js|assets)\/app\.js/;
+  var appScriptState = 'none';   // none | pending | loaded | failed
+  var t0 = Date.now();
+
+  function isAppScript(t) { return !!(t && t.tagName === 'SCRIPT' && APP_RE.test(t.src || '')); }
+  function appStarted() { return !!window.__yuliaModuleOk; }
+
+  function hideBootNotice() {
+    var box = $('bootNotice');
+    if (box && box.parentNode) box.parentNode.removeChild(box);
+  }
+  window.__yuliaHideBootNotice = hideBootNotice;
+
+  // Скрипт приложения в документе (статический type=module в режиме разработки или вставленный загрузчиком сборки)
+  function findAppScript() {
+    var list = doc.getElementsByTagName('script');
+    for (var i = 0; i < list.length; i++) if (isAppScript(list[i])) return list[i];
+    return null;
+  }
+
+  function check() {
+    if (appStarted()) { hideBootNotice(); return; }
+    if (appScriptState === 'failed') { showBootNotice(); return; }
+    // Скрипт ещё качается (или загрузчик его пока не вставил) — медленная сеть, это не сбой
+    var waitedTooLong = Date.now() - t0 > 90000;
+    if (!waitedTooLong && (appScriptState === 'pending' || appScriptState === 'none')) { setTimeout(check, 5000); return; }
+    showBootNotice();
+  }
+
+  function startWatchdog() {
+    // Открыто как файл: модули браузер блокирует сразу, сеть ни при чём — короткое ожидание оправдано
+    if (location.protocol === 'file:') {
+      setTimeout(function () { if (!appStarted()) showBootNotice(); }, 3500);
+      return;
+    }
+    var s = findAppScript();
+    if (s && appScriptState === 'none') appScriptState = 'pending';
+    // Отсчёт запасного таймера — от полной загрузки страницы, а не от её начала
+    var arm = function () { setTimeout(function () {
+      var el = findAppScript();
+      if (el && appScriptState === 'none') appScriptState = 'pending';
+      check();
+    }, 15000); };
+    if (doc.readyState === 'complete') arm(); else window.addEventListener('load', arm);
+  }
+
+  // Загрузчик сборки вставляет <script> позже — отмечаем момент, когда он появился в документе
+  try {
+    new MutationObserver(function (muts, obs) {
+      if (appStarted()) { obs.disconnect(); return; }
+      for (var i = 0; i < muts.length; i++) {
+        var added = muts[i].addedNodes;
+        for (var j = 0; j < added.length; j++) if (isAppScript(added[j]) && appScriptState === 'none') { appScriptState = 'pending'; obs.disconnect(); return; }
+      }
+    }).observe(root, { childList: true, subtree: true });
+  } catch (e) { /* без MutationObserver сработает запасной таймер */ }
+
+  // Ошибка загрузки скрипта приложения — не ждём таймера: уже ясно, что приложение не стартует
   window.addEventListener('error', function (e) {
-    var t = e && e.target;
-    if (t && t.tagName === 'SCRIPT' && /(?:js|assets)\/app\.js/.test(t.src || '')) showBootNotice();
+    if (isAppScript(e && e.target)) { appScriptState = 'failed'; showBootNotice(); }
+  }, true);
+
+  // Скрипт загрузился: даём ему 2 с на запуск; если признака жизни нет — ошибка исполнения.
+  // Слушаем на document, а не на window: по спецификации событие load элемента до window не доходит даже в фазе перехвата
+  doc.addEventListener('load', function (e) {
+    if (!isAppScript(e && e.target)) return;
+    appScriptState = 'loaded';
+    setTimeout(function () { if (appStarted()) hideBootNotice(); else showBootNotice(); }, 2000);
   }, true);
 
   // Модули заметок, кейс-карточек, помещений и «Обновить сейчас» входят в бандл приложения (js/app.js) и стартуют

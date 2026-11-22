@@ -7,7 +7,7 @@
 import { fmt, ic, icons, isStale } from './ui/helpers.js';
 import { state } from './state.js';
 import { travelCalc } from './calculators/travel.js';
-import { KINDS, groupPrices, priceText, ruDate as isoRu, safeUrl, ticketPriceOf as tpOf, observedCompare, revenueEstimate as revEst } from './competitor-prices.js';
+import { KINDS, confirmedGroups, planAssumptionGroups, priceText, ruDate as isoRu, safeUrl, ticketPriceOf as tpOf, observedCompare, revenueEstimate as revEst } from './competitor-prices.js';
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ruDate = d => isoRu(d) || '—';
@@ -36,18 +36,25 @@ function whatHTML(c) {
 }
 
 /* Цены по типам: каждая группа — свой подзаголовок; внутри — подпись, цена с «от», дата, источник, надёжность */
+/* Подпись даты цены: ручной ввод — «введено», вторичный источник — «срез», официальный — «проверено» */
+const dateWord = p => (p.manual ? 'введено' : p.confidence === 'medium' ? 'срез' : 'проверено');
+
 function pricesHTML(c, manual) {
-  const groups = groupPrices(c, manual);
+  // в группах — только подтверждённые цены и ручной ввод; допущения бизнес-плана идут отдельной сноской ниже
+  const groups = confirmedGroups(c, manual);
   const body = groups.length ? groups.map(g => `<div class="cd-kind"><h5>${esc(g.label)}<small>${esc(g.per)}</small></h5>${g.items.map(p => {
-    const stale = !p.manual && p.confidence !== 'model' && p.fetched_at && isStale(p.fetched_at, THRESHOLD().prices);
-    return `<div class="cd-row"><span class="cd-k">${esc(p.label || 'Тариф')}</span><span class="cd-v"><b>${esc(priceText(p))}</b><small>${p.fetched_at ? `${p.manual ? 'введено' : 'проверено'} ${ruDate(p.fetched_at)}` : 'дата не указана'}${p.valid_from ? ` · действует с ${ruDate(p.valid_from)}` : ''}${p.source_url ? ' · ' + link(p.source_url) : ''} ${badge(p.manual ? 'manual' : p.confidence || 'medium')}${stale ? ' <span class="cd-badge stale">устарело</span>' : ''}</small></span></div>`;
+    const stale = !p.manual && p.fetched_at && isStale(p.fetched_at, THRESHOLD().prices);
+    return `<div class="cd-row"><span class="cd-k">${esc(p.label || 'Тариф')}</span><span class="cd-v"><b>${esc(priceText(p))}</b><small>${p.fetched_at ? `${dateWord(p)} ${ruDate(p.fetched_at)}` : 'дата не указана'}${p.valid_from ? ` · действует с ${ruDate(p.valid_from)}` : ''}${p.source_url ? ' · ' + link(p.source_url) : ''} ${badge(p.manual ? 'manual' : p.confidence || 'medium')}${stale ? ' <span class="cd-badge stale">устарело</span>' : ''}</small></span></div>`;
   }).join('')}</div>`).join('')
     : `<div class="cd-row"><span class="cd-k">Цена</span><span class="cd-v"><b class="cd-none">нет данных</b><small>«нет данных» не значит «бесплатно» — запросите КП или введите цену в карточке</small></span></div>`;
   const note = c.price_note ? `<p class="cd-note">${esc(c.price_note)}</p>` : '';
+  // допущения бизнес-плана: обычным текстом, без «проверено», с явной пометкой «не цена студии»
+  const plan = planAssumptionGroups(c);
+  const planHTML = plan.length ? `<div class="cd-plan"><h5>Допущение бизнес-плана — не цена студии</h5>${plan.map(g => g.items.map(p => `<div class="cd-row"><span class="cd-k">${esc(p.label || g.label)}</span><span class="cd-v"><span class="cd-plan-v">${esc(priceText(p))}</span><small>рабочая цифра проекта; на сайте студии не сверялась ${badge('model')}</small></span></div>`).join('')).join('')}</div>` : '';
   // значения прежнего исследования, не подтверждённые при сверке — показываем честно, но в сравнение не берём
   const un = (Array.isArray(c.unconfirmed_prices) ? c.unconfirmed_prices : []).filter(p => Number.isFinite(p.value));
   const unHTML = un.length ? `<details class="cd-more"><summary>Не подтверждено (${un.length}) — в сравнение не входит</summary>${un.map(p => `<div class="cd-row"><span class="cd-k">${esc(p.label || 'Тариф')}</span><span class="cd-v"><b class="cd-strike">${esc(priceText(p))}</b><small>${esc(p.reason || 'не подтверждено')}</small></span></div>`).join('')}</details>` : '';
-  return `<section class="cd-block"><h4>Цены по типам</h4><p class="cd-note cd-note-top">Сравнивайте только цены одного типа: билет в зал, выезд за ребёнка, пакет праздника, час аренды и абонемент — разные вещи.</p>${body}${note}${unHTML}</section>`;
+  return `<section class="cd-block"><h4>Цены по типам</h4><p class="cd-note cd-note-top">Сравнивайте только цены одного типа: билет в зал, выезд за ребёнка, пакет праздника, час аренды и абонемент — разные вещи.</p>${body}${planHTML}${note}${unHTML}</section>`;
 }
 
 /* Автопроверка сайта (еженедельно): статус страницы и найденная цена с типом */
@@ -69,7 +76,7 @@ function revenueHTML(c, manual) {
   const p = rev.price;
   return `<section class="cd-block"><h4>Ваша касса по цене конкурента</h4>
     <p class="cd-warn">${ic('circle-help')}<span>Оценка по <b>вашей</b> модели выезда, а не выручка конкурента: его расходы и число зрителей неизвестны.</span></p>
-    <p class="cd-note cd-note-top">Цена: <b>${esc(priceText(p, false))}</b> (${esc(KINDS[p.kind] ? KINDS[p.kind].short : 'за человека')}, ${esc(p.source)}${p.date ? ', ' + ruDate(p.date) : ''}).${rev.fromPrice ? ' Это цена «от» — минимальная, реальная может быть выше.' : ''}</p>
+    <p class="cd-note cd-note-top">Цена: <b>${esc(priceText(p, false))}</b> (${esc(KINDS[p.kind] ? KINDS[p.kind].short : 'за человека')}, ${esc(p.source)}${p.date ? `, ${p.confidence === 'medium' ? 'срез' : p.confidence === 'manual' ? 'введено' : 'проверено'} ${ruDate(p.date)}` : ''}).${rev.fromPrice ? ' Это цена «от» — минимальная, реальная может быть выше.' : ''}</p>
     <div class="cd-tablebox"><table class="cd-table"><thead><tr><th scope="col">Зрителей</th><th scope="col">Касса</th><th scope="col">Вам чистыми</th></tr></thead>
     <tbody>${rev.rows.map(r => `<tr><td>${r.n}</td><td>${fmt(r.gross)} ₽</td><td><b>${r.profit >= 0 ? '+' : '−'}${fmt(Math.abs(r.profit))} ₽</b></td></tr>`).join('')}</tbody></table></div>
     <p class="cd-note">Как считается: касса = зрители × цена. Вам чистыми = касса минус ваши расходы на один показ в городе из калькулятора выезда (гонорары и взносы, бензин, износ, печать, оргсбор сада или школы, налог). Окупается от ${rev.rows[0].be} зрителей.</p></section>`;

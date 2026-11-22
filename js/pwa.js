@@ -270,6 +270,8 @@ export function initPwa({ win = globalThis.window, doc = globalThis.document } =
   /* Показ с ожиданием: если сейчас мешает диалог/новости — повтор через RETRY_MS */
   function showWhenFree(kind, opts) {
     win.clearTimeout(retryTimer);
+    // «Нет сети» из события offline ждал очереди, а сеть уже вернулась — показывать устаревшую плашку незачем
+    if (kind === 'offline' && !(opts && opts.extra && opts.extra.date) && nav.onLine !== false) return;
     if (blocked()) { retryTimer = win.setTimeout(() => showWhenFree(kind, opts), RETRY_MS); return; }
     render(typeof kind === 'function' ? kind() : kind, opts);
   }
@@ -377,6 +379,7 @@ export function initPwa({ win = globalThis.window, doc = globalThis.document } =
       const d = e.data || {};
       if (d.type === MSG_DATA_FALLBACK && !fallbackShown) {
         fallbackShown = true;
+        watchOnline();
         showWhenFree('offline', { extra: { date: d.date } });
       }
     });
@@ -384,8 +387,19 @@ export function initPwa({ win = globalThis.window, doc = globalThis.document } =
   }
 
   /* Сеть пропала/вернулась во время работы */
-  win.addEventListener('offline', () => { if (!sheet || sheetKind === 'install') showWhenFree('offline'); });
-  win.addEventListener('online', () => { if (sheet && sheetKind === 'offline') render('online'); });
+  /* Событие online в части браузеров (и под сервис-воркером в эмуляции) приходит с задержкой или не приходит вовсе,
+     поэтому, пока висит «Нет сети», раз в 3 с дополнительно сверяемся с navigator.onLine */
+  let onlinePoll = 0;
+  function onOnline() {
+    win.clearInterval(onlinePoll); onlinePoll = 0;
+    if (sheet && sheetKind === 'offline') render('online');
+  }
+  function watchOnline() {
+    if (onlinePoll || nav.onLine !== false) return;
+    onlinePoll = win.setInterval(() => { if (nav.onLine !== false) onOnline(); }, 3000);
+  }
+  win.addEventListener('offline', () => { watchOnline(); if (!sheet || sheetKind === 'install') showWhenFree('offline'); });
+  win.addEventListener('online', onOnline);
 
   /* ---------- Установка: события браузера ---------- */
   win.addEventListener('beforeinstallprompt', e => {
@@ -421,7 +435,7 @@ export function initPwa({ win = globalThis.window, doc = globalThis.document } =
     if (typeof win.MutationObserver === 'function') new win.MutationObserver(syncYield).observe(doc.body, { childList: true });
     win.addEventListener('resize', syncYield, { passive: true });
     armAuto();
-    if (nav.onLine === false) showWhenFree('offline');
+    if (nav.onLine === false) { watchOnline(); showWhenFree('offline'); }
   };
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start, { once: true });
   else start();

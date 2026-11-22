@@ -25,14 +25,14 @@
 .nav .seg-ind{top:0;bottom:0;border-radius:999px;background:var(--seg);box-shadow:none}
 .headtools{display:flex;align-items:center;gap:8px}
 .seg-theme{position:relative;display:flex;background:var(--seg);border-radius:999px;padding:3px}
-.seg-theme button{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;font-size:12px;font-weight:600;color:var(--mutedS);padding:0 13px;border-radius:999px;transition:scale .35s var(--spring)}
+.seg-theme button{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);font-size:12px;font-weight:600;color:var(--mutedS);padding:0 13px;border-radius:999px;transition:scale .35s var(--spring)}
 .seg-theme button:active{scale:.94}
 .seg-theme button svg.lucide{width:14px;height:14px}
 .seg-theme button[aria-pressed="true"]{color:var(--text)}
 .seg-theme.has-ind button[aria-pressed="true"]{background:none;box-shadow:none}
 .seg-theme button[aria-pressed="true"] svg{animation:turn .6s var(--spring)}
 @keyframes turn{from{transform:rotate(-70deg) scale(.6)}to{transform:none}}
-.ghostbtn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:0 14px;font-size:12px;font-weight:600;color:var(--text2)}
+.ghostbtn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:var(--tap);border:1px solid var(--line);background:var(--card);border-radius:999px;padding:0 14px;font-size:12px;font-weight:600;color:var(--text2)}
 .ghostbtn svg.lucide{width:14px;height:14px}
 #menubtn{display:none}
 #menubtn svg line{transform-box:fill-box;transform-origin:center;transition:transform .45s var(--spring),opacity .25s var(--spring)}
@@ -460,7 +460,7 @@ tr:last-child td{border-bottom:0}
 }
 @media(max-width:1060px){
   .nav{display:none}
-  /* тач-цели шапки ≥44px на планшете и телефоне */
+  /* тач-цели шапки ≥44px — теперь во всех ширинах (базовые правила выше); здесь оставлено для явности */
   .seg-theme button,.ghostbtn{min-height:var(--tap)}
   #menubtn{display:inline-flex;width:var(--tap);padding:0}
   .kpi,.kpi:nth-child(1),.kpi:nth-child(6){grid-column:span 4}

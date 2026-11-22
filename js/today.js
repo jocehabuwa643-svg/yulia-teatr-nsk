@@ -201,19 +201,34 @@ export function upcomingEvents(data, now, { limit = EVENTS_MAX, horizon = HORIZO
 /* ---------- Свежесть данных ---------- */
 
 /* Дата последнего обновления данных и признак «устарели»: старше days дней, курс ЦБ помечен stale или ленты новостей не отвечают.
+   Учитываются три метки: meta.generated_at (данные изменились), meta.checked_at (ежедневный прогон проверил источники,
+   но нового не было — например, ЦБ не меняет курс в выходные и праздники) и news.updated_at.
+   checked: true — самая поздняя метка именно проверка без изменений (подпись «проверены», а не «обновлены»).
+   notes — пояснения без признака «устарели» (часть лент новостей не ответила при последнем прогоне).
    Нет ни одной даты → null (строка не показывается) */
 export function dataFreshness(data, now, days = STALE_DAYS) {
   const d = data || {};
-  const stamps = [d.meta && d.meta.generated_at, d.news && d.news.updated_at].map(s => Date.parse(s)).filter(Number.isFinite);
+  const m = d.meta || {};
+  const ts = s => { const v = Date.parse(s); return Number.isFinite(v) ? v : null; };
+  const changed = [m.generated_at, d.news && d.news.updated_at].map(ts).filter(v => v !== null);
+  const checkedAt = ts(m.checked_at);
+  const stamps = checkedAt === null ? changed : changed.concat(checkedAt);
   if (!stamps.length) return null;
   const at = Math.max(...stamps);
+  const checked = checkedAt !== null && checkedAt === at && (!changed.length || Math.max(...changed) < at);
   const age = todayNum(now) - todayNum(at);
   const reasons = [];
   if (age > days) reasons.push(`последнее обновление ${age} ${plural(age, 'день', 'дня', 'дней')} назад`);
   const cbr = d.rates && d.rates.cbr;
   if (cbr && Object.values(cbr).some(v => v && v.stale === true)) reasons.push('курсы ЦБ не обновились');
   if (d.news && d.news.stale === true) reasons.push('ленты новостей недоступны');
-  return { at, label: dayLabel(todayNum(at), now), age, stale: reasons.length > 0, reasons };
+  // Часть лент не ответила — данные не устарели (прежние записи сохранены), но честно об этом говорим
+  const notes = [];
+  const nf = d.news && Number(d.news.sources_failed), nt = d.news && Number(d.news.sources_total);
+  if (!(d.news && d.news.stale === true) && Number.isFinite(nf) && nf > 0 && Number.isFinite(nt) && nt > 0) {
+    notes.push(`не ответили ${nf} из ${nt} лент новостей`);
+  }
+  return { at, label: dayLabel(todayNum(at), now), age, stale: reasons.length > 0, reasons, checked, notes };
 }
 
 /* ---------- Чек-лист ---------- */
@@ -306,7 +321,7 @@ export function digestHtml(dg, now = Date.now()) {
     : '';
   const f = dg.fresh;
   const fresh = f
-    ? `<p class="td-fresh">${ic('database')}<span>Данные обновлены ${esc(f.label)}</span>${f.stale ? `<span class="td-stale">Данные устарели</span><span class="sr-only">: </span><span class="td-why">${esc(f.reasons.join('; '))}</span>` : ''}</p>`
+    ? `<p class="td-fresh">${ic('database')}<span>Данные ${f.checked ? 'проверены' : 'обновлены'} ${esc(f.label)}</span>${f.stale ? `<span class="td-stale">Данные устарели</span><span class="sr-only">: </span><span class="td-why">${esc(f.reasons.join('; '))}</span>` : ''}${!f.stale && f.notes && f.notes.length ? `<span class="sr-only">. </span><span class="td-why">${esc(f.notes.join('; '))}</span>` : ''}</p>`
     : '';
   const body = [events, news, side].filter(Boolean);
   return `<div class="td-head"><div><p class="eyebrow"><span class="dash"></span>Сегодня</p><h2 class="td-date" id="todayTitle">${esc(dg.date)}</h2>${season}</div>${fresh}</div>` +

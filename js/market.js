@@ -7,7 +7,7 @@ import { $, $$, fmt, ic, icons, toast, store, isStale, enter, counter } from './
 import { state } from './state.js';
 import { monthWindow, windowTitle, holidayStatus, holidayEndedInMonth } from './calendar.js';
 import { openCompetitorDetail, setDetailFocus } from './competitor-detail.js';
-import { KINDS, groupPrices, groupSummary, groupDate, observedCompare, perPersonRows, otherKindRows, priceText } from './competitor-prices.js';
+import { KINDS, groupSummary, groupDate, observedCompare, perPersonRows, otherKindRows, priceText, confirmedGroups, planAssumptionGroups } from './competitor-prices.js';
 
 /* ---------- Общие утилиты ---------- */
 
@@ -82,8 +82,9 @@ function flatten(c) {
 }
 const groupOf = type => groupsList().find(g => g.type === type) || { type, label: type, icon: 'tag' };
 
-/* Есть ли у карточки хоть одна цена (подтверждённая или введённая Юлией) */
-const hasPrice = c => groupPrices(c, manualAll()[c.id]).length > 0;
+/* Есть ли у карточки хоть одна цена (подтверждённая источником или введённая Юлией).
+   Допущения бизнес-плана (confidence:model) ценой конкурента не считаются */
+const hasPrice = c => confirmedGroups(c, manualAll()[c.id]).length > 0;
 
 /* Ссылка «источник» с иконкой; без ссылки — пусто */
 const srcLink = (u, text = 'источник') => { const s = safeUrl(u); return s ? `<a href="${esc(s)}" target="_blank" rel="noopener noreferrer">${text} ${ic('external-link')}</a>` : ''; };
@@ -121,6 +122,9 @@ function renderKpis() {
     tile('tag', 'Есть цена', priced, 'с источником или введена вами') +
     tile('circle-help', 'Нет данных', total - priced, 'это не «бесплатно»') +
     `<div class="mk-kpi"><span class="mk-kpi-ic">${ic('calendar-days')}</span><small>Сверка с источниками</small><b class="d">${ruDate(fetched)}</b><span class="mk-kpi-sub">${stale ? 'Данные устарели' : `свежие, порог ${thresholdDays('prices')} дн.`}</span></div>`;
+  // дата в шапке раздела — из данных (competitors.fetched_at), та же, что в плашке «Сверка с источниками»
+  const stamp = $('marketStamp');
+  if (stamp) stamp.textContent = fetched ? `Сверка с источниками: ${ruDate(fetched)}.` : 'Дата сверки с источниками: нет данных.';
   $$('#marketKpis b[data-target]').forEach(b => enter(b, () => counter(b)));
   armReveal($('marketKpis'), '.mk-kpi');
 }
@@ -168,21 +172,30 @@ function observedLine(c) {
 
 /* Цены карточки по типам: одна строка на тип — «Билет · от 350 ₽/билет · 18.11.2026 · источник».
    «от» сохраняется, «нет данных» — не ноль; ручная цена помечена «введено вами». */
+/* Сноска о допущении бизнес-плана: мелко, без «проверено», явно «не цена студии» */
+function planNote(c) {
+  const pg = planAssumptionGroups(c).filter(g => g.kind !== 'other');
+  if (!pg.length) return '';
+  const t = pg.map(g => `${KINDS[g.kind].short.toLowerCase()} ${groupSummary(g).text}`).join('; ');
+  return `<p class="pplan"><span class="stat st-model">допущение бизнес-плана</span> ${esc(t)} — рабочая цифра проекта, не цена студии. Цену студии уточните у неё и введите ниже.</p>`;
+}
+
 function priceBlock(c) {
-  const groups = groupPrices(c, manualAll()[c.id]).filter(g => g.kind !== 'other');
+  const groups = confirmedGroups(c, manualAll()[c.id]).filter(g => g.kind !== 'other');
   if (!groups.length) {
-    return `<p class="pnone"><b>Цена: нет данных</b>${c.price_note && String(c.price_note).length <= 90 ? ` · ${esc(c.price_note)}` : ''}</p>` + observedLine(c);
+    return `<p class="pnone"><b>Цена: нет данных</b>${c.price_note && String(c.price_note).length <= 90 ? ` · ${esc(c.price_note)}` : ''}</p>` + planNote(c) + observedLine(c);
   }
   const rows = groups.map(g => {
     const s = groupSummary(g);
     const first = g.items.find(p => p.manual) || g.items[0];
     const date = ruDate(groupDate(g));
-    const conf = first.manual ? '<span class="stat st-manual">введено вами</span>' : first.confidence === 'model' ? '<span class="stat st-model">ориентир плана</span>' : '';
-    const stale = !first.manual && first.confidence !== 'model' && groupDate(g) && isStale(groupDate(g), thresholdDays('prices')) ? '<span class="fbadge stale">устарело</span>' : '';
+    // в группах только подтверждённые цены и ручной ввод; вторичный источник подписан явно
+    const conf = first.manual ? '<span class="stat st-manual">введено вами</span>' : first.confidence === 'medium' ? '<span class="stat st-model">вторичный источник</span>' : '';
+    const stale = !first.manual && groupDate(g) && isStale(groupDate(g), thresholdDays('prices')) ? '<span class="fbadge stale">устарело</span>' : '';
     const link = srcLink(first.source_url);
-    return `<li class="pk"><span class="pk-k">${esc(KINDS[g.kind].short)}</span><b class="pk-v">${esc(s.text)}${s.note ? `<small>${esc(s.note)} · всего ${s.count} ${plural(s.count, ['тариф', 'тарифа', 'тарифов'])}</small>` : s.count > 1 ? `<small>${s.count} ${plural(s.count, ['тариф', 'тарифа', 'тарифов'])}</small>` : ''}</b><span class="pk-m">${conf}${date !== '—' ? `<span>проверено ${date}</span>` : ''}${link}${stale}</span></li>`;
+    return `<li class="pk"><span class="pk-k">${esc(KINDS[g.kind].short)}</span><b class="pk-v">${esc(s.text)}${s.note ? `<small>${esc(s.note)} · всего ${s.count} ${plural(s.count, ['тариф', 'тарифа', 'тарифов'])}</small>` : s.count > 1 ? `<small>${s.count} ${plural(s.count, ['тариф', 'тарифа', 'тарифов'])}</small>` : ''}</b><span class="pk-m">${conf}${date !== '—' ? `<span>${first.manual ? 'введено' : first.confidence === 'medium' ? 'срез' : 'проверено'} ${date}</span>` : ''}${link}${stale}</span></li>`;
   }).join('');
-  return `<ul class="pkinds" aria-label="Цены по типам">${rows}</ul>` + observedLine(c);
+  return `<ul class="pkinds" aria-label="Цены по типам">${rows}</ul>` + planNote(c) + observedLine(c);
 }
 
 /* Абзац карточки: короткий — как есть, длинный — вложенный <details>, чтобы не раздувать карточку */
@@ -337,7 +350,23 @@ function renderPriceChart() {
     ? `<details class="mk-more wide"><summary>Без цены за человека (${pp.none.length})</summary><p class="pnod">${pp.none.map(esc).join(', ')}. «Нет данных» — не 0 ₽.</p></details>` : '';
   // другие типы цен — компактные таблицы, каждая сравнивается только внутри себя
   const other = otherKindRows(ALL, man);
-  const otherHtml = ['party_package', 'hour', 'subscription'].filter(k => other[k].length).map(k => `<div class="pgrp pgrp-o"><h4 class="pgrp-h">${esc(KINDS[k].label)}</h4><ul class="plist">${other[k].map(r => `<li><span>${esc(r.name)}<small>${r.manual ? 'введено вами' : r.confidence === 'model' ? 'ориентир бизнес-плана, не оферта' : ''}${ruDate(r.date) !== '—' ? (r.manual || r.confidence === 'model' ? ' · ' : '') + ruDate(r.date) : ''}${r.url ? ' · ' + srcLink(r.url) : ''}</small></span><b>${esc(r.text)}</b></li>`).join('')}</ul></div>`).join('');
+  /* Ориентиры бизнес-плана (confidence:model) — не цены, проверенные на сайте студии: число рядом с именем
+     реального конкурента не показываем, только перечисляем, у кого цены на сайте не подтверждены.
+     Абонемент делится по единице: «за месяц» и «за абонемент из N занятий» между собой не сравниваются. */
+  const otherLi = r => `<li><span>${esc(r.name)}<small>${r.manual ? 'введено вами' : ''}${ruDate(r.date) !== '—' ? (r.manual ? ' · ' : '') + ruDate(r.date) : ''}${r.url ? ' · ' + srcLink(r.url) : ''}</small></span><b>${esc(r.text)}</b></li>`;
+  const otherUl = rows => `<ul class="plist">${rows.map(otherLi).join('')}</ul>`;
+  const SUB_PER = [['month', 'За месяц занятий'], ['pack', 'Абонемент на несколько занятий']];
+  const otherHtml = ['party_package', 'hour', 'subscription'].filter(k => other[k].length).map(k => {
+    const real = other[k].filter(r => r.manual || r.confidence !== 'model');
+    const model = other[k].filter(r => !r.manual && r.confidence === 'model');
+    const body = !real.length ? ''
+      : k === 'subscription'
+        ? SUB_PER.map(([per, title]) => { const rows = real.filter(r => r.per === per); return rows.length ? `<p class="pgrp-n">${title}</p>${otherUl(rows)}` : ''; }).join('')
+        : otherUl(real);
+    const modelNote = model.length
+      ? `<p class="pnod">Цены на сайтах не подтверждены${real.length ? '' : ' ни у кого'}: ${model.map(r => esc(r.name)).join(', ')}. Есть только ориентир бизнес-плана — уточните у студии или введите цену вручную в карточке.</p>` : '';
+    return `<div class="pgrp pgrp-o"><h4 class="pgrp-h">${esc(KINDS[k].label)}</h4>${body}${modelNote}</div>`;
+  }).join('');
   const box = $('priceChart');
   box.innerHTML = grp('Выездной спектакль, за ребёнка', 'Цена за одного зрителя на выезде в сад, школу или ДК.', pp.per_child, mine) +
     grp('Билет на спектакль или сеанс в зале', 'Билет у стационарных площадок — не выезд, но ориентир того, сколько семья платит за ребёнка.', pp.ticket) +

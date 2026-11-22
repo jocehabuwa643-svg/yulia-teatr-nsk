@@ -1,6 +1,8 @@
 /* app.js — точка входа ES-модулей. Порядок запуска устроен так, чтобы сбой одного раздела
    не ронял остальные: каждый раздел стартует в своей обёртке safe(). */
 window.__yuliaModuleOk = true; // сигнал для boot.js: модули распарсились и запустились
+// Если на медленной сети boot.js уже успел показать баннер «не удалось загрузить» — убираем его: приложение стартовало
+if (typeof window.__yuliaHideBootNotice === 'function') window.__yuliaHideBootNotice();
 
 import { $, icons } from './ui/helpers.js';
 import { loadAll, buildCalcConfig } from './data-loader.js';

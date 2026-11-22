@@ -94,6 +94,26 @@ export function auditFreshness(data, now = Date.now()) {
     if (leads.stale || age > L.leads) {
       add('leads.json', 'warning', `«Потенциальные клиенты» не обновлялись ${Number.isFinite(age) ? days(age) : '(даты нет)'} (порог ${L.leads}) — проверьте workflow Weekly refresh${leads.stale_reason ? ': ' + leads.stale_reason : ''}`);
     }
+    /* 4а. Частичный сбой: документ «свежий», потому что обновились мелкие места, а крупные (Новосибирск) остались прежними.
+       Смотрим каждое место отдельно: устаревшее дольше порога — warning, только что не обновившееся — notice с долей объектов */
+    const places = Array.isArray(leads.places) ? leads.places : [];
+    const objCount = p => (Array.isArray(p.items) ? p.items.length : Array.isArray(p.objects) ? p.objects.length
+      : [p.school, p.kindergarten, p.culture].filter(Number.isFinite).reduce((a, b) => a + b, 0));
+    const total = places.reduce((a, p) => a + objCount(p), 0);
+    const stalePlaces = places.filter(p => p && p.stale === true);
+    if (!leads.stale && stalePlaces.length) {
+      const old = stalePlaces.filter(p => ageInDays(p.updated_at || p.fetched_at, now) > L.leads);
+      const name = p => p.name || p.id;
+      if (old.length) {
+        add('leads.json', 'warning', `Места не обновлялись дольше ${L.leads} дн.: ${old.map(p => `${name(p)} (${days(ageInDays(p.updated_at || p.fetched_at, now))})`).join(', ')} — источник OSM не ответил; обновить: node scripts/refresh-local.mjs --weekly`);
+      }
+      const recent = stalePlaces.filter(p => !old.includes(p));
+      if (recent.length) {
+        const n = recent.reduce((a, p) => a + objCount(p), 0);
+        const share = total > 0 ? ` — ${Math.round(n * 100 / total)}% объектов` : '';
+        add('leads.json', 'notice', `При последнем прогоне не обновились: ${recent.map(name).join(', ')}${share}; показаны данные прошлого прогона`);
+      }
+    }
   }
 
   /* 5. Конкуренты: автопроверка сайтов — еженедельно; ручные цены — сверка раз в месяц */
@@ -103,6 +123,13 @@ export function auditFreshness(data, now = Date.now()) {
     const checked = all.filter(x => x && x.check_status && x.check_status !== 'skipped_policy' && x.checked_at);
     if (checked.length && checked.every(x => ageInDays(x.checked_at, now) > L.competitors_check)) {
       add('competitors.json', 'warning', `Автопроверка сайтов конкурентов не выполнялась более ${L.competitors_check} дн. — проверьте workflow Weekly refresh`);
+    } else if (checked.length) {
+      /* 5а. Прогон был, но ни один сайт не ответил успешно: checked_at обновляется и при 'unavailable',
+         поэтому смотрим момент последнего УСПЕШНОГО ответа (observed.last_ok_at; для ok/changed — checked_at) */
+      const lastOk = x => (x.observed && x.observed.last_ok_at) || (['ok', 'changed'].includes(x.check_status) ? x.checked_at : null);
+      if (checked.every(x => { const a = ageInDays(lastOk(x), now); return !Number.isFinite(a) || a > L.competitors_check; })) {
+        add('competitors.json', 'warning', `Автопроверка запускалась, но ни один сайт конкурентов не ответил успешно более ${L.competitors_check} дн. — проверьте сеть workflow Weekly refresh`);
+      }
     }
     const oldPrices = all.flatMap(x => (Array.isArray(x && x.prices) ? x.prices : []))
       .filter(p => p && p.value !== null && p.value !== undefined && ageInDays(p.fetched_at || p.date, now) > L.prices);

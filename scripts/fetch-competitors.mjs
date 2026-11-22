@@ -25,6 +25,8 @@ import { DATA_DIR, PROJECT_UA, fetchRetry, readJson, writeJsonIfChanged, detectI
 const HOST_PAUSE_MS = 2500;            // пауза между запросами к одному хосту (2–3 с)
 const MAX_HTML_CHARS = 2_000_000;      // страницу крупнее не разбираем целиком
 const LISTS = ['outbound_performers', 'studio_scene', 'party_venues', 'stationary_benchmarks'];
+/* Окно «тот же прогон»: повтор в течение 20 ч не меняет метки времени, если страница не изменилась */
+export const SAME_RUN_DAYS = 20 / 24;
 
 /* Площадки, чьи условия использования запрещают автоматический сбор: не запрашиваем вообще */
 export const DENY_HOSTS = ['2gis.ru', 'vk.ru', 'vk.com', 'ok.ru', 'yandex.ru', 'yandex.com', 'ya.ru', 'zoon.ru', 'instagram.com', 't.me', 'youtube.com', 'facebook.com'];
@@ -215,8 +217,11 @@ export async function run({ now = new Date(), dataDir = DATA_DIR, deps = {} } = 
       if (!item || !item.source_url) continue;
       const prevChecked = item.checked_at, prevStatus = item.check_status, prevObs = item.observed;
       const res = await checkItem(item, nowIso, deps);
-      /* идемпотентность: если по существу ничего не изменилось и прошлая проверка свежая (<6 дн.), метки времени не трогаем */
-      if (prevChecked && prevStatus === res.check_status && ageInDays(prevChecked, now.getTime()) < 6) {
+      /* идемпотентность только для повторного запуска в тот же день (ручной перезапуск workflow, < 20 ч):
+         если по существу ничего не изменилось, метки времени не трогаем — без пустых коммитов.
+         Плановый недельный прогон всегда продвигает checked_at и last_ok_at: иначе дата «автопроверка …» в интерфейсе
+         замирала бы, а аудит свежести (порог 14 дн.) мог бы выдать ложное «проверка не выполнялась». */
+      if (prevChecked && prevStatus === res.check_status && ageInDays(prevChecked, now.getTime()) < SAME_RUN_DAYS) {
         const strip = o => JSON.stringify(o ? { ...o, last_ok_at: 0, price: o.price ? { ...o.price, fetched_at: 0 } : o.price } : null);
         if (strip(prevObs) === strip(res.observed)) { res.checked_at = prevChecked; res.observed = prevObs; }
       }

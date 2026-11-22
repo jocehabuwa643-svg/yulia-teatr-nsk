@@ -114,6 +114,27 @@ export function groupPrices(c, manual) {
   return KIND_ORDER.map(kind => ({ kind, ...KINDS[kind], items: all.filter(p => p.kind === kind) })).filter(g => g.items.length);
 }
 
+/* Допущение бизнес-плана (confidence:model) — рабочая цифра проекта, а НЕ цена, проверенная на сайте конкурента */
+export const isPlanAssumption = p => !!p && !p.manual && p.confidence === 'model';
+
+/* Цены, которые можно показывать как цены конкурента: подтверждённые источником или введённые Юлией.
+   Допущения плана из групп убираются; группа только из допущений исчезает целиком. */
+export function confirmedGroups(c, manual) {
+  return groupPrices(c, manual)
+    .map(g => ({ ...g, items: g.items.filter(p => !isPlanAssumption(p)) }))
+    .filter(g => g.items.length);
+}
+
+/* Допущения бизнес-плана карточки по типам — для честной сноски «не цена студии» */
+export function planAssumptionGroups(c) {
+  return groupPrices(c, null)
+    .map(g => ({ ...g, items: g.items.filter(isPlanAssumption) }))
+    .filter(g => g.items.length);
+}
+
+/* Подпись источника цены по уровню достоверности: «проверено по источнику» — только для официального сайта */
+export const SOURCE_WORD = { high: 'официальный сайт', medium: 'вторичный источник (не перепроверяется автоматически)', low: 'не подтверждено' };
+
 /* Сводка группы одной строкой: одна цена — как есть; несколько — диапазон «21 000–29 500 ₽/пакет · 4 тарифа».
    Если минимальная цена была «от» — диапазон тоже начинается с «от». */
 export function groupSummary(g) {
@@ -147,9 +168,13 @@ export function groupDate(g) {
 export function ticketPriceOf(c, manual) {
   const m = manualPrice(manual);
   if (m && PER_PERSON.has(m.kind)) return { value: m.value, qualifier: null, kind: m.kind, label: m.label, source: 'введено вами', date: m.fetched_at, url: m.source_url, confidence: 'manual' };
-  const listed = (c && c.prices || []).filter(p => Number.isFinite(p.value) && PER_PERSON.has(kindOf(p)));
+  // допущения бизнес-плана ценой конкурента не считаются
+  const listed = (c && c.prices || []).filter(p => Number.isFinite(p.value) && PER_PERSON.has(kindOf(p)) && !isPlanAssumption(p));
   const p = listed.find(x => x.chart) || listed[0];
-  if (p) return { value: p.value, qualifier: p.qualifier || null, kind: kindOf(p), label: p.label || '', source: 'проверено по источнику', date: p.fetched_at || null, url: safeUrl(p.source_url), confidence: p.confidence || 'medium' };
+  if (p) {
+    const conf = p.confidence || 'medium';
+    return { value: p.value, qualifier: p.qualifier || null, kind: kindOf(p), label: p.label || '', source: SOURCE_WORD[conf] || SOURCE_WORD.medium, date: p.fetched_at || null, url: safeUrl(p.source_url), confidence: conf };
+  }
   const o = c && c.observed && c.observed.price;
   if (o && Number.isFinite(o.value) && PER_PERSON.has(kindOf(o))) return { value: o.value, qualifier: o.qualifier || null, kind: kindOf(o), label: 'найдено на сайте', source: 'найдено на сайте автоматически', date: o.fetched_at || c.checked_at || null, url: safeUrl(o.source_url), confidence: 'low' };
   return { value: null, qualifier: null, kind: null, label: '', source: null, date: null, url: null, confidence: 'no_data' };
@@ -204,7 +229,10 @@ export function otherKindRows(list, manualAll = {}) {
   (list || []).forEach(c => groupPrices(c, manualAll[c.id]).forEach(g => {
     if (!out[g.kind]) return;
     const s = groupSummary(g);
-    out[g.kind].push({ id: c.id, name: c.name, text: s.text, count: s.count || 1, manual: s.manual, date: groupDate(g), confidence: (g.items.find(p => p.manual) || g.items[0]).confidence || 'medium', url: safeUrl((g.items.find(p => p.source_url) || {}).source_url) });
+    // единица внутри типа: «₽/мес» и «₽/абонемент (4 или 8 занятий)» — разные величины, сравнивать их нельзя
+    const lead = g.items.find(p => p.manual) || g.items[0];
+    const per = /мес/i.test(unitOf(lead)) ? 'month' : g.kind === 'subscription' ? 'pack' : 'unit';
+    out[g.kind].push({ id: c.id, name: c.name, text: s.text, count: s.count || 1, manual: s.manual, date: groupDate(g), per, confidence: (g.items.find(p => p.manual) || g.items[0]).confidence || 'medium', url: safeUrl((g.items.find(p => p.source_url) || {}).source_url) });
   }));
   return out;
 }

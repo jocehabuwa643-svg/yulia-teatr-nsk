@@ -55,7 +55,7 @@
 .cl-ic svg.lucide{width:26px;height:26px}
 .cl-t{grid-area:t;display:grid;gap:3px;min-width:0}
 .cl-t small{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mutedS)}
-.cl-h{display:block;font-size:clamp(19px,2.2vw,25px);font-weight:700;letter-spacing:-.03em;line-height:1.15;overflow-wrap:break-word;hyphens:auto}
+.cl-h{display:block;font-size:clamp(19px,2.2vw,25px);font-weight:700;letter-spacing:-.03em;line-height:1.25;overflow-wrap:break-word;hyphens:auto}
 .cl-sub{font-size:12.5px;line-height:1.45;color:var(--mutedS);overflow-wrap:break-word}
 .cl-go{grid-area:go;align-self:start;color:var(--mutedS);font-size:22px;line-height:1;transition:transform .3s var(--ease)}
 .cl-entry:hover .cl-go{transform:translateX(5px)}
@@ -122,6 +122,7 @@ html.cl-lock body{padding-right:var(--cl-sbw,0px)}
 .cl-stat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 10px;margin:12px 0;align-items:start}
 .cl-stat > span{display:grid;gap:1px;min-width:0}
 .cl-stat > .cd-badge{grid-column:1 / -1;justify-self:start}
+.cl-stat > .cl-stale-note{grid-column:1 / -1;margin-top:-2px;color:var(--text2)}
 .cl-stat b{font-size:20px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .cl-stat small{font-size:11.5px;line-height:1.3;color:var(--mutedS);overflow-wrap:break-word;hyphens:auto}
 .cl-stat .cl-stat-sum{padding-left:10px;border-left:1px solid var(--line)}
@@ -130,10 +131,20 @@ html.cl-lock body{padding-right:var(--cl-sbw,0px)}
 /* Подложка как у основной карты (css/market.css .mapstage): монохром светлой темы, инверсия — тёмной */
 .cl-map .leaflet-tile-pane{filter:grayscale(1) contrast(.9) brightness(1.04)}
 :root[data-theme="dark"] .cl-map .leaflet-tile-pane{filter:grayscale(1) invert(1) contrast(.85) brightness(.95)}
-/* Дробный devicePixelRatio телефона (2.6) даёт светлые щели между тайлами: перекрываем тайлы на полпикселя
+/* Дробный devicePixelRatio телефона (2.6) даёт светлые щели между тайлами: при масштабировании край картинки
+   становится полупрозрачным, и сквозь него просвечивает фон. Перекрываем тайлы на 1 CSS-пиксель (≈2,6 физ. пикселя —
+   мягкий край соседнего ряда ложится на непрозрачную часть; 0,5 px на 2.6 не хватало для горизонтального стыка)
    и снимаем mix-blend-mode:plus-lighter из leaflet.css (при наложении он складывает цвета — снова светлая линия) */
-.cl-map img.leaflet-tile{width:256.5px!important;height:256.5px!important;mix-blend-mode:normal!important}
-.cl-map .leaflet-control-zoom a{width:40px;height:40px;line-height:40px}
+.cl-map img.leaflet-tile{width:257px!important;height:257px!important;mix-blend-mode:normal!important}
+/* Кнопки масштаба +/−: leaflet.css подгружается позже наших стилей и при равной специфичности красит их белым —
+   поднимаем специфичность, берём цвета из токенов темы и размер касания 44 px */
+.cl-map.leaflet-container .leaflet-bar{border:1px solid var(--line);box-shadow:var(--shadow)}
+.cl-map.leaflet-container .leaflet-bar a,.cl-map.leaflet-container .leaflet-bar a:hover{
+  width:var(--tap,44px);height:var(--tap,44px);line-height:var(--tap,44px);
+  background:var(--card);color:var(--text);border-bottom:1px solid var(--line)}
+.cl-map.leaflet-container .leaflet-bar a:last-child{border-bottom:0}
+.cl-map.leaflet-container .leaflet-bar a:hover,.cl-map.leaflet-container .leaflet-bar a:focus-visible{background:var(--chip)}
+.cl-map.leaflet-container .leaflet-bar a.leaflet-disabled{background:var(--chip);color:var(--mutedS)}
 .cl-map .leaflet-popup-content{font-size:13px;line-height:1.4;margin:10px 14px}
 .cl-tilewarn{position:absolute;left:10px;right:10px;bottom:28px;z-index:500;margin:0;padding:8px 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:12px;color:var(--text2)}
 .clm-legend{display:flex;gap:8px 16px;flex-wrap:wrap;align-items:center;margin-top:12px;font-size:12.5px;color:var(--text2)}
