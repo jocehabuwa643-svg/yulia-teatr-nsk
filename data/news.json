@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-22T21:18:48.753Z",
+  "updated_at": "2026-11-23T12:38:45.451Z",
   "stale": false,
   "sources_total": 5,
   "sources_failed": 4,
@@ -10,7 +10,7 @@
       "name": "Минкультуры Новосибирской области",
       "url": "https://mk.nso.ru/",
       "feed_url": "https://mk.nso.ru/rss.xml",
-      "fetched_at": "2026-11-22T21:18:48.753Z",
+      "fetched_at": "2026-11-23T12:38:45.451Z",
       "status": "error",
       "items": 0,
       "error": "robots.txt недоступен: https://mk.nso.ru/robots.txt: таймаут 10000 мс",
@@ -20,7 +20,7 @@
       "name": "Правительство Новосибирской области",
       "url": "https://www.nso.ru/",
       "feed_url": "https://www.nso.ru/rss.xml",
-      "fetched_at": "2026-11-22T21:18:48.753Z",
+      "fetched_at": "2026-11-23T12:38:45.451Z",
       "status": "error",
       "items": 0,
       "error": "robots.txt недоступен: https://www.nso.ru/robots.txt: таймаут 10000 мс",
@@ -30,17 +30,17 @@
       "name": "ФНС России (УФНС по Новосибирской области)",
       "url": "https://www.nalog.gov.ru/rn54/",
       "feed_url": "https://www.nalog.gov.ru/rn54/rss/",
-      "fetched_at": "2026-11-22T21:18:48.753Z",
-      "status": "empty",
-      "items": 0,
-      "total": 5,
-      "last_ok_at": "2026-11-22T21:18:48.753Z"
+      "fetched_at": "2026-11-23T12:38:45.451Z",
+      "status": "ok",
+      "items": 1,
+      "total": 3,
+      "last_ok_at": "2026-11-23T12:38:45.451Z"
     },
     {
       "name": "Минкультуры России — новости министерства",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=2&lang=ru&TYPE=ministry&LIMIT=40&SECTION_ID=30",
-      "fetched_at": "2026-11-22T21:18:48.753Z",
+      "fetched_at": "2026-11-23T12:38:45.451Z",
       "status": "error",
       "items": 0,
       "error": "robots.txt недоступен: https://culture.gov.ru/robots.txt: таймаут 10000 мс",
@@ -50,7 +50,7 @@
       "name": "Минкультуры России — культурная жизнь регионов",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=34&lang=ru&TYPE=news&LIMIT=40",
-      "fetched_at": "2026-11-22T21:18:48.753Z",
+      "fetched_at": "2026-11-23T12:38:45.451Z",
       "status": "error",
       "items": 0,
       "error": "robots.txt недоступен: https://culture.gov.ru/robots.txt: таймаут 10000 мс",
@@ -58,6 +58,16 @@
     }
   ],
   "items": [
+    {
+      "id": "5e294288b436",
+      "title": "О способах уплаты имущественных налогов рассказали во время встречи с работниками новосибирской организации",
+      "summary": "",
+      "url": "https://www.nalog.gov.ru/rn54/news/activities_fts/16677997/",
+      "source_name": "ФНС России (УФНС по Новосибирской области)",
+      "source_url": "https://www.nalog.gov.ru/rn54/",
+      "published_at": "2026-11-23T11:03:55.000Z",
+      "topic": "taxes"
+    },
     {
       "id": "a31f4eb6e802",
       "title": "Концерт Молодежного духового оркестра",
