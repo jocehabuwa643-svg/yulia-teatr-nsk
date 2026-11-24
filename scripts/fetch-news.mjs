@@ -592,7 +592,8 @@ export function buildDoc(results, prev, now = Date.now()) {
   const anyOk = attempted.some(r => r.status.status !== 'error');
   const fresh = results.flatMap(r => r.items);
   const prevItems = prev && Array.isArray(prev.items) ? prev.items : [];
-  const prevSources = prev && prev.sources;
+  // прежние статусы ищем и среди обычных лент, и среди пропущенных в прошлый раз
+  const prevSources = [...((prev && prev.sources) || []), ...((prev && prev.skipped_sources) || [])];
   // Частичный сбой честно виден в файле: сколько лент не ответило (весь файл при этом не stale — часть лент жива)
   const failed = attempted.filter(r => r.status.status === 'error').length;
   const doc = {
@@ -603,7 +604,10 @@ export function buildDoc(results, prev, now = Date.now()) {
     sources_skipped: results.length - attempted.length,
     keep_days: KEEP_DAYS,
     max_items: MAX_ITEMS,
-    sources: results.map(r => ({ ...r.status, last_ok_at: sourceLastOk(r.status, prevSources, nowIso) })),
+    // в sources — только запрошенные ленты (статусы ok/error/empty по схеме файла);
+    // пропущенные в этом прогоне — отдельным списком skipped_sources, со своей пометкой и прежним last_ok_at
+    sources: attempted.map(r => ({ ...r.status, last_ok_at: sourceLastOk(r.status, prevSources, nowIso) })),
+    skipped_sources: results.filter(r => r.status.status === 'skipped').map(r => ({ ...r.status, last_ok_at: sourceLastOk(r.status, prevSources, nowIso) })),
     items: mergeItems(fresh, prevItems, now, { perSource: MAX_PER_SOURCE })
   };
   if (!anyOk) {

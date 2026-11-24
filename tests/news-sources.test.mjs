@@ -62,8 +62,12 @@ test('buildDoc: пропущенные ленты — не сбой (sources_fai
   assert.equal(doc.sources_total, 2, 'считаются только запрошенные ленты');
   assert.equal(doc.sources_failed, 1, 'сбой — только настоящий');
   assert.equal(doc.sources_skipped, 1);
-  assert.equal(doc.sources[0].last_ok_at, iso(NOW - 3 * 864e5), 'у пропущенной ленты — прежний last_ok_at');
-  assert.equal(doc.sources[0].note, CI_SKIP_NOTE);
+  assert.equal(doc.skipped_sources[0].last_ok_at, iso(NOW - 3 * 864e5), 'у пропущенной ленты — прежний last_ok_at');
+  assert.equal(doc.skipped_sources[0].note, CI_SKIP_NOTE);
+  assert.ok(doc.sources.every(x => ['ok', 'error', 'empty'].includes(x.status)), 'в sources только статусы схемы файла');
+  // следующий прогон: прежний last_ok_at берётся и из skipped_sources
+  const next = buildDoc([st(byKey.mk_nso, 'skipped', { note: CI_SKIP_NOTE }), st(byKey.nsktv, 'ok')], doc, NOW + 864e5);
+  assert.equal(next.skipped_sources[0].last_ok_at, iso(NOW - 3 * 864e5));
   // все запрошенные ленты упали, пропущенные не спасают — честный stale
   const allDown = buildDoc([st(byKey.mk_nso, 'skipped'), st(byKey.nsktv, 'error')], prev, NOW);
   assert.equal(allDown.stale, true);
