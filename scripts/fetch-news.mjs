@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-/* fetch-news.mjs — «Новости отрасли»: собирает публичные RSS/Atom-ленты (культура, гранты, налоги, регион),
+/* fetch-news.mjs — «Новости отрасли»: собирает публичные RSS/Atom-ленты (культура, гранты, налоги, регион, школы и сады),
    фильтрует по ключевым словам, копит записи за последние 60 дней (не больше 40) и пишет data/news.json.
 
    Правила проекта: таймаут 10 с и повторы с паузой (fetch-util), robots.txt каждого хоста проверяется перед запросом,
    сбой одной ленты не роняет остальные, при полном сбое прежние записи сохраняются и ставится stale:true.
+   Ленты ведомств, которые не отвечают серверам GitHub (LOCAL_SOURCES, ci_unreachable), в GitHub Actions пропускаются
+   (status:"skipped", без ::warning), а при локальном запуске качаются вместе с остальными (ALL_SOURCES).
    Новости НЕ выдумываются: в файл попадает только то, что реально пришло из лент (заголовок, ссылка, дата источника).
    Чистые функции (parseFeed, filterItems, dedupe, normalize, mergeItems, robotsAllows) экспортируются для тестов.
    Запуск: node scripts/fetch-news.mjs (DATA_DIR=… — сухой прогон на копии данных). */
@@ -15,38 +17,26 @@ import { DATA_DIR, fetchRetry, readJson, writeJsonIfChanged } from './fetch-util
 
 /* ---------- Настройки ---------- */
 export const KEEP_DAYS = 60;          // сколько дней хранить записи
-export const MAX_ITEMS = 40;          // потолок записей в файле
+export const MAX_ITEMS = 40;
+/* не больше записей одного источника в файле: частые ленты (Клерк) не вытесняют редкие, но полезные (гранты, культура) */
+export const MAX_PER_SOURCE = 6;          // потолок записей в файле
 export const SUMMARY_MAX = 200;       // длина краткого описания, знаков
 const FUTURE_TOLERANCE_MS = 864e5;    // дата «из будущего» больше чем на сутки — запись отбрасывается
 const UA = 'Mozilla/5.0 (compatible; news-digest-bot/1.0)';
 const DAY = 864e5;
 
-/* Ленты. Каждая проверена вручную (HTTP 200, валидный RSS) и по robots.txt — см. DATA_SOURCES.md, раздел «Новости отрасли».
+/* Ленты, которые отвечают серверам GitHub Actions (ежедневный прогон data-refresh.yml). Каждая проверена: HTTP 200 и валидный RSS
+   локально и с раннера ubuntu-latest (проба 24.11.2026, run 45381338114), robots.txt хоста ленту не запрещает — см. DATA_SOURCES.md, раздел 4а.
    filter: any — хотя бы одно слово из списка; all — каждая группа должна совпасть хотя бы одним словом; exclude — стоп-слова;
    titleOnly — искать только в заголовке (для широких лент с длинными описаниями, иначе много шума).
-   Слово с префиксом «=» ищется целиком (для коротких: «=ип»), без префикса — как основа (подстрока). */
+   Слово с префиксом «=» ищется целиком (для коротких: «=ип»), без префикса — как основа (подстрока).
+   У всех лент берём только заголовок, ссылку на первоисточник, дату и короткий анонс — так разрешают условия изданий. */
+// Общие стоп-слова городских лент: происшествия и «кинотеатр» (подстрока «театр» иначе ловит кинопрокат)
+const CITY_NOISE = ['18+', 'пожар', 'погиб', '=дтп', 'полиц', 'мошенн', 'спасател', 'суд', 'умер', 'кинотеатр', 'кинопрокат'];
+// Пушкинская карта — именно карта, а не Пушкинский музей или премия
+const PUSHKIN_CARD = ['пушкинская карт', 'пушкинской карт', 'пушкинскую карт'];
+
 export const SOURCES = [
-  {
-    key: 'mk_nso',
-    name: 'Минкультуры Новосибирской области',
-    url: 'https://mk.nso.ru/',
-    feed_url: 'https://mk.nso.ru/rss.xml',
-    topic: 'culture',
-    filter: {
-      any: ['театр', 'спектак', 'детск', '=дети', '=детей', 'детям', 'школьник', 'грант', 'субсид', 'конкурс', 'фестивал', 'пушкинск', 'кукол', 'творческ', '=нко', 'премия', 'господдержк']
-    }
-  },
-  {
-    key: 'nso_gov',
-    name: 'Правительство Новосибирской области',
-    url: 'https://www.nso.ru/',
-    feed_url: 'https://www.nso.ru/rss.xml',
-    topic: 'city',
-    filter: {
-      titleOnly: true,
-      any: ['театр', 'спектак', 'культурн', 'учреждени культуры', 'сферы культуры', 'детского отдыха', 'детский досуг', 'досуг', 'предприним', 'малого бизнес', 'малого и среднего', '=мсп', 'самозанят', 'грант', 'субсид', 'пушкинск', '=нко', 'фестивал', 'дополнительного образования']
-    }
-  },
   {
     key: 'fns_54',
     name: 'ФНС России (УФНС по Новосибирской области)',
@@ -59,12 +49,136 @@ export const SOURCES = [
     }
   },
   {
+    // Рубрика «Культура» делового издания НСО: театры, филармония, НОВАТ, фестивали (стандартная рубричная лента WordPress)
+    key: 'infopro54_culture',
+    name: 'Infopro54',
+    url: 'https://infopro54.ru/category/news/society/culture/',
+    feed_url: 'https://infopro54.ru/category/news/society/culture/feed/',
+    topic: 'culture',
+    filter: {
+      titleOnly: true,
+      any: ['театр', 'спектак', 'фестивал', 'филармон', 'новат', 'детск', '=дети', '=детей', 'школьник', 'конкурс', 'кукол', 'грант', ...PUSHKIN_CARD, 'дом культуры', '=дк'],
+      exclude: ['кинотеатр', 'кинопрокат', 'архитектур']
+    }
+  },
+  {
+    // ГТРК «Новосибирск» (ВГТРК), ссылка на RSS стоит на самом сайте. Город: культура, дети, школы, конкурсы
+    key: 'nsktv',
+    name: 'Вести Новосибирск',
+    url: 'https://www.nsktv.ru/',
+    feed_url: 'https://www.nsktv.ru/rss.php',
+    https: true,
+    topic: 'city',
+    filter: {
+      titleOnly: true,
+      any: ['театр', 'спектак', 'фестивал', 'культур', 'детск', '=дети', '=детей', 'детям', 'школьник', 'школьниц', 'пятиклассниц', 'конкурс', 'грант', ...PUSHKIN_CARD, 'дом культуры', '=дк', 'предприним', 'самозанят', '=мсп', 'малого бизнес'],
+      exclude: CITY_NOISE
+    }
+  },
+  {
+    // Городское издание Новосибирска (штатная лента WordPress /feed/): театры, школы, детские сады
+    key: 'nsknews',
+    name: 'Новосибирские новости',
+    url: 'https://nsknews.info/',
+    feed_url: 'https://nsknews.info/feed/',
+    topic: 'city',
+    filter: {
+      titleOnly: true,
+      any: ['театр', 'спектак', 'фестивал', 'детсад', 'детский сад', 'детских сад', 'школ', 'детск', '=дети', '=детей', 'конкурс', 'грант', ...PUSHKIN_CARD, 'дом культуры', '=дк', 'предприним', 'самозанят', 'карантин', 'актрис', 'актер', 'актёр'],
+      exclude: [...CITY_NOISE, 'спецопераци', '=сво', 'бойц', 'стадион', 'самбо']
+    }
+  },
+  {
+    // Региональная редакция АиФ (ссылка /rss/all.php на главной). Поток большой — только узкий фильтр по заголовку:
+    // Пушкинская карта, самозанятые и предприниматели НСО, детские сады
+    key: 'aif_nsk',
+    name: 'АиФ-Новосибирск',
+    url: 'https://nsk.aif.ru/',
+    feed_url: 'https://nsk.aif.ru/rss/all.php',
+    topic: 'city',
+    filter: {
+      titleOnly: true,
+      any: ['театр', 'спектак', ...PUSHKIN_CARD, 'самозанят', 'предприним', '=мсп', 'малого бизнес', 'детсад', 'детских сад', 'детский сад', 'грант', 'фестивал', 'дом культуры', '=дк', 'карантин'],
+      exclude: CITY_NOISE
+    }
+  },
+  {
+    // Рубрика «ПроБизнес» Infopro54: налоги, патент и отчётность предпринимателей НСО (дополняет общую ленту ФНС)
+    key: 'infopro54_biz',
+    name: 'Infopro54 · бизнес',
+    url: 'https://infopro54.ru/category/news/biznes/probiznes/',
+    feed_url: 'https://infopro54.ru/category/news/biznes/probiznes/feed/',
+    topic: 'taxes',
+    filter: {
+      titleOnly: true,
+      any: ['патент', 'налог', '=усн', '=ндс', 'отчетн', 'отчётн', 'самозанят', '=ккт', 'кассов', 'взнос', 'торговый сбор', 'рекламного сбора', 'рекламный сбор'],
+      exclude: ['мошенн', 'похитил', '=компанию', '=компании', 'верховный суд']
+    }
+  },
+  {
+    // Газета «Культура»: федеральная театральная повестка и итоги грантов ПФКИ (у самого фонда RSS нет)
+    key: 'portal_kultura',
+    name: 'Газета «Культура»',
+    url: 'https://portal-kultura.ru/',
+    feed_url: 'https://portal-kultura.ru/rss/',
+    topic: 'culture',
+    filter: {
+      titleOnly: true,
+      any: ['детск', 'для детей', '=дети', '=детей', 'кукол', 'кукольн', 'сказк', 'юного зрител', 'юных зрител', '=тюз', 'грант', 'пфки', 'фонд культурных', 'президентск', ...PUSHKIN_CARD, 'новосибирск', 'театральных школ', 'школьн']
+    }
+  },
+  {
+    // Клерк.ру (лента объявлена на главной): УСН, ИП, самозанятые, ККТ — практичные изменения для ИП. Рекламу курсов отсекаем
+    key: 'klerk',
+    name: 'Клерк.ру',
+    url: 'https://www.klerk.ru/',
+    feed_url: 'https://www.klerk.ru/xml/index.xml',
+    topic: 'taxes',
+    filter: {
+      titleOnly: true,
+      any: ['=усн', 'упрощ', '=аусн', '=ип', 'самозанят', '=нпд', 'патент', '=ккт', 'онлайн-касс', 'малого бизнес', '=мсп', '=нко', 'торговый сбор', 'взносы ип', 'взносов ип'],
+      exclude: ['курсы клерка', 'курсов клерка']
+    }
+  }
+];
+
+/* Ленты ведомств, которые НЕ отвечают зарубежным серверам GitHub Actions (502 / таймаут уже на robots.txt — логи Actions
+   21–24.11.2026 и проба 24.11.2026), но открываются из российской сети. ci_unreachable: true — в GitHub Actions лента не
+   запрашивается (одна строка в логе вместо ежедневного ::warning и минут ожидания таймаутов), её молчание не считается сбоем
+   обновления; при локальном запуске (node scripts/refresh-local.mjs) качается как обычно. Проверить, не открылись ли они
+   для GitHub, — переменная окружения NEWS_TRY_CI_UNREACHABLE=1 в шаге workflow. */
+export const LOCAL_SOURCES = [
+  {
+    key: 'mk_nso',
+    name: 'Минкультуры Новосибирской области',
+    url: 'https://mk.nso.ru/',
+    feed_url: 'https://mk.nso.ru/rss.xml',
+    topic: 'culture',
+    ci_unreachable: true,
+    filter: {
+      any: ['театр', 'спектак', 'детск', '=дети', '=детей', 'детям', 'школьник', 'грант', 'субсид', 'конкурс', 'фестивал', 'пушкинск', 'кукол', 'творческ', '=нко', 'премия', 'господдержк']
+    }
+  },
+  {
+    key: 'nso_gov',
+    name: 'Правительство Новосибирской области',
+    url: 'https://www.nso.ru/',
+    feed_url: 'https://www.nso.ru/rss.xml',
+    topic: 'city',
+    ci_unreachable: true,
+    filter: {
+      titleOnly: true,
+      any: ['театр', 'спектак', 'культурн', 'учреждени культуры', 'сферы культуры', 'детского отдыха', 'детский досуг', 'досуг', 'предприним', 'малого бизнес', 'малого и среднего', '=мсп', 'самозанят', 'грант', 'субсид', 'пушкинск', '=нко', 'фестивал', 'дополнительного образования']
+    }
+  },
+  {
     key: 'mkrf_news',
     name: 'Минкультуры России — новости министерства',
     url: 'https://culture.gov.ru/press/news/',
     feed_url: 'https://culture.gov.ru/rssall/rss.php?ID=2&lang=ru&TYPE=ministry&LIMIT=40&SECTION_ID=30',
     https: true,
     topic: 'culture',
+    ci_unreachable: true,
     filter: {
       titleOnly: true,
       any: ['детск', 'для детей', 'юных зрител', 'кукол', 'грант', 'субсид', 'пушкинск', 'президентск', 'фонд культурных', '=нко', 'негосударствен', 'театрам', 'театров', 'новосибирск']
@@ -77,12 +191,24 @@ export const SOURCES = [
     feed_url: 'https://culture.gov.ru/rssall/rss.php?ID=34&lang=ru&TYPE=news&LIMIT=40',
     https: true,
     topic: 'culture',
+    ci_unreachable: true,
     filter: {
       all: [['новосибирск', 'сибир']],
       any: ['театр', 'спектак', 'детск', 'кукол', 'грант', 'фестивал', 'пушкинск', 'конкурс']
     }
   }
 ];
+
+/* Все ленты в порядке приоритета при дублях (из дублей остаётся запись ленты, стоящей выше):
+   ведомства НСО — первыми, затем ФНС и СМИ, затем Минкультуры России */
+export const ALL_SOURCES = [LOCAL_SOURCES[0], LOCAL_SOURCES[1], ...SOURCES, LOCAL_SOURCES[2], LOCAL_SOURCES[3]];
+
+/* Пропускается ли лента в этом прогоне: в GitHub Actions ленты с ci_unreachable не запрашиваются
+   (env — process.env или подмена в тестах; NEWS_TRY_CI_UNREACHABLE=1 — всё-таки попробовать) */
+export const CI_SKIP_NOTE = 'источник недоступен с GitHub, используется при локальном запуске';
+export function skipInThisRun(source, env = process.env) {
+  return Boolean(source && source.ci_unreachable && env && env.GITHUB_ACTIONS && !env.NEWS_TRY_CI_UNREACHABLE);
+}
 
 /* ---------- Сущности и теги ---------- */
 const NAMED = {
@@ -267,12 +393,15 @@ export function parseDate(s) {
 }
 
 const TOPIC_RULES = [
-  ['grants', ['грант', 'субсид', 'президентск', 'фонд культурных', 'конкурсн отбор', 'конкурс проектов']],
-  ['industry', ['детский театр', 'детского театра', 'детских театр', 'кукольн', 'театр кукол', 'театр для детей', 'для детей', 'детский спектакл', 'детских спектакл', 'юного зрителя', '=тюз', 'детские праздник', 'аниматор']]
+  // гранты: ПФКИ и Фонд президентских грантов, конкурсы на субсидии (в т.ч. региональные конкурсы НСО)
+  ['grants', ['грант', 'субсид', 'президентск', 'фонд культурных', '=пфки', 'конкурсн отбор', 'конкурс проектов', 'конкурса проектов']],
+  // детский театр и смежное: кукольные и школьные театры, театральные студии, семейные спектакли, жанр «…-сказка» (опера-сказка, спектакль-сказка)
+  ['industry', ['детский театр', 'детского театра', 'детских театр', 'кукольн', 'театр кукол', 'театр для детей', 'для детей', 'детский спектакл', 'детских спектакл', 'юного зрителя', 'юных зрител', '=тюз', 'детские праздник', 'аниматор',
+    'школьный театр', 'школьного театра', 'школьных театр', 'театральная студия', 'театральной студии', 'театральных студий', 'семейный спектакл', 'семейного спектакл', '-сказк']]
 ];
 /* Гранты по тексту анонса — только по фразам о самом конкурсе. Упоминание «грант/фонд» в теле новости о фестивале
    («проходит при поддержке Президентского фонда…») ещё не делает её новостью о грантах — такая метка вводила бы в заблуждение */
-const GRANT_BODY = ['приём заявок', 'прием заявок', 'заявки принимаются', 'конкурсн отбор', 'конкурс проектов', 'получение грант', 'на соискание грант', 'итоги конкурса'];
+const GRANT_BODY = ['приём заявок', 'прием заявок', 'заявки принимаются', 'конкурсн отбор', 'конкурс проектов', 'получение грант', 'на соискание грант', 'итоги конкурса', 'грантового конкурса'];
 
 /* Совпадение со списком слов; «=слово» — целое слово (как в фильтре лент) */
 const hasAny = (text, words) => words.some(w => (w.startsWith('=') ? new RegExp(`(^|[^а-яёa-z0-9])${w.slice(1)}($|[^а-яёa-z0-9])`, 'i').test(text) : text.includes(w)));
@@ -349,7 +478,7 @@ export function dedupe(items, threshold = 0.8) {
 }
 
 /* Свежие записи + накопленные: дедуп (свежие приоритетнее), окно KEEP_DAYS, сортировка по дате (новые выше), потолок MAX_ITEMS */
-export function mergeItems(fresh, previous, now = Date.now(), { keepDays = KEEP_DAYS, max = MAX_ITEMS } = {}) {
+export function mergeItems(fresh, previous, now = Date.now(), { keepDays = KEEP_DAYS, max = MAX_ITEMS, perSource = Infinity } = {}) {
   const from = now - keepDays * DAY;
   const all = dedupe([...(fresh || []), ...(previous || [])])
     .filter(it => {
@@ -357,7 +486,10 @@ export function mergeItems(fresh, previous, now = Date.now(), { keepDays = KEEP_
       return Number.isFinite(t) && t >= from && t - now <= FUTURE_TOLERANCE_MS;
     });
   all.sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at) || a.id.localeCompare(b.id));
-  return all.slice(0, max);
+  // потолок на источник: после сортировки оставляем самые свежие записи каждого источника
+  const seen = new Map();
+  const capped = all.filter(it => { const k = it.source_url || it.source || ''; const n = (seen.get(k) || 0) + 1; seen.set(k, n); return n <= perSource; });
+  return capped.slice(0, max);
 }
 
 /* ---------- robots.txt ---------- */
@@ -443,7 +575,8 @@ export function essence(doc) {
 /* Когда лента последний раз отвечала успешно (ok или empty). Сбой — переносим прежнее значение из прошлого файла
    (сопоставление по адресу ленты); у файла старого формата без last_ok_at берём fetched_at прошлого успешного прогона */
 export function sourceLastOk(status, prevSources, nowIso) {
-  if (status.status !== 'error') return nowIso;
+  // лента, пропущенная в этом прогоне (skipped), сейчас не отвечала — как и при сбое, переносим прежнее значение
+  if (status.status !== 'error' && status.status !== 'skipped') return nowIso;
   const old = (Array.isArray(prevSources) ? prevSources : []).find(s => s && s.feed_url === status.feed_url);
   if (!old) return null;
   if (old.last_ok_at) return old.last_ok_at;
@@ -453,21 +586,25 @@ export function sourceLastOk(status, prevSources, nowIso) {
 /* Собирает итоговый документ из результатов лент и прежнего файла (чистая функция) */
 export function buildDoc(results, prev, now = Date.now()) {
   const nowIso = new Date(now).toISOString();
-  const anyOk = results.some(r => r.status.status !== 'error');
+  // Пропущенные в этом прогоне ленты (skipped: недоступны с GitHub, качаются при локальном запуске) не считаются
+  // ни успехом, ни сбоем: sources_total — сколько лент реально запрашивали, sources_skipped — сколько пропустили
+  const attempted = results.filter(r => r.status.status !== 'skipped');
+  const anyOk = attempted.some(r => r.status.status !== 'error');
   const fresh = results.flatMap(r => r.items);
   const prevItems = prev && Array.isArray(prev.items) ? prev.items : [];
   const prevSources = prev && prev.sources;
   // Частичный сбой честно виден в файле: сколько лент не ответило (весь файл при этом не stale — часть лент жива)
-  const failed = results.filter(r => r.status.status === 'error').length;
+  const failed = attempted.filter(r => r.status.status === 'error').length;
   const doc = {
     updated_at: anyOk ? nowIso : (prev && prev.updated_at) || null,
     stale: !anyOk,
-    sources_total: results.length,
+    sources_total: attempted.length,
     sources_failed: failed,
+    sources_skipped: results.length - attempted.length,
     keep_days: KEEP_DAYS,
     max_items: MAX_ITEMS,
     sources: results.map(r => ({ ...r.status, last_ok_at: sourceLastOk(r.status, prevSources, nowIso) })),
-    items: mergeItems(fresh, prevItems, now)
+    items: mergeItems(fresh, prevItems, now, { perSource: MAX_PER_SOURCE })
   };
   if (!anyOk) {
     // полный сбой: записи — прежние, отметка времени первого сбоя не сдвигается
@@ -485,26 +622,34 @@ async function main() {
     try { prev = readJson(file); } catch (e) { console.error(`news.json не читается (${e.message}) — начинаем с пустого списка`); }
   }
   const now = Date.now();
-  // ленты на разных хостах качаем параллельно; один хост (culture.gov.ru) — последовательно, чтобы не нагружать
+  // В GitHub Actions ленты ведомств, недоступные зарубежным серверам, не запрашиваем — статус skipped, одна строка в логе
+  const skipped = ALL_SOURCES.filter(s => skipInThisRun(s));
+  const toFetch = ALL_SOURCES.filter(s => !skipInThisRun(s));
+  // ленты на разных хостах качаем параллельно; один хост (culture.gov.ru, infopro54.ru) — последовательно, чтобы не нагружать
   const byHost = new Map();
-  for (const s of SOURCES) {
+  for (const s of toFetch) {
     const h = new URL(s.feed_url).host;
     if (!byHost.has(h)) byHost.set(h, []);
     byHost.get(h).push(s);
   }
   const resultsByKey = new Map();
+  for (const s of skipped) {
+    resultsByKey.set(s.key, { status: { name: s.name, url: s.url, feed_url: s.feed_url, fetched_at: new Date(now).toISOString(), status: 'skipped', items: 0, note: CI_SKIP_NOTE }, items: [] });
+  }
   await Promise.all([...byHost.values()].map(async group => {
     for (const s of group) resultsByKey.set(s.key, await fetchSource(s, now));
   }));
-  const results = SOURCES.map(s => resultsByKey.get(s.key));
+  const results = ALL_SOURCES.map(s => resultsByKey.get(s.key));
   for (const r of results) {
     const st = r.status;
+    if (st.status === 'skipped') continue;
     console.log(`${st.status.padEnd(5)} ${st.name}: ${st.items} из ${st.total ?? 0}${st.error ? ' — ' + st.error : ''}`);
   }
+  if (skipped.length) console.log(`skip  ${skipped.map(s => s.name).join('; ')}: ${CI_SKIP_NOTE}`);
 
   const doc = buildDoc(results, prev, now);
-  // Недоступные ленты — заметная строка в сводке GitHub Actions: сайты ведомств РФ часто не отвечают зарубежным серверам GitHub
-  // (502 / таймаут). Тогда помогает локальный прогон из российской сети: node scripts/refresh-local.mjs (см. DATA_SOURCES.md)
+  // Неожиданно упавшие ленты (не заранее известные skipped) — заметная строка в сводке GitHub Actions.
+  // Если упала лента из российской сети, помогает локальный прогон: node scripts/refresh-local.mjs (см. DATA_SOURCES.md)
   if (doc.sources_failed && process.env.GITHUB_ACTIONS) {
     const names = results.filter(r => r.status.status === 'error').map(r => r.status.name).join('; ');
     console.log(`::warning file=data/news.json::Не ответили ${doc.sources_failed} из ${doc.sources_total} лент: ${names}. Прежние записи сохранены; обновить из российской сети — node scripts/refresh-local.mjs`);

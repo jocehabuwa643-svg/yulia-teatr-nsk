@@ -1,8 +1,9 @@
 {
-  "updated_at": "2026-11-24T02:36:51.374Z",
+  "updated_at": "2026-11-24T11:32:33.392Z",
   "stale": false,
-  "sources_total": 5,
-  "sources_failed": 4,
+  "sources_total": 12,
+  "sources_failed": 0,
+  "sources_skipped": 0,
   "keep_days": 60,
   "max_items": 40,
   "sources": [
@@ -10,54 +11,304 @@
       "name": "Минкультуры Новосибирской области",
       "url": "https://mk.nso.ru/",
       "feed_url": "https://mk.nso.ru/rss.xml",
-      "fetched_at": "2026-11-24T02:36:51.374Z",
-      "status": "error",
-      "items": 0,
-      "error": "robots.txt недоступен: https://mk.nso.ru/robots.txt: HTTP 502",
-      "last_ok_at": "2026-11-21T14:37:46.505Z"
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "ok",
+      "items": 5,
+      "total": 10,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
     },
     {
       "name": "Правительство Новосибирской области",
       "url": "https://www.nso.ru/",
       "feed_url": "https://www.nso.ru/rss.xml",
-      "fetched_at": "2026-11-24T02:36:51.374Z",
-      "status": "error",
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "empty",
       "items": 0,
-      "error": "robots.txt недоступен: https://www.nso.ru/robots.txt: HTTP 502",
-      "last_ok_at": "2026-11-21T14:37:46.505Z"
+      "total": 10,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
     },
     {
       "name": "ФНС России (УФНС по Новосибирской области)",
       "url": "https://www.nalog.gov.ru/rn54/",
       "feed_url": "https://www.nalog.gov.ru/rn54/rss/",
-      "fetched_at": "2026-11-24T02:36:51.374Z",
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "empty",
+      "items": 0,
+      "total": 4,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
+    },
+    {
+      "name": "Infopro54",
+      "url": "https://infopro54.ru/category/news/society/culture/",
+      "feed_url": "https://infopro54.ru/category/news/society/culture/feed/",
+      "fetched_at": "2026-11-24T11:32:33.392Z",
       "status": "ok",
-      "items": 1,
-      "total": 5,
-      "last_ok_at": "2026-11-24T02:36:51.374Z"
+      "items": 11,
+      "total": 50,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
+    },
+    {
+      "name": "Вести Новосибирск",
+      "url": "https://www.nsktv.ru/",
+      "feed_url": "https://www.nsktv.ru/rss.php",
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "ok",
+      "items": 4,
+      "total": 30,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
+    },
+    {
+      "name": "Новосибирские новости",
+      "url": "https://nsknews.info/",
+      "feed_url": "https://nsknews.info/feed/",
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "ok",
+      "items": 3,
+      "total": 60,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
+    },
+    {
+      "name": "АиФ-Новосибирск",
+      "url": "https://nsk.aif.ru/",
+      "feed_url": "https://nsk.aif.ru/rss/all.php",
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "ok",
+      "items": 3,
+      "total": 105,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
+    },
+    {
+      "name": "Infopro54 · бизнес",
+      "url": "https://infopro54.ru/category/news/biznes/probiznes/",
+      "feed_url": "https://infopro54.ru/category/news/biznes/probiznes/feed/",
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "ok",
+      "items": 8,
+      "total": 50,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
+    },
+    {
+      "name": "Газета «Культура»",
+      "url": "https://portal-kultura.ru/",
+      "feed_url": "https://portal-kultura.ru/rss/",
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "ok",
+      "items": 3,
+      "total": 30,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
+    },
+    {
+      "name": "Клерк.ру",
+      "url": "https://www.klerk.ru/",
+      "feed_url": "https://www.klerk.ru/xml/index.xml",
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "ok",
+      "items": 8,
+      "total": 100,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
     },
     {
       "name": "Минкультуры России — новости министерства",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=2&lang=ru&TYPE=ministry&LIMIT=40&SECTION_ID=30",
-      "fetched_at": "2026-11-24T02:36:51.374Z",
-      "status": "error",
-      "items": 0,
-      "error": "robots.txt недоступен: https://culture.gov.ru/robots.txt: таймаут 10000 мс",
-      "last_ok_at": "2026-11-21T14:37:46.505Z"
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "ok",
+      "items": 1,
+      "total": 40,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
     },
     {
       "name": "Минкультуры России — культурная жизнь регионов",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=34&lang=ru&TYPE=news&LIMIT=40",
-      "fetched_at": "2026-11-24T02:36:51.374Z",
-      "status": "error",
+      "fetched_at": "2026-11-24T11:32:33.392Z",
+      "status": "empty",
       "items": 0,
-      "error": "robots.txt недоступен: https://culture.gov.ru/robots.txt: таймаут 10000 мс",
-      "last_ok_at": "2026-11-21T14:37:46.505Z"
+      "total": 40,
+      "last_ok_at": "2026-11-24T11:32:33.392Z"
     }
   ],
   "items": [
+    {
+      "id": "5ea5d59accef",
+      "title": "В ГИТИСе подвели итоги IX фестиваля театральных школ стран СНГ",
+      "summary": "",
+      "url": "https://portal-kultura.ru/articles/news/379862-v-gitise-podveli-itogi-ix-festivalya-teatralnykh-shkol-stran-sng/",
+      "source_name": "Газета «Культура»",
+      "source_url": "https://portal-kultura.ru/",
+      "published_at": "2026-11-24T10:35:21.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "573f85370335",
+      "title": "Перешли с АУСН на УСН, а доход сотрудника превысил 2,4 млн рублей: как считать НДФЛ",
+      "summary": "Смена АУСН на УСН не влияет на базу НДФЛ.",
+      "url": "https://www.klerk.ru/buh/news/719816/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T10:30:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "0f74b757444b",
+      "title": "Фестиваль «Книжная Сибирь» собрал более 12 000 гостей и 50 авторов",
+      "summary": "Двенадцатый фестиваль «Книжная Сибирь» – масштабное событие, объединившее читателей, писателей, издателей, библиотекарей и специалистов книжной отрасли. Девиз фестиваля этого года – «Книга…",
+      "url": "https://mk.nso.ru/news/12240",
+      "source_name": "Минкультуры Новосибирской области",
+      "source_url": "https://mk.nso.ru/",
+      "published_at": "2026-11-24T10:00:00.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "21a58e7a13d8",
+      "title": "До конца 2026 года обладатели «Пушкинской карты» смогут потратить на билеты в кино на 300 рублей больше",
+      "summary": "В 2026 году номинал карты увеличен до 5 300 рублей, из которых 2 300 рублей предназначены специально для покупки билетов в кино. Остальные средства по-прежнему можно направлять на театры, музеи…",
+      "url": "https://mk.nso.ru/news/12239",
+      "source_name": "Минкультуры Новосибирской области",
+      "source_url": "https://mk.nso.ru/",
+      "published_at": "2026-11-24T09:50:00.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "e4d35005e9d4",
+      "title": "Создатели шоу-спектакля «Гэтсби» в Новосибирске пошли на мировое",
+      "summary": "Бывшие партнеры спорили об интеллектуальных правах на постановку Сообщение Создатели шоу-спектакля «Гэтсби» в Новосибирске пошли на мировое появились сначала на Infopro54 - Новости Новосибирска…",
+      "url": "https://infopro54.ru/news/sozdateli-shou-spektaklya-getsbi-v-novosibirske-poshli-na-mirovoe/",
+      "source_name": "Infopro54",
+      "source_url": "https://infopro54.ru/category/news/society/culture/",
+      "published_at": "2026-11-24T09:30:46.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "1589229ef962",
+      "title": "ИП, работающий по трудовому договору, может получить двойные больничные",
+      "summary": "Человек-ИП-сотрудник имеет право на больничные по двум основаниям.",
+      "url": "https://www.klerk.ru/buh/news/720020/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T09:25:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "14cf63c60f47",
+      "title": "Подведены итоги первого грантового конкурса ПФКИ",
+      "summary": "",
+      "url": "https://portal-kultura.ru/articles/news/379858-podvedeny-itogi-pervogo-grantovogo-konkursa-pfki/",
+      "source_name": "Газета «Культура»",
+      "source_url": "https://portal-kultura.ru/",
+      "published_at": "2026-11-24T08:30:42.000Z",
+      "topic": "grants"
+    },
+    {
+      "id": "8f5c64190e61",
+      "title": "Самозанятые могут формировать пенсионный стаж добровольными взносами",
+      "summary": "Для получения страховой пенсии по старости нужно не менее 15 лет стажа и 30 пенсионных баллов. Самозанятые могут накапливать их через добровольное пенсионное страхование.",
+      "url": "https://www.klerk.ru/buh/news/720116/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T08:30:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "80d28ed99e71",
+      "title": "Лимиты УСН в 2027 году: таблица изменений, НДС и новые правила для бизнеса",
+      "summary": "Разберём, какие лимиты УСН и НДС будут действовать с 1 января 2027 года, как выбрать ставку налога, когда можно потерять право на спецрежим и что бухгалтеру необходимо проверить до конца 2026 года.",
+      "url": "https://www.klerk.ru/blogs/klerk/720180/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T08:20:32.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "5d42327277d9",
+      "title": "Налоговики находят нарушения при каждой проверке ККТ на рынках",
+      "summary": "Налоговики контролируют выдачу кассовых чеков и легализацию выручки в торговле и сфере услуг. Проверки на рынках и в других торговых пространствах продолжатся по всему региону.",
+      "url": "https://www.klerk.ru/buh/news/719751/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T08:10:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "14ddb31b09e5",
+      "title": "Масштабный проект ГТРК «Новосибирск» показал уникальную культуру народов Сибири",
+      "summary": "Путешествие началось с Республики Алтай, которая в этом году отмечает 270-летие добровольного вхождения в состав России. Далее маршрут пролег через Тыву, где бойцы 55-й мотострелковой бригады разных…",
+      "url": "https://www.nsktv.ru/news/city/masshtabnyy_proekt_vesti_novosibirsk_pokazal_unikalnuyu_kulturu_narodov_sibiri/",
+      "source_name": "Вести Новосибирск",
+      "source_url": "https://www.nsktv.ru/",
+      "published_at": "2026-11-24T07:57:57.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "57ebfd027e08",
+      "title": "Московский ансамбль современной музыки выступит в Филармонии",
+      "summary": "Программа объединит шедевры камерной классики и современной музыки Сообщение Московский ансамбль современной музыки выступит в Филармонии появились сначала на Infopro54 - Новости Новосибирска…",
+      "url": "https://infopro54.ru/news/moskovskij-ansambl-sovremennoj-muzyki-vystupit-v-filarmonii/?erid=F7NfYUJCUneVfSVduS7y",
+      "source_name": "Infopro54",
+      "source_url": "https://infopro54.ru/category/news/society/culture/",
+      "published_at": "2026-11-24T07:43:06.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "2e48cbef11ad",
+      "title": "В Томске прошла премьера оперы-сказки «Теремок» композитора Алексея Пиоттуха",
+      "summary": "",
+      "url": "https://portal-kultura.ru/articles/news/379856-v-tomske-proshla-premera-opery-skazki-teremok-kompozitora-alekseya-piottukha/",
+      "source_name": "Газета «Культура»",
+      "source_url": "https://portal-kultura.ru/",
+      "published_at": "2026-11-24T07:24:33.000Z",
+      "topic": "industry"
+    },
+    {
+      "id": "0b1530e3e134",
+      "title": "Космонавт Анна Кикина провела виртуальную экскурсию для школьников Новосибирска",
+      "summary": "Из своего второго полёта на МКС космонавт Анна Кикина передала привет родному Новосибирскому планетарию. Сегодня состоялся созвон с ребятами по спутниковой связи, которого они ждали несколько…",
+      "url": "https://www.nsktv.ru/news/education/kosmonavt_anna_kikina_provela_virtualnuyu_ekskursiyu_dlya_shkolnikov_novosibirska/",
+      "source_name": "Вести Новосибирск",
+      "source_url": "https://www.nsktv.ru/",
+      "published_at": "2026-11-24T05:34:33.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "9f3e9a700c87",
+      "title": "Льготные ставки УСН для НКО и религиозных объединений оставили в ведении регионов",
+      "summary": "Особые условия смогут устанавливать для социально ориентированных НКО и религиозных объединений. Без поправки налог для некоторых организаций мог вырасти в несколько раз.",
+      "url": "https://www.klerk.ru/buh/news/719945/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-23T18:09:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "b523ac4bf805",
+      "title": "В Новосибирской области из-за гриппа и ОРВИ закрыли 53 группы в детсадах",
+      "summary": "",
+      "url": "https://nsk.aif.ru/health/v-novosibirskoy-oblasti-iz-za-grippa-i-orvi-zakryli-53-gruppy-v-detsadah",
+      "source_name": "АиФ-Новосибирск",
+      "source_url": "https://nsk.aif.ru/",
+      "published_at": "2026-11-23T14:06:38.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "62fe05ab30f0",
+      "title": "Новосибирская актриса отмечает 80-летие бенефисом в «Мадам Рубинштейн»",
+      "summary": "Известная новосибирская актриса Галина Алёхина сыграла главную роль в новом спектакле «Красного факела».",
+      "url": "https://nsknews.info/news/novosibirskaia-aktrisa-otmecaet-80-letie-benefisom-v-madam-rubinstein",
+      "source_name": "Новосибирские новости",
+      "source_url": "https://nsknews.info/",
+      "published_at": "2026-11-23T12:00:50.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "64f91047f6ec",
+      "title": "Театр «Старый дом» открыл камерную сцену на Зыряновской",
+      "summary": "Новосибирский театр «Старый дом» открыл камерную сцену без дистанции со зрителем. В новой точке на улице Зыряновской, 55 будут репетировать и устраивать неформатные спектакли. Первым стала…",
+      "url": "https://nsknews.info/news/teatr-staryi-dom-otkryl-kamernuiu-scenu-na-zyrianovskoi",
+      "source_name": "Новосибирские новости",
+      "source_url": "https://nsknews.info/",
+      "published_at": "2026-11-23T11:37:00.000Z",
+      "topic": "city"
+    },
     {
       "id": "5e294288b436",
       "title": "О способах уплаты имущественных налогов рассказали во время встречи с работниками новосибирской организации",
@@ -69,6 +320,76 @@
       "topic": "taxes"
     },
     {
+      "id": "fa3c06b207e9",
+      "title": "В Новосибирской области начали оплачивать больничные самозанятым",
+      "summary": "",
+      "url": "https://nsk.aif.ru/society/v-novosibirskoy-oblasti-nachali-oplachivat-bolnichnye-samozanyatym",
+      "source_name": "АиФ-Новосибирск",
+      "source_url": "https://nsk.aif.ru/",
+      "published_at": "2026-11-23T10:45:00.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "064f8f4795fa",
+      "title": "89 солистов и 9 ансамблей собрал конкурс «Золотые струны Сибири»",
+      "summary": "Участниками открытого Межрегионального конкурса исполнителей на балалайке и домре в заочном формате стали конкурсанты из Феодосии (Республика Крым), Донецка и Макеевки (ДНР), а также из Беларуси…",
+      "url": "https://mk.nso.ru/news/12234",
+      "source_name": "Минкультуры Новосибирской области",
+      "source_url": "https://mk.nso.ru/",
+      "published_at": "2026-11-23T09:05:00.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "349317d33c82",
+      "title": "Международный фестиваль в Новосибирске вдохновил детей на чтение книг",
+      "summary": "«Книга или смартфон? Каких-то тридцать лет назад ответ был очевиден, — отмечает корреспондент Николай Осипов. — Гаджет был дорогим и малофункциональным, а книга погружала ребёнка в мир идей и…",
+      "url": "https://www.nsktv.ru/news/obshchestvo/mezhdunarodnyy_festival_v_novosibirske_vdokhnovil_detey_na_chtenie_knig/",
+      "source_name": "Вести Новосибирск",
+      "source_url": "https://www.nsktv.ru/",
+      "published_at": "2026-11-23T06:16:13.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "1074015e8a69",
+      "title": "Лимит Пушкинской карты на кино увеличен до конца года",
+      "summary": "",
+      "url": "https://nsk.aif.ru/society/limit-pushkinskoy-karty-na-kino-uvelichen-do-konca-goda",
+      "source_name": "АиФ-Новосибирск",
+      "source_url": "https://nsk.aif.ru/",
+      "published_at": "2026-11-23T06:09:41.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "503cc8ff2715",
+      "title": "Детсад на 120 мест строят в экоквартале «На Кедровой» под Новосибирском",
+      "summary": "Процесс проконтролировали специалисты первого отдела госстройнадзора Новосибирской области.",
+      "url": "https://nsknews.info/news/detsad-na-120-mest-stroiat-v-ekokvartale-na-kedrovoi-pod-novosibirskom",
+      "source_name": "Новосибирские новости",
+      "source_url": "https://nsknews.info/",
+      "published_at": "2026-11-23T05:52:00.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "95a1466fe670",
+      "title": "Пятиклассницы из Бердска победили в конкурсе «Мы — гордость Родины»",
+      "summary": "Гордость России живёт в Бердске. Две пятиклассницы вернулись из столицы со статусом лучших юных исследователей страны, обойдя тысячу конкурентов. Тысяча участников со всей страны, жёсткая…",
+      "url": "https://www.nsktv.ru/news/obshchestvo/pyatiklassnitsy_iz_berdska_pobedili_v_konkurse_my_gordost_rodiny/",
+      "source_name": "Вести Новосибирск",
+      "source_url": "https://www.nsktv.ru/",
+      "published_at": "2026-11-23T05:48:08.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "9ade68169db4",
+      "title": "Воспитание начинается с личного примера",
+      "summary": "Министр культуры Новосибирской области Юрий Зимняков и министр образования Новосибирской области Мария Жафярова встретились с известным писателем Захаром Прилепиным. Встреча прошла на полях…",
+      "url": "https://mk.nso.ru/news/12233",
+      "source_name": "Минкультуры Новосибирской области",
+      "source_url": "https://mk.nso.ru/",
+      "published_at": "2026-11-23T03:20:00.000Z",
+      "topic": "culture"
+    },
+    {
       "id": "a31f4eb6e802",
       "title": "Концерт Молодежного духового оркестра",
       "summary": "Концерт Молодежного духового оркестра Новосибирской государственной консерватории имени М. И. Глинки под управлением Игоря Шаталова объединяет академическую и популярную музыку – от торжественных…",
@@ -76,6 +397,16 @@
       "source_name": "Минкультуры России — культурная жизнь регионов",
       "source_url": "https://culture.gov.ru/press/news/",
       "published_at": "2026-11-21T14:35:07.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "6942668c90c6",
+      "title": "Что Захар Прилепин сказал о Цое, Кобзоне и Киркорове на фестивале в Новосибирске",
+      "summary": "Писатель выступил перед родителями и педагогами: главное из часового разговора о детях, чтении и «правильных настройках» Сообщение Что Захар Прилепин сказал о Цое, Кобзоне и Киркорове на фестивале в…",
+      "url": "https://infopro54.ru/news/chto-zahar-prilepin-skazal-o-czoe-kobzone-i-kirkorove-na-festivale-v-novosibirske/",
+      "source_name": "Infopro54",
+      "source_url": "https://infopro54.ru/category/news/society/culture/",
+      "published_at": "2026-11-21T10:00:33.000Z",
       "topic": "culture"
     },
     {
@@ -109,26 +440,6 @@
       "topic": "culture"
     },
     {
-      "id": "d5669fd9f698",
-      "title": "Театр «Глобус» стал лауреатом премии Министерства культуры Российской Федерации",
-      "summary": "Министерство культуры Новосибирской области поздравляет Новосибирский академический молодежный театр «Глобус» с получением премии за лучшую театральную постановку по произведениям русской классики…",
-      "url": "https://mk.nso.ru/news/12226",
-      "source_name": "Минкультуры Новосибирской области",
-      "source_url": "https://mk.nso.ru/",
-      "published_at": "2026-11-19T11:50:00.000Z",
-      "topic": "culture"
-    },
-    {
-      "id": "1b95350e07f1",
-      "title": "Звездный состав писателей и более 100 издательств посетят фестиваль «Книжная Сибирь»",
-      "summary": "С 20 по 22 ноября в Новосибирске состоится международный фестиваль «Книжная Сибирь». Основной площадкой мероприятия станет Государственная публичная научно-техническая библиотека. О программе…",
-      "url": "https://mk.nso.ru/news/12223",
-      "source_name": "Минкультуры Новосибирской области",
-      "source_url": "https://mk.nso.ru/",
-      "published_at": "2026-11-19T11:40:00.000Z",
-      "topic": "culture"
-    },
-    {
       "id": "3c2039f63c6a",
       "title": "Мероприятия IX Большого Детского фестиваля собрали более 30 тысяч зрителей",
       "summary": "IX Большой Детский фестиваль под руководством народного артиста Российской Федерации Сергея Безрукова проходил в двух городах: с 22 августа по 17 ноября в Москве и с 12 сентября по 4 ноября – в…",
@@ -147,6 +458,66 @@
       "source_url": "https://culture.gov.ru/press/news/",
       "published_at": "2026-11-14T07:37:51.000Z",
       "topic": "culture"
+    },
+    {
+      "id": "5338c1577c92",
+      "title": "Филиппа Селиванова назначили главным дирижером НОВАТа",
+      "summary": "Он сменил Михаила Татарникова, который продолжит сотрудничать с театром Сообщение Филиппа Селиванова назначили главным дирижером НОВАТа появились сначала на Infopro54 - Новости Новосибирска. Новости…",
+      "url": "https://infopro54.ru/news/filippa-selivanova-naznachili-glavnym-dirizherom-novata/",
+      "source_name": "Infopro54",
+      "source_url": "https://infopro54.ru/category/news/society/culture/",
+      "published_at": "2026-11-03T05:15:37.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "b601e62ddeb6",
+      "title": "Новосибирская филармония приглашает на «Белый фестиваль»",
+      "summary": "С 2 по 17 декабря состоятся шесть ярких концертов с участием выдающихся музыкантов из различных жанров Сообщение Новосибирская филармония приглашает на «Белый фестиваль» появились сначала на…",
+      "url": "https://infopro54.ru/news/novosibirskaya-filarmoniya-priglashaet-na-belyj-festival/?erid=F7NfYUJCUneVewx4uRhQ",
+      "source_name": "Infopro54",
+      "source_url": "https://infopro54.ru/category/news/society/culture/",
+      "published_at": "2026-10-30T09:05:38.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "a1182588da97",
+      "title": "Патенты для бизнеса в Новосибирской области подорожают в 2027 году",
+      "summary": "Минфин региона не зафиксировал оттока предпринимателей после предыдущих индексаций. Размер индексации будет зависеть от вида деятельности Сообщение Патенты для бизнеса в Новосибирской области…",
+      "url": "https://infopro54.ru/news/patenty-dlya-biznesa-v-novosibirskoj-oblasti-podorozhayut-v-2027-godu/",
+      "source_name": "Infopro54 · бизнес",
+      "source_url": "https://infopro54.ru/category/news/biznes/probiznes/",
+      "published_at": "2026-10-29T10:00:11.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "a76f9351b9e5",
+      "title": "Предприниматели предложили свои поправки в Налоговый Кодекс России",
+      "summary": "Изменения, которые включены в проект федерального закона сейчас, увеличивают налоговую нагрузку на бизнес, повышают штрафы и ухудшают условия его работы Сообщение Предприниматели предложили свои…",
+      "url": "https://infopro54.ru/news/predprinimateli-predlozhili-svoi-popravki-v-nalogovyj-kodeks-rossii/",
+      "source_name": "Infopro54 · бизнес",
+      "source_url": "https://infopro54.ru/category/news/biznes/probiznes/",
+      "published_at": "2026-10-27T10:00:47.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "3e4661335848",
+      "title": "Игорь Бутман отпразднует юбилей на сцене Новосибирской филармонии",
+      "summary": "Зрителей ожидают эксклюзивные выступления, неповторимые совместные импровизации и атмосфера энергии и вдохновения, которая неизменно сопровождает концерты маэстро Сообщение Игорь Бутман отпразднует…",
+      "url": "https://infopro54.ru/news/igor-butman-otprazdnuet-yubilej-na-scene-novosibirskoj-filarmonii/?erid=F7NfYUJCUneVewcQqxp1",
+      "source_name": "Infopro54",
+      "source_url": "https://infopro54.ru/category/news/society/culture/",
+      "published_at": "2026-10-21T08:04:07.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "e0efbd196b5e",
+      "title": "Период осенний отчетности начинается у новосибирских предпринимателей",
+      "summary": "Эта отчетная кампания значительно отличается от предыдущих Сообщение Период осенний отчетности начинается у новосибирских предпринимателей появились сначала на Infopro54 - Новости Новосибирска…",
+      "url": "https://infopro54.ru/news/period-osennij-otchetnosti-nachinaetsya-u-novosibirskix-predprinimatelej/",
+      "source_name": "Infopro54 · бизнес",
+      "source_url": "https://infopro54.ru/category/news/biznes/probiznes/",
+      "published_at": "2026-10-06T12:00:55.000Z",
+      "topic": "taxes"
     }
   ]
 }
