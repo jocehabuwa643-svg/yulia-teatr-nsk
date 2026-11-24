@@ -1,130 +1,132 @@
 {
-  "updated_at": "2026-11-24T11:32:33.392Z",
+  "updated_at": "2026-11-24T11:32:33.616Z",
   "stale": false,
-  "sources_total": 12,
+  "sources_total": 8,
   "sources_failed": 0,
-  "sources_skipped": 0,
+  "sources_skipped": 4,
   "keep_days": 60,
   "max_items": 40,
   "sources": [
     {
+      "name": "ФНС России (УФНС по Новосибирской области)",
+      "url": "https://www.nalog.gov.ru/rn54/",
+      "feed_url": "https://www.nalog.gov.ru/rn54/rss/",
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "empty",
+      "items": 0,
+      "total": 4,
+      "last_ok_at": "2026-11-24T11:32:33.616Z"
+    },
+    {
+      "name": "Infopro54",
+      "url": "https://infopro54.ru/category/news/society/culture/",
+      "feed_url": "https://infopro54.ru/category/news/society/culture/feed/",
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "ok",
+      "items": 11,
+      "total": 50,
+      "last_ok_at": "2026-11-24T11:32:33.616Z"
+    },
+    {
+      "name": "Вести Новосибирск",
+      "url": "https://www.nsktv.ru/",
+      "feed_url": "https://www.nsktv.ru/rss.php",
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "ok",
+      "items": 4,
+      "total": 30,
+      "last_ok_at": "2026-11-24T11:32:33.616Z"
+    },
+    {
+      "name": "Новосибирские новости",
+      "url": "https://nsknews.info/",
+      "feed_url": "https://nsknews.info/feed/",
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "ok",
+      "items": 3,
+      "total": 60,
+      "last_ok_at": "2026-11-24T11:32:33.616Z"
+    },
+    {
+      "name": "АиФ-Новосибирск",
+      "url": "https://nsk.aif.ru/",
+      "feed_url": "https://nsk.aif.ru/rss/all.php",
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "ok",
+      "items": 3,
+      "total": 105,
+      "last_ok_at": "2026-11-24T11:32:33.616Z"
+    },
+    {
+      "name": "Infopro54 · бизнес",
+      "url": "https://infopro54.ru/category/news/biznes/probiznes/",
+      "feed_url": "https://infopro54.ru/category/news/biznes/probiznes/feed/",
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "ok",
+      "items": 8,
+      "total": 50,
+      "last_ok_at": "2026-11-24T11:32:33.616Z"
+    },
+    {
+      "name": "Газета «Культура»",
+      "url": "https://portal-kultura.ru/",
+      "feed_url": "https://portal-kultura.ru/rss/",
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "ok",
+      "items": 3,
+      "total": 30,
+      "last_ok_at": "2026-11-24T11:32:33.616Z"
+    },
+    {
+      "name": "Клерк.ру",
+      "url": "https://www.klerk.ru/",
+      "feed_url": "https://www.klerk.ru/xml/index.xml",
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "ok",
+      "items": 8,
+      "total": 100,
+      "last_ok_at": "2026-11-24T11:32:33.616Z"
+    }
+  ],
+  "skipped_sources": [
+    {
       "name": "Минкультуры Новосибирской области",
       "url": "https://mk.nso.ru/",
       "feed_url": "https://mk.nso.ru/rss.xml",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "ok",
-      "items": 5,
-      "total": 10,
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "skipped",
+      "items": 0,
+      "note": "источник недоступен с GitHub, используется при локальном запуске",
       "last_ok_at": "2026-11-24T11:32:33.392Z"
     },
     {
       "name": "Правительство Новосибирской области",
       "url": "https://www.nso.ru/",
       "feed_url": "https://www.nso.ru/rss.xml",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "empty",
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "skipped",
       "items": 0,
-      "total": 10,
-      "last_ok_at": "2026-11-24T11:32:33.392Z"
-    },
-    {
-      "name": "ФНС России (УФНС по Новосибирской области)",
-      "url": "https://www.nalog.gov.ru/rn54/",
-      "feed_url": "https://www.nalog.gov.ru/rn54/rss/",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "empty",
-      "items": 0,
-      "total": 4,
-      "last_ok_at": "2026-11-24T11:32:33.392Z"
-    },
-    {
-      "name": "Infopro54",
-      "url": "https://infopro54.ru/category/news/society/culture/",
-      "feed_url": "https://infopro54.ru/category/news/society/culture/feed/",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "ok",
-      "items": 11,
-      "total": 50,
-      "last_ok_at": "2026-11-24T11:32:33.392Z"
-    },
-    {
-      "name": "Вести Новосибирск",
-      "url": "https://www.nsktv.ru/",
-      "feed_url": "https://www.nsktv.ru/rss.php",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "ok",
-      "items": 4,
-      "total": 30,
-      "last_ok_at": "2026-11-24T11:32:33.392Z"
-    },
-    {
-      "name": "Новосибирские новости",
-      "url": "https://nsknews.info/",
-      "feed_url": "https://nsknews.info/feed/",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "ok",
-      "items": 3,
-      "total": 60,
-      "last_ok_at": "2026-11-24T11:32:33.392Z"
-    },
-    {
-      "name": "АиФ-Новосибирск",
-      "url": "https://nsk.aif.ru/",
-      "feed_url": "https://nsk.aif.ru/rss/all.php",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "ok",
-      "items": 3,
-      "total": 105,
-      "last_ok_at": "2026-11-24T11:32:33.392Z"
-    },
-    {
-      "name": "Infopro54 · бизнес",
-      "url": "https://infopro54.ru/category/news/biznes/probiznes/",
-      "feed_url": "https://infopro54.ru/category/news/biznes/probiznes/feed/",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "ok",
-      "items": 8,
-      "total": 50,
-      "last_ok_at": "2026-11-24T11:32:33.392Z"
-    },
-    {
-      "name": "Газета «Культура»",
-      "url": "https://portal-kultura.ru/",
-      "feed_url": "https://portal-kultura.ru/rss/",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "ok",
-      "items": 3,
-      "total": 30,
-      "last_ok_at": "2026-11-24T11:32:33.392Z"
-    },
-    {
-      "name": "Клерк.ру",
-      "url": "https://www.klerk.ru/",
-      "feed_url": "https://www.klerk.ru/xml/index.xml",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "ok",
-      "items": 8,
-      "total": 100,
+      "note": "источник недоступен с GitHub, используется при локальном запуске",
       "last_ok_at": "2026-11-24T11:32:33.392Z"
     },
     {
       "name": "Минкультуры России — новости министерства",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=2&lang=ru&TYPE=ministry&LIMIT=40&SECTION_ID=30",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "ok",
-      "items": 1,
-      "total": 40,
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "skipped",
+      "items": 0,
+      "note": "источник недоступен с GitHub, используется при локальном запуске",
       "last_ok_at": "2026-11-24T11:32:33.392Z"
     },
     {
       "name": "Минкультуры России — культурная жизнь регионов",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=34&lang=ru&TYPE=news&LIMIT=40",
-      "fetched_at": "2026-11-24T11:32:33.392Z",
-      "status": "empty",
+      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "status": "skipped",
       "items": 0,
-      "total": 40,
+      "note": "источник недоступен с GitHub, используется при локальном запуске",
       "last_ok_at": "2026-11-24T11:32:33.392Z"
     }
   ],
