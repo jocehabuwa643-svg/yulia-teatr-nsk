@@ -209,7 +209,7 @@ function longP(label, text) {
 const caseLine = k => `<li><span>${esc(k.text)}</span><small>${k.date ? ruDate(k.date) + ' · ' : ''}${srcLink(k.source_url) || 'источник не указан'}</small></li>`;
 
 /* Варианты типа для ручного ввода цены */
-const KIND_OPTIONS = ['ticket', 'per_child', 'party_package', 'hour', 'subscription'];
+const KIND_OPTIONS = ['ticket', 'per_child', 'outbound_package', 'party_package', 'hour', 'subscription'];
 
 function cardHtml(c) {
   const g = groupOf(c.type);
@@ -356,7 +356,7 @@ function renderPriceChart() {
   const otherLi = r => `<li><span>${esc(r.name)}<small>${r.manual ? 'введено вами' : ''}${ruDate(r.date) !== '—' ? (r.manual ? ' · ' : '') + ruDate(r.date) : ''}${r.url ? ' · ' + srcLink(r.url) : ''}</small></span><b>${esc(r.text)}</b></li>`;
   const otherUl = rows => `<ul class="plist">${rows.map(otherLi).join('')}</ul>`;
   const SUB_PER = [['month', 'За месяц занятий'], ['pack', 'Абонемент на несколько занятий']];
-  const otherHtml = ['party_package', 'hour', 'subscription'].filter(k => other[k].length).map(k => {
+  const otherHtml = ['outbound_package', 'party_package', 'hour', 'subscription'].filter(k => other[k].length).map(k => {
     const real = other[k].filter(r => r.manual || r.confidence !== 'model');
     const model = other[k].filter(r => !r.manual && r.confidence === 'model');
     const body = !real.length ? ''

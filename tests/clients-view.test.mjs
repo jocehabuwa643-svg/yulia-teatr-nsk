@@ -229,3 +229,64 @@ test('страж: pushState недоступен (file://) — подразде�
   assert.equal(g.push(), false);
   assert.equal(g.release(), false);
 });
+
+/* ---------- Перезагрузка с открытым подразделом: запасная запись ----------
+   История после перезагрузки: [A (старт), B (наша старая метка, текущая)]. Открытие должно занять B, а не класть C:
+   тогда «назад» из открытого подраздела закрывает его (уходит на A), и следующего лишнего шага на том же адресе нет. */
+function reloadedHarness() {
+  const h = fakeHistory(1);
+  h.pushState({ [HIST_KEY]: 'old-token' });          // запись от прошлой загрузки страницы
+  const g = makeBackGuard(h);
+  const d = { open: false };
+  const close = () => { if (d.open) { d.open = false; g.release(); } };
+  h.onpop(st => { if (g.onPop(st) && d.open) close(); else g.scrub(); });
+  const open = () => { if (d.open) return; d.open = true; g.push(); };
+  g.scrub();                                         // как при загрузке clients-view.js
+  return { h, g, d, open, close };
+}
+
+test('страж: после перезагрузки открытие занимает запасную запись, новую не кладёт', () => {
+  const x = reloadedHarness();
+  assert.equal(x.g.spare, true);
+  const len = x.h.index;
+  x.open();
+  assert.equal(x.h.index, len, 'запись не добавилась');
+  assert.ok(x.g.isOurs(x.h.state));
+});
+
+test('страж: после перезагрузки «назад» закрывает подраздел за один шаг и остаётся на сайте', () => {
+  const x = reloadedHarness();
+  x.open();
+  x.h.back(); x.h.flush();
+  assert.equal(x.d.open, false);
+  assert.equal(x.h.index, 0, 'стартовая запись A — следующий «назад» уже уводит с сайта, лишнего шага нет');
+});
+
+test('страж: занятую запасную запись кнопка закрывает без back(); повторные циклы не копят записей', () => {
+  const x = reloadedHarness();
+  let backs = 0; const origBack = x.h.back; x.h.back = () => { backs++; origBack(); };
+  for (let i = 0; i < 5; i++) {
+    x.open(); x.close(); x.h.flush();
+    assert.equal(x.h.index, 1, `цикл ${i}`);
+    assert.equal(x.g.pending, false);
+    assert.equal(x.h.state, null, 'метка снята');
+  }
+  assert.equal(backs, 0, 'back() ни разу не вызывался');
+});
+
+/* ---------- Подписи к числам ---------- */
+test('countWord: согласование с числом (1 школа, 2 школы, 5 школ, 11 школ, 21 школа)', async () => {
+  const { countWord, pluralRu } = await import('../js/clients-model.js');
+  assert.equal(countWord('school', 1), 'школа');
+  assert.equal(countWord('school', 2), 'школы');
+  assert.equal(countWord('school', 5), 'школ');
+  assert.equal(countWord('school', 11), 'школ');
+  assert.equal(countWord('school', 21), 'школа');
+  assert.equal(countWord('kindergarten', 2), 'детских сада');
+  assert.equal(countWord('kindergarten', 1), 'детский сад');
+  assert.equal(countWord('kindergarten', 0), 'детских садов');
+  assert.equal(countWord('culture', 0), 'ДК и клубов');
+  assert.equal(countWord('places', 6), 'мест на карте');
+  assert.equal(pluralRu(112, 'a', 'b', 'c'), 'c');
+  assert.equal(pluralRu(1.5, 'a', 'b', 'c'), 'c');
+});

@@ -12,12 +12,14 @@
 export const KINDS = {
   ticket: { label: 'Билет на спектакль или сеанс', short: 'билет', per: 'за человека, в зале' },
   per_child: { label: 'Выездной спектакль, за ребёнка', short: 'выезд, за ребёнка', per: 'за ребёнка' },
+  // выезд с ценой за всю программу для группы (шоу Николя: 8 000 ₽ за 45 мин до 15 детей) — не «за человека»
+  outbound_package: { label: 'Выезд — цена за программу для группы', short: 'выезд, за программу', per: 'за всю программу для группы' },
   party_package: { label: 'Праздник — пакет', short: 'пакет праздника', per: 'за весь праздник' },
   hour: { label: 'Аренда — час', short: 'час аренды', per: 'за час' },
   subscription: { label: 'Абонемент или месяц занятий', short: 'абонемент', per: 'за абонемент или месяц' },
   other: { label: 'Прочее (предоплата, разовое занятие)', short: 'прочее', per: '' }
 };
-export const KIND_ORDER = ['ticket', 'per_child', 'party_package', 'hour', 'subscription', 'other'];
+export const KIND_ORDER = ['ticket', 'per_child', 'outbound_package', 'party_package', 'hour', 'subscription', 'other'];
 /* Цены «за человека» — только их можно сравнивать с билетом Юлии */
 export const PER_PERSON = new Set(['ticket', 'per_child']);
 
@@ -66,6 +68,7 @@ export function kindOf(p) {
   if (p.kind && KINDS[p.kind]) return p.kind;
   const u = String(p.unit || '').toLowerCase();
   if (/пакет/.test(u)) return 'party_package';
+  if (/шоу|выезд|программ/.test(u)) return 'outbound_package';
   if (/час/.test(u)) return 'hour';
   if (/абонемент|мес/.test(u)) return 'subscription';
   if (/реб/.test(u)) return 'per_child';
@@ -97,7 +100,7 @@ export function manualPrice(m) {
   if (!m || !Number.isFinite(m.value)) return null;
   const kind = m.kind && KINDS[m.kind] ? m.kind : 'ticket';
   return {
-    label: 'введено вами', value: m.value, unit: m.unit || (kind === 'ticket' ? '₽/билет' : kind === 'per_child' ? '₽/ребёнок' : kind === 'hour' ? '₽/час' : kind === 'party_package' ? '₽/пакет' : kind === 'subscription' ? '₽/мес' : '₽'),
+    label: 'введено вами', value: m.value, unit: m.unit || (kind === 'ticket' ? '₽/билет' : kind === 'per_child' ? '₽/ребёнок' : kind === 'hour' ? '₽/час' : kind === 'party_package' ? '₽/пакет' : kind === 'outbound_package' ? '₽/выезд' : kind === 'subscription' ? '₽/мес' : '₽'),
     qualifier: null, kind, source_name: 'Ручной ввод', source_url: safeUrl(m.url), fetched_at: m.date || null, confidence: 'manual', manual: true
   };
 }
@@ -222,10 +225,10 @@ export function perPersonRows(list, manualAll = {}) {
   return out;
 }
 
-/* Сводка цен других типов (пакет праздника, аренда-час, абонемент) — каждая группа отдельно */
+/* Сводка цен других типов (выезд за программу, пакет праздника, аренда-час, абонемент) — каждая группа отдельно */
 export function otherKindRows(list, manualAll = {}) {
   const out = {};
-  ['party_package', 'hour', 'subscription'].forEach(k => { out[k] = []; });
+  ['outbound_package', 'party_package', 'hour', 'subscription'].forEach(k => { out[k] = []; });
   (list || []).forEach(c => groupPrices(c, manualAll[c.id]).forEach(g => {
     if (!out[g.kind]) return;
     const s = groupSummary(g);

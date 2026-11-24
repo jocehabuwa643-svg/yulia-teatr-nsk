@@ -28,9 +28,20 @@ const PAUSE_MS = 3000;                     // пауза между запрос
 const DEADLINE_MS = 30 * 60_000;           // общий бюджет времени прогона
 const AREA_BASE = 3_600_000_000;           // id области Overpass = 3600000000 + id отношения OSM
 
-/* Эндпоинты по порядку: основной и зеркало VK Maps. Оба публичные; при отказе первого пробуем второй */
-export const ENDPOINTS = (process.env.OVERPASS_ENDPOINTS || 'https://maps.mail.ru/osm/tools/overpass/api/interpreter')
-  .split(',').map(s => s.trim()).filter(Boolean);
+/* Эндпоинты по порядку: основной — зеркало VK Maps (maps.mail.ru), затем независимые публичные экземпляры Overpass
+   kumi.systems и private.coffee (другие владельцы и площадки — не падают вместе с mail.ru). Все бесплатные, без ключей;
+   robots.txt у всех трёх API не закрывает (проверено 22.11.2026), у нас ≈ 6–12 запросов в неделю с User-Agent проекта.
+   Главный overpass-api.de по умолчанию НЕ включён: его robots.txt содержит Disallow: /api/ (решение приёмки, см. DATA_SOURCES.md);
+   владелец может вернуть его через OVERPASS_ENDPOINTS. В каждом круге повторов место пробует эндпоинты по очереди:
+   504/таймаут одного — сразу следующий, без ожидания; 4xx (кроме 408/429) — эндпоинт для этого места исключается.
+   Свой список — через OVERPASS_ENDPOINTS=url1,url2 */
+export const DEFAULT_ENDPOINTS = [
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter'
+];
+export const ENDPOINTS = (process.env.OVERPASS_ENDPOINTS ? process.env.OVERPASS_ENDPOINTS.split(',') : DEFAULT_ENDPOINTS)
+  .map(s => s.trim()).filter(Boolean);
 
 /* Населённые пункты. relation — id административной границы в OSM (найдены через Nominatim, 2026-11-21);
    districts:true — для города отдельно считаем по районам (admin_level=9). ll — запасная точка центра. */
@@ -251,12 +262,15 @@ export function leadsStale(doc, now = Date.now()) {
 const OVERPASS_RETRY_WAIT_MS = [12_000, 30_000];
 const SECOND_PASS_WAIT_MS = 60_000; // пауза перед вторым кругом по местам, которые не ответили в первом
 
-/* Один запрос к Overpass с переключением между эндпоинтами и терпеливыми повторами (до 3 попыток на эндпоинт).
-   Возвращает разобранный результат или бросает Error */
+/* Один запрос к Overpass с переключением между эндпоинтами и терпеливыми повторами.
+   Круг = по одной попытке на каждый живой эндпоинт; между кругами — паузы OVERPASS_RETRY_WAIT_MS (очередь слотов сервера).
+   Возвращает разобранный результат или бросает последнюю ошибку */
 async function queryPlace(def, deadline) {
   let lastErr;
-  for (const endpoint of ENDPOINTS) {
-    for (let attempt = 0; attempt <= OVERPASS_RETRY_WAIT_MS.length; attempt++) {
+  const alive = new Set(ENDPOINTS);
+  for (let round = 0; round <= OVERPASS_RETRY_WAIT_MS.length && alive.size; round++) {
+    for (const endpoint of ENDPOINTS) {
+      if (!alive.has(endpoint)) continue;
       if (Date.now() > deadline) throw new Error('исчерпан общий бюджет времени прогона');
       try {
         const res = await fetchRetry(endpoint, {
@@ -272,12 +286,15 @@ async function queryPlace(def, deadline) {
         return { parsed, endpoint, osmBase: json.osm3s && json.osm3s.timestamp_osm_base };
       } catch (e) {
         lastErr = e;
-        // 4xx (кроме 408/429), запрет и отсутствие эндпоинта — повторять бессмысленно, идём на следующий эндпоинт
+        // 4xx (кроме 408/429), запрет и отсутствие эндпоинта — повторять бессмысленно, исключаем эндпоинт для этого места
         const hopeless = e.fatal && !/HTTP (408|429)/.test(e.message);
-        console.error(`[leads] ${def.name}: ${e.message}${hopeless || attempt === OVERPASS_RETRY_WAIT_MS.length ? '' : ` — повтор через ${OVERPASS_RETRY_WAIT_MS[attempt] / 1000} с`}`);
-        if (hopeless || attempt === OVERPASS_RETRY_WAIT_MS.length) break;
-        await wait(OVERPASS_RETRY_WAIT_MS[attempt]);
+        if (hopeless) alive.delete(endpoint);
+        console.error(`[leads] ${def.name}: ${e.message}${hopeless ? ' — эндпоинт пропускаем' : ' — пробуем следующий'}`);
       }
+    }
+    if (round < OVERPASS_RETRY_WAIT_MS.length && alive.size) {
+      console.error(`[leads] ${def.name}: круг ${round + 1} не удался — пауза ${OVERPASS_RETRY_WAIT_MS[round] / 1000} с`);
+      await wait(OVERPASS_RETRY_WAIT_MS[round]);
     }
   }
   throw lastErr;

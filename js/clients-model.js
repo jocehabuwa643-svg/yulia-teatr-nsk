@@ -150,6 +150,30 @@ export function confLabel(conf) {
   return ({ model: 'допущение проекта', manual: 'введено вами', high: 'проверено', medium: 'публичный источник', low: 'низкая точность', no_data: 'нет данных' })[conf] || String(conf || 'нет данных');
 }
 
+/* ---------- Подписи к числам ----------
+   Русское согласование: 1 школа, 2 школы, 5 школ; 11–14 — всегда «много» (11 школ). Нечисло/дробь — форма «много» */
+export function pluralRu(n, one, few, many) {
+  const v = Math.abs(Math.trunc(Number(n)));
+  if (!Number.isFinite(v) || v !== Math.abs(Number(n))) return many;
+  const d10 = v % 10, d100 = v % 100;
+  if (d10 === 1 && d100 !== 11) return one;
+  if (d10 >= 2 && d10 <= 4 && (d100 < 12 || d100 > 14)) return few;
+  return many;
+}
+
+/* Подписи счётчиков подраздела «Клиенты и площадки» по виду объекта */
+export const COUNT_WORDS = {
+  school: ['школа', 'школы', 'школ'],
+  kindergarten: ['детский сад', 'детских сада', 'детских садов'],
+  culture: ['ДК или клуб', 'ДК или клуба', 'ДК и клубов'],
+  visit: ['школа или сад', 'школы и сада', 'школ и садов'],
+  places: ['место на карте', 'места на карте', 'мест на карте']
+};
+export function countWord(kind, n) {
+  const w = COUNT_WORDS[kind];
+  return w ? pluralRu(n, w[0], w[1], w[2]) : '';
+}
+
 /* ---------- Страж истории ----------
    Зачем: «назад» телефона должно закрывать подраздел. Для этого при открытии кладём СВОЮ запись (pushState
    с уникальным токеном), а при закрытии кнопкой снимаем её history.back().
@@ -158,7 +182,12 @@ export function confLabel(conf) {
    быстрый повторный цикл открытия/закрытия; восстановление вкладки после выгрузки из памяти),
    второй back() уводил ЗА начало сайта — «выкидывает из сайта».
    Правило стража: back() вызывается ТОЛЬКО когда history.state несёт наш текущий токен. Запись с токеном
-   положена с этой же страницы, значит шаг назад от неё всегда остаётся на сайте. */
+   положена с этой же страницы, значит шаг назад от неё всегда остаётся на сайте.
+   Запасная запись: после перезагрузки вкладки с открытым подразделом остаётся запись с нашей (уже чужой) меткой —
+   лишний шаг «назад» на том же адресе. scrub снимает метку и запоминает, что ТЕКУЩАЯ запись запасная (spare);
+   следующее открытие не кладёт новую запись, а занимает эту (replaceState). Закрытие кнопкой такой «занятой» записи
+   back() не вызывает (перед ней может не быть записи сайта — например, вкладку восстановили одну), а снова делает её
+   запасной; «назад» телефона уходит на предыдущую запись и закрывает подраздел — число шагов «назад» верное. */
 export const HIST_KEY = 'clView';
 
 export function makeBackGuard(hist, opts = {}) {
@@ -166,15 +195,31 @@ export function makeBackGuard(hist, opts = {}) {
   let token = null;        // токен нашей текущей записи
   let pending = false;     // вызван back(), ждём popstate
   let seq = 0;
+  let spare = false;       // текущая запись — запасная (осталась от прошлой загрузки страницы)
+  let adopted = false;     // наша запись — занятая запасная, а не положенная pushState
+  const strip = st => {
+    if (!st || typeof st !== 'object') return null;
+    const { [HIST_KEY]: _, ...rest } = st;
+    return Object.keys(rest).length ? rest : null;
+  };
   const isOurs = st => !!(st && token && st[HIST_KEY] === token);
   return {
     get token() { return token; },
     get pending() { return pending; },
+    get spare() { return spare; },
     isOurs,
     /* Положить запись при открытии. Возвращает true, если запись положена */
     push() {
       if (token && isOurs(hist.state)) return true;          // уже стоит наша запись — второй не кладём
       const t = `${now().toString(36)}-${++seq}`;
+      if (spare) {
+        // занимаем запасную запись вместо новой — лишнего шага «назад» не будет
+        try {
+          hist.replaceState({ ...(strip(hist.state) || {}), [HIST_KEY]: t }, '');
+          token = t; adopted = true; spare = false;
+          return true;
+        } catch (e) { spare = false; /* не вышло — кладём обычную запись */ }
+      }
       try {
         const base = (hist.state && typeof hist.state === 'object') ? hist.state : {};
         hist.pushState({ ...base, [HIST_KEY]: t }, '');
@@ -186,6 +231,13 @@ export function makeBackGuard(hist, opts = {}) {
     release() {
       const ours = isOurs(hist.state);
       token = null;
+      if (ours && adopted) {
+        // занятая запасная запись: снимаем метку без back() — запись снова запасная
+        adopted = false;
+        try { hist.replaceState(strip(hist.state), ''); spare = true; } catch (e) { /* не критично */ }
+        return false;
+      }
+      adopted = false;
       if (!ours) return false;
       pending = true;
       try { hist.back(); return true; } catch (e) { pending = false; return false; }
@@ -193,6 +245,7 @@ export function makeBackGuard(hist, opts = {}) {
     /* popstate: true — запись уже снята браузером (подраздел надо закрыть без второго back) */
     onPop(st) {
       pending = false;
+      spare = false; adopted = false;   // браузер перешёл на другую запись — прежние пометки к ней не относятся
       if (token && !isOurs(st)) { token = null; return true; }
       return false;
     },
@@ -202,6 +255,7 @@ export function makeBackGuard(hist, opts = {}) {
       if (st && typeof st === 'object' && HIST_KEY in st && !isOurs(st)) {
         const { [HIST_KEY]: _, ...rest } = st;
         try { hist.replaceState(Object.keys(rest).length ? rest : null, ''); } catch (e) { /* не критично */ }
+        spare = true;
         return true;
       }
       return false;

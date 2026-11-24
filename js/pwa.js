@@ -207,6 +207,8 @@ export function initPwa({ win = globalThis.window, doc = globalThis.document } =
       (folded || c.secondary ? `<button type="button" class="pwa-btn pwa-secondary">${folded ? 'Не сейчас' : c.secondary}</button>` : '') + '</div>';
     doc.body.appendChild(box);
     sheet = box; sheetKind = group;
+    // «Нет сети» на экране — сами следим, когда сеть вернётся (см. watchOnline)
+    if (group === 'offline') watchOnline();
 
     const primary = box.querySelector('.pwa-primary');
     const secondary = box.querySelector('.pwa-secondary');
@@ -374,7 +376,6 @@ export function initPwa({ win = globalThis.window, doc = globalThis.document } =
       if (reloadOnSwitch) { reloadOnSwitch = false; win.location.reload(); }
     });
     // данные пришли из кэша сервис-воркера — честная пометка «нет сети»
-    let fallbackShown = false;
     nav.serviceWorker.addEventListener('message', e => {
       const d = e.data || {};
       if (d.type === MSG_DATA_FALLBACK && !fallbackShown) {
@@ -386,17 +387,46 @@ export function initPwa({ win = globalThis.window, doc = globalThis.document } =
     try { nav.serviceWorker.startMessages(); } catch { /* старый браузер — сообщения придут после загрузки */ }
   }
 
-  /* Сеть пропала/вернулась во время работы */
-  /* Событие online в части браузеров (и под сервис-воркером в эмуляции) приходит с задержкой или не приходит вовсе,
-     поэтому, пока висит «Нет сети», раз в 3 с дополнительно сверяемся с navigator.onLine */
-  let onlinePoll = 0;
+  /* Сеть пропала/вернулась во время работы.
+     Событие online в части браузеров (и под сервис-воркером в эмуляции) приходит с задержкой или не приходит вовсе,
+     а после запасного ответа воркера (5xx, слабая сеть) navigator.onLine и вовсе остаётся true. Поэтому, пока висит
+     «Нет сети», сами проверяем сеть: лёгкий запрос data/meta.json?t=… мимо кэша. Свежий ответ без пометки X-SW-Fallback —
+     сеть вернулась. Пауза между проверками растёт 4 → 8 → 16 → 30 с, чтобы не тратить трафик на слабой сети. */
+  let fallbackShown = false, onlineTimer = 0, probeDelay = 0, probing = false;
+  const PROBE_MIN_MS = 4000, PROBE_MAX_MS = 30000, PROBE_TIMEOUT_MS = 8000;
+  function stopWatch() { win.clearTimeout(onlineTimer); onlineTimer = 0; probeDelay = 0; }
   function onOnline() {
-    win.clearInterval(onlinePoll); onlinePoll = 0;
+    stopWatch();
+    fallbackShown = false; // следующий запасной ответ снова покажет плашку
     if (sheet && sheetKind === 'offline') render('online');
   }
+  /* Одна проверка сети: true — пришёл настоящий ответ сервера (не копия из кэша воркера) */
+  async function probeNetwork() {
+    if (nav.onLine === false || typeof win.fetch !== 'function') return false;
+    const ctl = typeof win.AbortController === 'function' ? new win.AbortController() : null;
+    const t = ctl ? win.setTimeout(() => ctl.abort(), PROBE_TIMEOUT_MS) : 0;
+    try {
+      const res = await win.fetch('data/meta.json?t=' + Date.now(), { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
+      return !!res && res.ok && !res.headers.get('X-SW-Fallback');
+    } catch { return false; } finally { win.clearTimeout(t); }
+  }
+  function scheduleProbe() {
+    probeDelay = probeDelay ? Math.min(probeDelay * 2, PROBE_MAX_MS) : PROBE_MIN_MS;
+    onlineTimer = win.setTimeout(async () => {
+      onlineTimer = 0;
+      // плашку закрыли сами — следить больше не за чем (при следующем сбое воркер пришлёт сообщение снова)
+      if (!sheet || sheetKind !== 'offline') { stopWatch(); fallbackShown = false; return; }
+      if (probing) { scheduleProbe(); return; }
+      probing = true;
+      const ok = await probeNetwork();
+      probing = false;
+      if (ok) onOnline(); else scheduleProbe();
+    }, probeDelay);
+  }
   function watchOnline() {
-    if (onlinePoll || nav.onLine !== false) return;
-    onlinePoll = win.setInterval(() => { if (nav.onLine !== false) onOnline(); }, 3000);
+    if (onlineTimer) return;
+    probeDelay = 0;
+    scheduleProbe();
   }
   win.addEventListener('offline', () => { watchOnline(); if (!sheet || sheetKind === 'install') showWhenFree('offline'); });
   win.addEventListener('online', onOnline);

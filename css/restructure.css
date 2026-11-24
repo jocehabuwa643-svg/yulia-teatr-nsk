@@ -176,3 +176,6 @@ html.cl-lock body{padding-right:var(--cl-sbw,0px)}
 .kd-note{font-size:12px;color:var(--mutedS);line-height:1.5;margin-top:8px}
 .kd-note kbd{background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:11px}
 
+
+/* Подпись OSM (ODbL) на узких экранах переносится, а не обрезается краем карты */
+.cl-map .leaflet-control-attribution{white-space:normal;max-width:100%;line-height:1.35;text-align:right}

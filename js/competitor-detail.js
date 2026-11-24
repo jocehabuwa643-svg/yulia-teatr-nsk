@@ -54,7 +54,7 @@ function pricesHTML(c, manual) {
   // значения прежнего исследования, не подтверждённые при сверке — показываем честно, но в сравнение не берём
   const un = (Array.isArray(c.unconfirmed_prices) ? c.unconfirmed_prices : []).filter(p => Number.isFinite(p.value));
   const unHTML = un.length ? `<details class="cd-more"><summary>Не подтверждено (${un.length}) — в сравнение не входит</summary>${un.map(p => `<div class="cd-row"><span class="cd-k">${esc(p.label || 'Тариф')}</span><span class="cd-v"><b class="cd-strike">${esc(priceText(p))}</b><small>${esc(p.reason || 'не подтверждено')}</small></span></div>`).join('')}</details>` : '';
-  return `<section class="cd-block"><h4>Цены по типам</h4><p class="cd-note cd-note-top">Сравнивайте только цены одного типа: билет в зал, выезд за ребёнка, пакет праздника, час аренды и абонемент — разные вещи.</p>${body}${planHTML}${note}${unHTML}</section>`;
+  return `<section class="cd-block"><h4>Цены по типам</h4><p class="cd-note cd-note-top">Сравнивайте только цены одного типа: билет в зал, выезд за ребёнка, выезд за программу для группы, пакет праздника, час аренды и абонемент — разные вещи.</p>${body}${planHTML}${note}${unHTML}</section>`;
 }
 
 /* Автопроверка сайта (еженедельно): статус страницы и найденная цена с типом */

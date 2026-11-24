@@ -18,7 +18,7 @@ import { fmt, ic, icons } from './ui/helpers.js';
 import { state } from './state.js';
 import { initPremises } from './premises.js';
 import { mountClientMap, showPlace, refreshClientMap, legendHTML } from './client-map.js';
-import { leadTotals, pickPlace, placeStat, districtRows, priceRows, confLabel, makeBackGuard, leadsMetaLine, placeStaleNote } from './clients-model.js';
+import { leadTotals, pickPlace, placeStat, districtRows, priceRows, confLabel, makeBackGuard, leadsMetaLine, placeStaleNote, countWord } from './clients-model.js';
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ruDate = d => { const t = new Date(d); return Number.isFinite(t.getTime()) ? t.toLocaleDateString('ru-RU') : '—'; };
@@ -94,9 +94,9 @@ function renderEntryStats(box) {
   box.classList.remove('is-loading');
   box.removeAttribute('aria-label');
   box.innerHTML = `
-    <span><b>${fmt(t.visit)}</b><small>школ и садов</small></span>
-    <span><b>${fmt(t.culture)}</b><small>ДК и клубов</small></span>
-    <span><b>${t.places}</b><small>мест на карте</small></span>`;
+    <span><b>${fmt(t.visit)}</b><small>${countWord('visit', t.visit)}</small></span>
+    <span><b>${fmt(t.culture)}</b><small>${countWord('culture', t.culture)}</small></span>
+    <span><b>${t.places}</b><small>${countWord('places', t.places)}</small></span>`;
 }
 
 /* ---------- Диалог ---------- */
@@ -140,6 +140,15 @@ function ensureDialog() {
   dlg.addEventListener('click', e => { if (e.target === dlg && downOnDlg) closeClients(); downOnDlg = false; });
   // единая точка закрытия: кнопки, Esc, «назад» телефона (CloseWatcher), программное dlg.close()
   dlg.addEventListener('close', onClosed);
+  // Esc при фокусе на карте: обработчик клавиатуры Leaflet глотает Esc после закрытия подсказки,
+  // поэтому ловим его на диалоге в фазе перехвата: открыта подсказка точки — закрываем только её, иначе — подраздел
+  dlg.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    const pop = dlg.querySelector('.leaflet-popup');
+    if (pop) { const x = pop.querySelector('.leaflet-popup-close-button'); if (x) x.click(); else pop.remove(); }
+    else closeClients();
+    e.preventDefault(); e.stopPropagation();
+  }, true);
   dlg.querySelectorAll('[data-cl-tab]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.clTab)));
   // стрелки влево/вправо по вкладкам (паттерн tablist)
   dlg.querySelector('.cl-tabs').addEventListener('keydown', e => {
@@ -208,9 +217,9 @@ function renderPlace(id) {
   const s = placeStat(p);
   const stale = placeStaleNote(p);
   dlg.querySelector('#clPlaceStat').innerHTML = `
-    <span><b>${fmt(s.school)}</b><small>школ</small></span>
-    <span><b>${fmt(s.kindergarten)}</b><small>детских садов</small></span>
-    <span><b>${fmt(s.culture)}</b><small>ДК и клубов</small></span>
+    <span><b>${fmt(s.school)}</b><small>${countWord('school', s.school)}</small></span>
+    <span><b>${fmt(s.kindergarten)}</b><small>${countWord('kindergarten', s.kindergarten)}</small></span>
+    <span><b>${fmt(s.culture)}</b><small>${countWord('culture', s.culture)}</small></span>
     <span class="cl-stat-sum"><b>${fmt(s.visit)}</b><small>потенциал выезда</small></span>
     ${stale ? `<span class="cd-badge stale" title="${esc(stale.text)}">${esc(stale.badge)}</span><small class="cl-stale-note">${esc(stale.text)}</small>` : ''}`;
   dlg.querySelector('#clLegend').innerHTML = legendHTML(p);

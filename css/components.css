@@ -362,6 +362,9 @@ tr:last-child td{border-bottom:0}
 .search input{border:0;background:transparent;padding:11px 0;width:100%;outline:none;color:var(--text)}
 .search:focus-within{outline:2px solid var(--a11y-focus);outline-offset:3px}
 .search input::placeholder{color:var(--mutedS)}
+/* Поле поиска без обёртки (заметки: <input class="search">) — касание не меньше 44px, текст 16px (iOS не увеличивает страницу) */
+input.search{display:block;min-height:44px;padding:10px 16px;font:inherit;font-size:16px;line-height:1.4;color:var(--text);box-sizing:border-box}
+input.search:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px}
 .found{font-size:12px;color:var(--mutedS);margin:2px 0 10px}
 .items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .item{border:1px solid var(--line);border-radius:var(--r-s);padding:0 16px;margin:0;background:var(--card)}
