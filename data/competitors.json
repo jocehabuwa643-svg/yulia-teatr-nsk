@@ -330,16 +330,17 @@
    "source_url": "https://sovenok.edusite.ru/magicpage.html?page=971598",
    "fetched_at": "2026-11-18",
    "confidence": "medium",
-   "checked_at": "2026-11-21T03:22:02.004Z",
-   "check_status": "ok",
+   "checked_at": "2026-11-23T11:08:21.736Z",
+   "check_status": "changed",
    "observed": {
     "url": "https://sovenok.edusite.ru/magicpage.html?page=971598",
     "http_status": 200,
-    "content_hash": "e9c349870233ed78",
+    "content_hash": "45049be1b0ab9216",
     "text_length": 36969,
-    "hash_at": "2026-11-21T03:22:02.004Z",
-    "last_ok_at": "2026-11-21T03:22:02.004Z",
-    "price": null
+    "hash_at": "2026-11-23T11:08:21.736Z",
+    "last_ok_at": "2026-11-23T11:08:21.736Z",
+    "price": null,
+    "changed_at": "2026-11-23T11:08:21.736Z"
    },
    "cases": [
     {
@@ -511,16 +512,17 @@
     }
    ],
    "verified_at": "2026-11-21",
-   "checked_at": "2026-11-21T18:16:33.220Z",
-   "check_status": "ok",
+   "checked_at": "2026-11-23T11:08:21.736Z",
+   "check_status": "changed",
    "observed": {
     "url": "https://puppets-nsk.ru/",
     "http_status": 200,
-    "content_hash": "62587bed03c0c434",
-    "text_length": 8717,
-    "hash_at": "2026-11-21T18:16:33.220Z",
-    "last_ok_at": "2026-11-21T18:16:33.220Z",
-    "price": null
+    "content_hash": "dea1b9058affb611",
+    "text_length": 7555,
+    "hash_at": "2026-11-23T11:08:21.736Z",
+    "last_ok_at": "2026-11-23T11:08:21.736Z",
+    "price": null,
+    "changed_at": "2026-11-23T11:08:21.736Z"
    }
   },
   {
@@ -601,10 +603,16 @@
     }
    ],
    "verified_at": "2026-11-21",
-   "checked_at": "2026-11-21T18:16:33.220Z",
-   "check_status": "unavailable",
+   "checked_at": "2026-11-23T11:08:21.736Z",
+   "check_status": "ok",
    "observed": {
-    "error": "www.nebo-nsk.ru: таймаут 10000 мс"
+    "url": "https://www.nebo-nsk.ru/",
+    "http_status": 200,
+    "content_hash": "028df747c6946950",
+    "text_length": 5152,
+    "hash_at": "2026-11-23T11:08:21.736Z",
+    "last_ok_at": "2026-11-23T11:08:21.736Z",
+    "price": null
    }
   },
   {
