@@ -115,7 +115,12 @@ test('run(): повтор в тот же день не трогает метки
   try {
     copyFileSync(new URL('../data/competitors.json', import.meta.url), join(dir, 'competitors.json'));
     const read = () => JSON.parse(readFileSync(join(dir, 'competitors.json'), 'utf-8'));
-    const T0 = Date.parse('2026-11-23T02:30:00Z');
+    // Начало отсчёта — через сутки после самой поздней проверки в живых данных (бот обновляет их каждую неделю),
+    // иначе фиксированная дата оказывается раньше реальной проверки и окно «тот же день» глушит прогон
+    const lastChecked = Math.max(...all(read()).map(x => Date.parse(x.checked_at)).filter(Number.isFinite), Date.parse('2026-11-23T02:30:00Z'));
+    const T0 = lastChecked + 8 * 864e5;
+    // посев: неделей раньше тот же прогон запоминает хеш тестовой страницы (в живых данных — хеши реальных сайтов)
+    await run({ now: new Date(T0 - 7 * 864e5), dataDir: dir, deps });
     await run({ now: new Date(T0), dataDir: dir, deps });
     const a = all(read()).filter(x => x.check_status === 'ok');
     assert.ok(a.length > 0, 'есть успешно проверенные сайты');
