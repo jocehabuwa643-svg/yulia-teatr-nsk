@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-25T12:54:30.148Z",
+  "updated_at": "2026-11-25T23:48:38.298Z",
   "stale": false,
   "sources_total": 8,
-  "sources_failed": 0,
+  "sources_failed": 2,
   "sources_skipped": 4,
   "keep_days": 60,
   "max_items": 40,
@@ -11,81 +11,81 @@
       "name": "ФНС России (УФНС по Новосибирской области)",
       "url": "https://www.nalog.gov.ru/rn54/",
       "feed_url": "https://www.nalog.gov.ru/rn54/rss/",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "fetched_at": "2026-11-25T23:48:38.298Z",
       "status": "ok",
       "items": 1,
       "total": 2,
-      "last_ok_at": "2026-11-25T12:54:30.148Z"
+      "last_ok_at": "2026-11-25T23:48:38.298Z"
     },
     {
       "name": "Infopro54",
       "url": "https://infopro54.ru/category/news/society/culture/",
       "feed_url": "https://infopro54.ru/category/news/society/culture/feed/",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "fetched_at": "2026-11-25T23:48:38.298Z",
       "status": "ok",
       "items": 11,
       "total": 50,
-      "last_ok_at": "2026-11-25T12:54:30.148Z"
+      "last_ok_at": "2026-11-25T23:48:38.298Z"
     },
     {
       "name": "Вести Новосибирск",
       "url": "https://www.nsktv.ru/",
       "feed_url": "https://www.nsktv.ru/rss.php",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "fetched_at": "2026-11-25T23:48:38.298Z",
       "status": "ok",
       "items": 3,
       "total": 30,
-      "last_ok_at": "2026-11-25T12:54:30.148Z"
+      "last_ok_at": "2026-11-25T23:48:38.298Z"
     },
     {
       "name": "Новосибирские новости",
       "url": "https://nsknews.info/",
       "feed_url": "https://nsknews.info/feed/",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
-      "status": "ok",
-      "items": 6,
-      "total": 60,
+      "fetched_at": "2026-11-25T23:48:38.298Z",
+      "status": "error",
+      "items": 0,
+      "error": "Новосибирские новости: HTTP 500",
       "last_ok_at": "2026-11-25T12:54:30.148Z"
     },
     {
       "name": "АиФ-Новосибирск",
       "url": "https://nsk.aif.ru/",
       "feed_url": "https://nsk.aif.ru/rss/all.php",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "fetched_at": "2026-11-25T23:48:38.298Z",
       "status": "ok",
       "items": 2,
       "total": 108,
-      "last_ok_at": "2026-11-25T12:54:30.148Z"
+      "last_ok_at": "2026-11-25T23:48:38.298Z"
     },
     {
       "name": "Infopro54 · бизнес",
       "url": "https://infopro54.ru/category/news/biznes/probiznes/",
       "feed_url": "https://infopro54.ru/category/news/biznes/probiznes/feed/",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "fetched_at": "2026-11-25T23:48:38.298Z",
       "status": "ok",
       "items": 8,
       "total": 50,
-      "last_ok_at": "2026-11-25T12:54:30.148Z"
+      "last_ok_at": "2026-11-25T23:48:38.298Z"
     },
     {
       "name": "Газета «Культура»",
       "url": "https://portal-kultura.ru/",
       "feed_url": "https://portal-kultura.ru/rss/",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
-      "status": "ok",
-      "items": 5,
-      "total": 30,
+      "fetched_at": "2026-11-25T23:48:38.298Z",
+      "status": "error",
+      "items": 0,
+      "error": "The operation was aborted due to timeout",
       "last_ok_at": "2026-11-25T12:54:30.148Z"
     },
     {
       "name": "Клерк.ру",
       "url": "https://www.klerk.ru/",
       "feed_url": "https://www.klerk.ru/xml/index.xml",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "fetched_at": "2026-11-25T23:48:38.298Z",
       "status": "ok",
-      "items": 5,
+      "items": 3,
       "total": 100,
-      "last_ok_at": "2026-11-25T12:54:30.148Z"
+      "last_ok_at": "2026-11-25T23:48:38.298Z"
     }
   ],
   "skipped_sources": [
@@ -93,7 +93,7 @@
       "name": "Минкультуры Новосибирской области",
       "url": "https://mk.nso.ru/",
       "feed_url": "https://mk.nso.ru/rss.xml",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "fetched_at": "2026-11-25T23:48:38.298Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -103,7 +103,7 @@
       "name": "Правительство Новосибирской области",
       "url": "https://www.nso.ru/",
       "feed_url": "https://www.nso.ru/rss.xml",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "fetched_at": "2026-11-25T23:48:38.298Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -113,7 +113,7 @@
       "name": "Минкультуры России — новости министерства",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=2&lang=ru&TYPE=ministry&LIMIT=40&SECTION_ID=30",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "fetched_at": "2026-11-25T23:48:38.298Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -123,7 +123,7 @@
       "name": "Минкультуры России — культурная жизнь регионов",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=34&lang=ru&TYPE=news&LIMIT=40",
-      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "fetched_at": "2026-11-25T23:48:38.298Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -131,6 +131,16 @@
     }
   ],
   "items": [
+    {
+      "id": "22ba96ec0b75",
+      "title": "Перечень профессий для упрощенного ВНЖ переутвердят без изменений",
+      "summary": "Новый список может вступить в силу 23 января 2027 года, когда полномочия по его утверждению перейдут от Минтруда к МВД. Содержание перечня не изменится.",
+      "url": "https://www.klerk.ru/buh/news/720398/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-25T17:50:00.000Z",
+      "topic": "taxes"
+    },
     {
       "id": "475d63897ebf",
       "title": "Новосибирская консерватория имени Глинки отметила 70-летний юбилей",
@@ -279,16 +289,6 @@
       "source_name": "Клерк.ру",
       "source_url": "https://www.klerk.ru/",
       "published_at": "2026-11-24T16:39:00.000Z",
-      "topic": "taxes"
-    },
-    {
-      "id": "5eddee4a9d92",
-      "title": "НДС на УСН в 2026 году: новые лимиты, ставки 5%, 7% и 22% — как выбрать выгодный вариант и избежать ошибок",
-      "summary": "Разберем, кто должен платить НДС на УСН в 2026 году, какие ставки доступны, как выбрать подходящий вариант и какие ошибки могут привести к финансовым потерям. А также расскажем, как бухгалтеру…",
-      "url": "https://www.klerk.ru/blogs/klerk/720253/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-24T14:17:00.000Z",
       "topic": "taxes"
     },
     {
