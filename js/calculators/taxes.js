@@ -63,7 +63,9 @@ export function scenario(rev0, ctx) {
   // пул вычета: взносы ИП за себя (фикс + 1% сверх порога) + при штате взносы за работников (модель — с гонораров ГПХ);
   // лимит — % налога из rates.json: без работников до 100%, с работниками / выплатами физлицам до 50% (ст. 346.21 п. 3.1 НК РФ)
   const staff = ctx.staff == null ? ctx.employees > 0 : !!ctx.staff;
-  const pool = ip.total + (staff ? gphContribs : 0);
+  // взносы с гонораров реально платятся только при выплатах физлицам по ГПХ (штат); «работаю одна» = команда на НПД, взносов нет
+  const paidGph = staff ? gphContribs : 0;
+  const pool = ip.total + paidGph;
   const dedPct = staff ? cfg.deductWithStaff : cfg.deductNoStaff;
 
   const regimes = [];
@@ -110,6 +112,9 @@ export function scenario(rev0, ctx) {
 
   // налог К УПЛАТЕ по режиму: УСН — после вычета/учёта взносов (taxAfterContrib), патент — без вычета (в модели не считается)
   regimes.forEach(g => { g.pay = g.tax == null ? null : Math.max(0, g.taxAfterContrib != null ? g.taxAfterContrib : g.tax); });
+  // остаток владельца по каждому режиму — на ОДНОЙ базе (решение владельца 25.11.2026): выручка − расходы (доля) −
+  // взносы с гонораров ПОВЕРХ доли расходов − налог к уплате − НДС − взносы ИП за себя
+  regimes.forEach(g => { g.ownerNet = g.pay == null || g.lost ? null : rev - costs - paidGph - g.pay - vat - ip.total; });
   const withTax = regimes.filter(r => r.tax != null);
   // best — по налогу ДО вычета взносов (прежняя логика, на ней держится сравнение сценариев «Налог года»);
   // bestPay — по налогу К УПЛАТЕ: его показывает шапка калькулятора, карточки и смета
@@ -117,11 +122,13 @@ export function scenario(rev0, ctx) {
   const bestPay = withTax.length ? withTax.reduce((a, b) => (a.pay <= b.pay ? a : b)) : null;
   return {
     revenue: rev, costs, vat, vatState: vs.state, vatRate: vs.rate, bandUnknown: vs.bandUnknown, usnLost: lost,
-    usnIncome, ip, gphContribs, pool, dedPct, staff, regimes, best, bestPay,
+    usnIncome, ip, gphContribs, paidGph, pool, dedPct, staff, regimes, best, bestPay,
     // детализация УСН «Доходы»: налог 6% → вычет взносов → налог к уплате (не меньше 0: вычет ограничен % налога ≤ 100%)
     usn6Tax: usn6, usn6Deduction: ded6, usn6Pay: Math.max(0, usn6 - ded6),
     // ОСТАТОК ВЛАДЕЛЬЦА (показывается в интерфейсе): выручка − расходы − налог к уплате (после вычета) − НДС − взносы ИП
-    ownerNet: rev - costs - Math.max(0, usn6 - ded6) - vat - ip.total,
+    // взносы с гонораров команды вычитаются поверх доли расходов — так же, как в «Доходы − расходы» (ownerNet15)
+    ownerNet: rev - costs - paidGph - Math.max(0, usn6 - ded6) - vat - ip.total,
+    ownerNet15: rev - costs - paidGph - Math.max(0, usn15c) - vat - ip.total,
     // остаток без вычета взносов (полный налог + полные взносы) — только для «точки перехода НДС» (сравнение берегов порога)
     netUsn6: rev - costs - usn6 - vat - ip.total
   };
@@ -183,6 +190,7 @@ export function calc(input, cfg) {
     staffConflict: (input.staff === 0 || input.staff === '0') && ctx.employees > 0,
     gphContribs: now.gphContribs, dedPct: now.dedPct, staff: now.staff, social: ctx.social,
     usn6Tax: now.usn6Tax, usn6Deduction: now.usn6Deduction, usn6Pay: now.usn6Pay, ownerNet: now.usnLost ? null : now.ownerNet,
+    ownerNet15: now.usnLost ? null : now.ownerNet15, paidGph: now.paidGph,
     socialYear: p.usnSocial != null ? p.year : lastSocialYear(cfg),
     warning: over ? `Годовая выручка выше порога ${ruNum(T / 1e6)} млн ₽ (${p.year}): в цену включается НДС ${ruNum(now.vatRate)}%, для УСН он исключается из дохода` : null
   };
@@ -196,5 +204,6 @@ export const summary = r => [
   { label: 'НДС за год', v: r.vat, t: 'rub' },
   { label: 'Взносы ИП (с 1% сверх порога)', v: r.ip.total, t: 'rub' },
   { label: 'Остаток владельца (УСН «Доходы», с вычетом взносов)', v: r.ownerNet, t: 'rub', empty: 'УСН недоступна' },
+  { label: 'Остаток владельца (УСН «Доходы − расходы»)', v: r.ownerNet15, t: 'rub', empty: 'УСН недоступна' },
   { label: 'Точка перехода НДС (выручка)', v: r.crossing ? r.crossing.breakEven : null, t: 'rub', empty: 'нет данных' }
 ];

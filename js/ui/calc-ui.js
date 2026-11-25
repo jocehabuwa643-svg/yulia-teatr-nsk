@@ -317,8 +317,11 @@ R.taxes = (input, cfg, r) => {
     ...(s.ip && s.ip.extra > 0 ? [`Допущение: 1% взносов (${rub(s.ip.extra)}) учтён в вычете того же года; по закону он уменьшает налог следующего года — в первый год налог к уплате может быть выше`] : []),
     `Налог к уплате: ${rub(s.usn6Pay)}`,
     `Взносы ИП: ${rub(s.ip.total)}`,
+    // взносы с гонораров команды — поверх доли расходов, одинаково для обоих режимов УСН
+    ...(s.paidGph > 0 ? [`Взносы с гонораров команды: ${rub(s.paidGph)} (поверх расходов ${input.costShare}%)`] : []),
     ...(s.vat > 0 ? [`НДС за год: ${rub(s.vat)}`] : []),
-    `Остаток владельца: ${signed(s.ownerNet)}`
+    `Остаток владельца: ${signed(s.ownerNet)}`,
+    `Для сравнения, «Доходы − расходы»: ${signed(s.ownerNet15)}`
   ]);
   const plates = T == null ? '' : `<div class="platerow">${plate(`До порога · ${rub(r.before.revenue)}`, usn6Text(r.before), ['налог УСН «Доходы» к уплате', ...side(r.before)])}${plate(`${c.over ? 'После порога · ваша выручка' : 'Сразу после порога'} · ${rub(r.after.revenue)}`, usn6Text(r.after), ['налог УСН «Доходы» к уплате', ...side(r.after)])}</div>`;
   const bestName = s => (s.bestPay ? `${s.bestPay.name} · ${rub(s.bestPay.pay)} к уплате` : 'нет данных');
@@ -365,7 +368,7 @@ R.taxes = (input, cfg, r) => {
     ${kv(`${ruNum(cfg.contrib1pctRate)}% сверх ${rub(cfg.contrib1pctThreshold)}`, `${rub(ip.extra)} ${rateTag(cfg, 'contributions_1pct_rate')}`)}
     ${kv('Потолок 1%-взноса', cap == null ? 'нет данных' : `${rub(cap)} ${rateTag(cfg, `ip_extra_contrib_cap.${yr}`)}`)}
     ${kv('Взносы ИП итого', rub(ip.total))}
-    ${kv('Взносы с гонораров (модель)', rub(r.gphContribs))}
+    ${kv('Взносы с гонораров команды (модель)', r.paidGph > 0 ? `${rub(r.paidGph)} — вычитаются поверх расходов ${input.costShare}% в обоих режимах` : (r.gphContribs > 0 ? 'нет: команда на НПД («работаю одна»)' : rub(0)))}
   </div>${ip.fixedNoData ? nodata(`Фиксированные взносы ИП на ${yr} год не внесены.`, `ip_fixed_contributions.${yr}`) : ''}`;
   return top + plates +
     (T != null ? gauge({ value: r.revenue, limit: T, label: `Выручка к порогу НДС (${yr})`, aria: `Выручка ${rub(r.revenue)} при пороге ${rub(T)}` }) : '') +

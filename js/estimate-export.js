@@ -114,12 +114,14 @@ const ROWS = {
       row('revenue', 'Выручка за год', r.revenue),
       row('cost', 'Расходы за год', r.costs),
       row('cost', 'Взносы ИП за себя', ip.total),
-      row('cost', 'Взносы с гонораров команды', r.gphContribs ? r.gphContribs : null),
+      // поверх доли расходов и только при выплатах по ГПХ (при команде на НПД взносов нет) — та же база, что в остатках ниже
+      row('cost', 'Взносы с гонораров команды (поверх расходов)', r.paidGph ? r.paidGph : null),
       ...taxRows,
       row('tax', 'НДС за год', r.vat ? r.vat : null),
       row('profit', 'Лучший режим (налог к уплате)', best ? `${best.name} · ${fmtValue(isNum(best.pay) ? best.pay : best.tax, 'rub')}` : null, 'text'),
       // тот же остаток, что на экране: налог УСН «Доходы» уже уменьшен на вычет взносов ИП (null — УСН недоступна)
       row('profit', 'Остаток владельца на УСН «Доходы» (с вычетом взносов)', r.ownerNet),
+      row('profit', 'Остаток владельца на УСН «Доходы − расходы»', r.ownerNet15),
       row('be', 'Точка перехода через порог НДС (выручка)', r.crossing ? r.crossing.breakEven : null)
     ];
   },

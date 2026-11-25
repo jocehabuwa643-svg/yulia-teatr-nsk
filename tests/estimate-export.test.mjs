@@ -162,7 +162,8 @@ test('калькуляторы и обзор подключают смету; п
 test('налоги: остаток владельца в смете = r.ownerNet (с вычетом взносов), цепочка налог → −вычет → к уплате', () => {
   const mod = registry.find(m => m.meta.id === 'taxes');
   // гонорары 1,2 млн → штат (лимит 50%): 216 000 − 108 000 = 108 000 к уплате; остаток +1 417 846 ₽
-  for (const [staff, owner, ded] of [['auto', 1417846, 108000], [0, 1404000, 94154]]) {
+  // штат: взносы с гонораров 362 400 поверх расходов → 1 417 846 − 362 400 = 1 055 446; «работаю одна» (команда на НПД) — взносов нет
+  for (const [staff, owner, ded] of [['auto', 1055446, 108000], [0, 1404000, 94154]]) {
     const inputs = { year: 2027, revenue: 3.6e6, costShare: 55, employees: 1.2e6, social: 0, staff };
     const r = runCalc(mod, inputs, cfg, ctx);
     const est = estOf(mod, inputs);
