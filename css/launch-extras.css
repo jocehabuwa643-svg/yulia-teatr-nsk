@@ -1,0 +1,94 @@
+/* launch-extras.css — блоки раздела «План запуска»: «Допуск в сады и школы (старт)» и «Летний сценарий (июнь–август)».
+   Только токены из tokens.css/themes.css (обе темы), тач-цели ≥ var(--tap), анимируются лишь transform/opacity. */
+
+/* ---------- Общие элементы ---------- */
+#accessStart{margin-bottom:14px}
+#summerPlan{margin-top:14px}
+.lx-access,.lx-summer{padding:clamp(18px,2vw,28px)}
+.lx-access h3,.lx-summer h3{display:flex;align-items:center;gap:8px;margin:0}
+.lx-access h3 svg,.lx-summer h3 svg,.lx-fmt h4 svg{width:20px;height:20px;flex-shrink:0;color:var(--mutedS)}
+.lx-intro{margin:8px 0 4px;font-size:14px;line-height:1.55;color:var(--text2);max-width:72ch}
+.lx-note{margin-top:12px;color:var(--mutedS)}
+.lx-checked,.lx-tag{display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--mutedS);background:var(--chip);white-space:nowrap}
+.lx-tag{margin-left:4px;vertical-align:1px}
+.lx-tally{margin-top:12px}
+.lx-sub{margin:20px 0 8px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mutedS)}
+.lx-empty{margin:6px 0;font-size:13px;color:var(--mutedS)}
+
+/* ---------- Допуск: компактный список с отметками ---------- */
+.lx-acc-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 22px;margin-top:6px}
+.lx-acc-item{border-bottom:1px solid var(--line);padding-bottom:10px;min-width:0}
+.lx-acc-item .checkrow{border-bottom:0;padding-bottom:6px}
+.lx-more{margin:0 0 0 38px}
+.lx-more>summary{display:flex;align-items:center;gap:6px;min-height:var(--tap);cursor:pointer;font-size:12px;font-weight:700;color:var(--text2);list-style:none;border-radius:6px}
+.lx-more>summary::-webkit-details-marker{display:none}
+.lx-more>summary:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px}
+.lx-clarify{margin:0 0 6px;font-size:12px;line-height:1.5;color:var(--text2)}
+.lx-clarify b{font-weight:700}
+.lx-srcs{display:flex;flex-wrap:wrap;gap:0 12px;margin:0}
+.lx-src{display:inline-flex;align-items:center;gap:4px;max-width:100%;min-height:var(--tap);font-size:12px;font-weight:600;color:var(--text);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
+.lx-src svg{width:13px;height:13px;flex-shrink:0;color:var(--mutedS)}
+.lx-src:focus-visible,.lx-prices a:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px;border-radius:6px}
+
+/* ---------- Летний сценарий: полоски сезонности ---------- */
+.lx-dip{margin-top:12px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--card2)}
+.lx-bars{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;align-items:end;height:96px}
+.lx-bar{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;height:100%;min-width:0}
+.lx-col{display:block;height:72px;border-radius:5px 5px 2px 2px;background:var(--track);transform:scaleY(var(--h,0));transform-origin:bottom center}
+.lx-bar.summer .lx-col{background:var(--text2)}
+.lx-bar.summer.below .lx-col{background:repeating-linear-gradient(135deg,var(--text2) 0 4px,var(--silver) 4px 7px)}
+.lx-m{display:block;margin-top:4px;font-size:10px;line-height:1;text-align:center;color:var(--mutedS);white-space:nowrap;overflow:hidden}
+.lx-bar.summer .lx-m{font-weight:700;color:var(--text)}
+/* линия «средний месяц = 1,0» (колонка 72px над подписью месяца 14px) */
+.lx-avg{position:absolute;left:0;right:0;bottom:calc(14px + 72px * var(--y,1));border-top:1px dashed var(--silver);pointer-events:none}
+.lx-dipline{margin:10px 0 4px;font-size:14px;line-height:1.5;color:var(--text)}
+.lx-cf{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.5;color:var(--text2)}
+.lx-cf li{margin:2px 0}
+
+/* ---------- Переключатель форматов ---------- */
+.lx-chips{display:flex;flex-wrap:wrap;gap:8px}
+.lx-chip{min-height:var(--tap);padding:10px 16px;font-size:13px;cursor:pointer;text-align:left;max-width:100%;white-space:normal}
+.lx-chip:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px}
+
+/* ---------- Карточки выбранных форматов ---------- */
+.lx-fmts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:12px}
+.lx-fmt{border:1px solid var(--line);border-radius:var(--r-s);padding:14px 16px;background:var(--card);min-width:0}
+.lx-fmt h4{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:15px}
+.lx-fmt dl{margin:0}
+.lx-fmt dt{margin-top:8px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mutedS)}
+.lx-fmt dd{margin:2px 0 0;font-size:13px;line-height:1.5;color:var(--text2);overflow-wrap:anywhere}
+.lx-prices{list-style:none;margin:2px 0 0;padding:0}
+.lx-prices li{padding:6px 0;border-bottom:1px dashed var(--line)}
+.lx-prices li:last-child{border-bottom:0}
+.lx-pv{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lx-ps{display:block;font-size:11px;color:var(--mutedS)}
+.lx-prices a{color:inherit;text-decoration:underline;text-underline-offset:2px;display:inline-flex;align-items:center;min-height:var(--tap)}
+.lx-fallback{margin:4px 0 0;font-size:12px;font-weight:600;color:var(--text2)}
+
+/* ---------- План «до мая» ---------- */
+.lx-todo .checkrow .cbody strong{font-weight:600}
+
+/* Появление карточек формата — только opacity/transform и только без reduced-motion */
+@media (prefers-reduced-motion:no-preference){
+  .lx-fmt{animation:lx-in .35s var(--ease) both}
+  @keyframes lx-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+}
+
+/* ---------- Узкие экраны ---------- */
+@media (max-width:720px){
+  .lx-acc-list{grid-template-columns:1fr}
+}
+@media (max-width:420px){
+  .lx-more{margin-left:0}
+  .lx-dip{padding:12px}
+  .lx-m{font-size:9px}
+  .lx-bars{gap:2px}
+}
+
+/* ---------- Печать: блоки остаются читаемыми, без интерактивных хвостов ---------- */
+@media print{
+  .lx-chips,.lx-tally{display:none}
+  .lx-more>summary{display:none}
+  .lx-fmt{animation:none;break-inside:avoid}
+  .lx-col{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+}

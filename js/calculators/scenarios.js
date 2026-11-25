@@ -53,7 +53,20 @@ export function fieldText(f, v) {
     return o ? String(Array.isArray(o) ? o[1] : o) : String(v);
   }
   const n = num(v);
-  return `${ruNum(n, 2)}${f.suffix ? NBSP + f.suffix : ''}`;
+  return `${ruNum(n, 2)}${f.suffix ? NBSP + agreeSuffix(f.suffix, n) : ''}`;
+}
+
+/* Согласование единицы с числом: «1 показ», «2 показа», «5 показов», «1,5 показа».
+   Склоняется только первое слово единицы из словаря; остальные единицы (₽, %, чел.) не меняются.
+   Форму выбирают правила русского языка из Intl.PluralRules (one / few / many / other — дробные) */
+const PLURAL_UNITS = { 'показов': { one: 'показ', few: 'показа', many: 'показов', other: 'показа' } };
+let ruPlural = null;
+try { ruPlural = new Intl.PluralRules('ru-RU'); } catch (e) { ruPlural = null; }
+export function agreeSuffix(suffix, n) {
+  const m = /^([^\s/]+)(.*)$/.exec(String(suffix));
+  const forms = m && PLURAL_UNITS[m[1]];
+  if (!forms || !ruPlural || typeof n !== 'number' || !Number.isFinite(n)) return suffix;
+  return (forms[ruPlural.select(Math.abs(n))] || m[1]) + m[2];
 }
 
 /* Таблица сравнения: первый столбец — текущие входы, затем сохранённые сценарии.

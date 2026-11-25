@@ -36,19 +36,20 @@ const countNum = (kind, v, cfg, cls = '') => `<b class="scr-num ${cls}"><span cl
 
 /* ---------- Блоки ---------- */
 function statementHTML(r, cfg) {
-  const rows = r.expenses.length
-    ? r.expenses.map((e, i) => {
+  const sh = r.shown;                                    // одна точка округления: верх, строки и итог сходятся до рубля
+  const rows = sh.items.length
+    ? sh.items.map((e, i) => {
       const hundred = r.perHundred && r.perHundred.items.find(x => x.key === e.key);
       return `<li><span class="sw pt${i + 1}" aria-hidden="true"></span><span class="scr-lbl">${esc(e.label)}</span><span class="scr-amt">${esc(plain(e.amount, cfg))}</span>${hundred && r.revenue > 0 ? `<small>${hundred.rub}${NBSP}₽ с сотни</small>` : ''}</li>`;
     }).join('')
     : '<li class="scr-none">Расходов в расчёте нет.</li>';
   const per = (PERIODS.find(p => p.id === r.period) || PERIODS[1]).word;
   return `<section class="scr-sec scr-book" aria-label="Бухгалтерия за ${per}">
-    <div class="scr-line scr-in"><span>Пришло денег</span>${countNum('plain', r.revenue, cfg)}</div>
-    <div class="scr-line scr-out"><span>Ушло всего</span>${countNum('plain', r.expensesTotal, cfg)}</div>
+    <div class="scr-line scr-in"><span>Пришло денег</span>${countNum('plain', sh.revenue, cfg)}</div>
+    <div class="scr-line scr-out"><span>Ушло всего</span>${countNum('plain', sh.expensesTotal, cfg)}</div>
     <ul class="scr-exp">${rows}</ul>
     <div class="scr-line scr-net"><span>Осталось вам</span><span class="scr-st" data-s="${r.status}">${STATUS[r.status][1]}${STATUS[r.status][0]}</span></div>
-    ${countNum('signed', r.profit, cfg, 'scr-hero')}
+    ${countNum('signed', sh.profit, cfg, 'scr-hero')}
     <p class="scr-verdict">${esc(r.verdict)}</p>
   </section>`;
 }
@@ -71,7 +72,8 @@ function hundredHTML(r) {
 
 /* Три столбика: выручка / расходы / прибыль. Минус — штриховка и подпись «в минусе», а не только цвет */
 function columnsHTML(r, cfg) {
-  const vals = [['Пришло', r.revenue, 'rev', 'plain'], ['Ушло', r.expensesTotal, 'exp', 'plain'], [r.profit < 0 ? 'В минусе' : 'Осталось', r.profit, r.profit < 0 ? 'neg' : 'pro', 'signed']];
+  const sh = r.shown;                                    // те же поданные числа, что в бухгалтерии выше
+  const vals = [['Пришло', sh.revenue, 'rev', 'plain'], ['Ушло', sh.expensesTotal, 'exp', 'plain'], [sh.profit < 0 ? 'В минусе' : 'Осталось', sh.profit, sh.profit < 0 ? 'neg' : 'pro', 'signed']];
   const max = Math.max(...vals.map(v => Math.abs(v[1])), 1);
   const cols = vals.map(([name, v, cls, kind], i) => `<div class="scr-col ${cls}" style="--i:${i}"><span class="cv">${esc(numText(kind, v, cfg))}</span><div class="cb"><i style="--h:${Math.max(Math.abs(v) / max * 100, v === 0 ? 0 : 2).toFixed(2)}%"></i></div><span class="cn">${name}</span></div>`).join('');
   return `<section class="scr-sec"><h3 class="scr-h">Выручка, расходы, прибыль</h3>
@@ -127,18 +129,30 @@ function cardsHTML(r, cfg) {
 }
 
 /* ---------- Анимация чисел ---------- */
+/* Итог счёта: точные поданные числа (их же читает скринридер). Вызывается в конце счёта и страховочным таймером */
+function settleCounts(els, cfg, state) {
+  cancelAnimationFrame(state.raf);
+  clearTimeout(state.timer);
+  els.forEach(el => { el.textContent = numText(el.dataset.kind, Number(el.dataset.scrCount), cfg); });
+}
 function runCounts(root, cfg, state) {
   const els = [...root.querySelectorAll('[data-scr-count]')];
-  if (!motionOK()) return;                                   // без анимации итог уже в разметке
+  // без анимации или во фоновой вкладке (кадры там стоят) — итог уже в разметке, промежуточных чисел не показываем
+  if (!motionOK() || document.hidden) return;
   els.forEach(el => { el.textContent = numText(el.dataset.kind, 0, cfg); });
-  const t0 = performance.now();
+  let t0 = null;                                             // отсчёт от первого кадра: метка кадра бывает раньше performance.now()
   const frame = now => {
-    const p = Math.min(1, (now - t0) / COUNT_MS);
-    const k = p >= 1 ? 1 : 1 - 2 ** (-10 * p);              // ease-out expo
+    if (t0 == null) t0 = now;
+    const p = Math.min(1, Math.max(0, (now - t0) / COUNT_MS));
+    if (p >= 1) { settleCounts(els, cfg, state); return; }
+    const k = 1 - 2 ** (-10 * p);                            // ease-out expo
     els.forEach(el => { el.textContent = numText(el.dataset.kind, Number(el.dataset.scrCount) * k, cfg); });
-    if (p < 1) state.raf = requestAnimationFrame(frame);
+    state.raf = requestAnimationFrame(frame);
   };
   state.raf = requestAnimationFrame(frame);
+  // страховка: если кадры остановились (вкладку свернули, браузер экономит батарею), итог всё равно встаёт точно
+  state.timer = setTimeout(() => settleCounts(els, cfg, state), COUNT_MS * 2);
+  state.settle = () => settleCounts(els, cfg, state);
 }
 
 /* ---------- Открыть экран ----------
@@ -175,17 +189,22 @@ export function openReport({ input, cfg, ctx = {}, opener, onSave, modeLabel = '
     </footer>
   </div>`;
 
-  const state = { raf: 0 };
+  const state = { raf: 0, timer: 0, settle: null };
   let closed = false;
   const root = document.documentElement;
   const finish = () => {
     if (closed) return;
     closed = true;
     cancelAnimationFrame(state.raf);
+    clearTimeout(state.timer);
+    document.removeEventListener('visibilitychange', onHidden);
     root.classList.remove('scr-lock');
     dlg.remove();
     if (opener && opener.isConnected) try { opener.focus(); } catch (e) { /* кнопки уже нет — фокус не нужен */ }
   };
+  // вкладку скрыли посреди счёта — сразу ставим итог, чтобы по возвращении не застать «недосчитанные» цифры
+  const onHidden = () => { if (document.hidden && state.settle) state.settle(); };
+  document.addEventListener('visibilitychange', onHidden);
   dlg.addEventListener('close', finish);
   dlg.addEventListener('click', e => {
     if (e.target.closest('[data-close]')) { dlg.close(); return; }
@@ -196,6 +215,7 @@ export function openReport({ input, cfg, ctx = {}, opener, onSave, modeLabel = '
       return;
     }
     if (e.target.closest('[data-print]')) {
+      if (state.settle) state.settle();                       // на печать — только точные итоговые числа
       // печатаем только плашку: правило @media print в simple-calc.css прячет всё остальное по классу на body
       document.body.classList.add('sc-printing');
       const done = () => { document.body.classList.remove('sc-printing'); removeEventListener('afterprint', done); };

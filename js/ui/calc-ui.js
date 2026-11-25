@@ -9,6 +9,7 @@ import { calc as travelCalc } from '../calculators/travel.js';
 import { methodLines, legalLine } from '../calculators/method.js';
 import { formatHeadline, thousands } from '../calculators/headline.js';
 import { clamp, ruNum } from '../calculators/util.js';
+import { agreeSuffix } from '../calculators/scenarios.js';
 
 /* ==== Поля ввода ==== */
 /* id элемента в DOM: у полей разных калькуляторов совпадают имена (year, venue, route…), поэтому id префиксуется */
@@ -67,7 +68,8 @@ export function rangeValues(fields) {
     const e = $(D(f)); if (!e) return;
     const v = fieldValue(f);
     const o = $(D(f) + 'Val');
-    const text = `${fmt(v)} ${e.dataset.suffix || ''}`.trim();
+    // единица согласуется с числом («1 показ», «3 показа»), как и в смете
+    const text = `${fmt(v)} ${agreeSuffix(e.dataset.suffix || '', v)}`.trim();
     if (o) o.textContent = text;
     e.setAttribute('aria-valuetext', text);
     const nm = $(D(f) + 'Num');
@@ -191,6 +193,17 @@ const head = (id, label, v, sub, empty) => {
 
 const R = {};
 
+/* Согласование «N чего-то» после числа: 1, 21, 31… — единственное число, иначе множественное (одна форма на 2–4 и 5+) */
+const oneOr = (n, one, many) => plural3(n, one, many, many);
+/* Три формы: 1 зритель · 2 зрителя · 5 зрителей — правила русского языка из Intl.PluralRules (без своих чисел) */
+const PLURAL = new Intl.PluralRules('ru-RU');
+const plural3 = (n, one, few, many) => {
+  const cat = PLURAL.select(Math.abs(Math.trunc(Number(n)) || 0));
+  return cat === 'one' ? one : cat === 'few' ? few : many;
+};
+/* Маржа без выручки не определена (расчёт даёт 0%) — плитка показывает прочерк, чтобы не путать с «в ноль» */
+const marginText = (gross, margin) => (Number.isFinite(gross) && gross > 0 ? pct(margin) : '—');
+
 R.travel = (input, cfg, r) => {
   const NCHART = cfg.calc.chart_points;                          // точек на графике — из data/config.json
   const nMax = Math.max(Math.ceil(r.be / r.k) * 2, input.kids * 2, NCHART);
@@ -200,8 +213,8 @@ R.travel = (input, cfg, r) => {
   });
   const beShow = Math.max(1, Math.ceil(r.be / Math.max(1, r.k)));
   return head('travel', 'Чистая прибыль', r.per, 'С одного показа после перечисленных расходов, до постоянных затрат.') +
-    minis([['Выручка дня', rub(r.gross)], ['Прибыль дня', signed(r.profit)], ['Маржа', pct(r.margin)]]) +
-    lineChart({ points: pts, marks: [{ x: Math.min(beShow, nMax), label: 'безубыточность' }], aria: `Прибыль дня в зависимости от числа зрителей на показ: ноль при ${beShow} зрителях`, unitX: 'зрит.' }) +
+    minis([['Выручка дня', rub(r.gross)], ['Прибыль дня', signed(r.profit)], ['Маржа', marginText(r.gross, r.margin)]]) +
+    lineChart({ points: pts, marks: [{ x: Math.min(beShow, nMax), label: 'безубыточность' }], aria: `Прибыль дня в зависимости от числа зрителей на показ: ноль при ${beShow} ${oneOr(beShow, 'зрителе', 'зрителях')}`, unitX: 'зрит.' }) +
     costBar([
       ['ФОТ и взносы', r.salary + r.social, 'c1'],
       ['Транспорт и реквизит', r.fuel + r.wear + r.print, 'c2'],
@@ -216,11 +229,11 @@ R.travel = (input, cfg, r) => {
       ${kv('Расходы ' + (r.k === 1 ? 'показа' : 'дня'), rub(r.cost))}
     </div>` +
     tip(cfg, 'Совет помощника',
-      r.profit < 0 ? `Не подтверждайте выезд на этих условиях. До нуля не хватает ${fmt(Math.max(0, r.be - input.kids * r.k))} оплаченных мест за день. Объедините группы или согласуйте минимум кассы.`
+      r.profit < 0 ? `Не подтверждайте выезд на этих условиях. До нуля не хватает ${fmt(Math.max(0, r.be - input.kids * r.k))} ${oneOr(Math.max(0, r.be - input.kids * r.k), 'оплаченного места', 'оплаченных мест')} за день. Объедините группы или согласуйте минимум кассы.`
         : r.margin < cfg.calc.advice.low_margin_pct ? 'Показ покрывает прямые расходы, но запас небольшой. Второй показ по тому же адресу снизит долю транспорта.'
           : 'Условия дают запас. Зафиксируйте число детей и второй слот письменно до бронирования команды.',
       r.profit < 0 ? 'warn' : '') +
-    `<p class="hint">Безубыточность: ${r.be} зрителей за день, в среднем не меньше ${beShow} на показ при одинаковых группах.</p>`;
+    `<p class="hint">Безубыточность: ${r.be} ${plural3(r.be, 'зритель', 'зрителя', 'зрителей')} за день, в среднем не меньше ${beShow} на показ при одинаковых группах.</p>`;
 };
 
 R.basecamp = (input, cfg, r) => {
@@ -288,32 +301,42 @@ R.goal = (input, cfg, r) => {
 };
 
 R.taxes = (input, cfg, r) => {
-  const yr = r.year, T = r.threshold, c = r.crossing, best = r.best;
-  const top = head('taxes', 'Налог года (лучшая схема)', best ? best.tax : null, best ? `«${best.name}» при выручке ${rub(r.revenue)} и расходах ${input.costShare}% · ${yr} год` : 'Ставки режимов без проверенных данных — введите вручную.');
+  // лучший режим выбирается по налогу К УПЛАТЕ (после законного вычета / учёта взносов ИП) — та же цифра, что в плашках ниже
+  const yr = r.year, T = r.threshold, c = r.crossing, best = r.bestPay;
+  const beforeDed = best && best.tax != null && best.pay != null && Math.round(best.tax) !== Math.round(best.pay) ? ` (до вычета взносов ${rub(best.tax)})` : '';
+  const top = head('taxes', 'Налог к уплате за год (лучшая схема)', best ? best.pay : null, best ? `${best.name}${beforeDed} при выручке ${rub(r.revenue)} и расходах ${input.costShare}% · ${yr} год` : 'Ставки режимов без проверенных данных — введите вручную.');
   // плашки «до / после порога»: оба берега считаются по ОДНОМУ режиму (УСН «Доходы»), лучший режим — отдельной строкой ниже
   const usn6Of = s => s.regimes.find(q => q.id === 'usn6');
-  const usn6Text = s => (s.usnLost ? 'УСН недоступна' : rub(usn6Of(s).tax));
-  const side = s => [
-    `НДС за год: ${rub(s.vat)}`,
+  // крупная цифра — налог К УПЛАТЕ после вычета взносов ИП (лимит и основание — в rates.json); ниже — вся цепочка до остатка
+  const usn6Text = s => (s.usnLost ? 'УСН недоступна' : rub(s.usn6Pay));
+  const dedNote = s => (s.dedPct == null ? 'лимит — нет данных' : `до ${ruNum(s.dedPct)}%${s.staff ? ', есть штат' : ', без работников'}`);
+  const side = s => (s.usnLost ? [`НДС за год: ${rub(s.vat)}`, `Взносы ИП: ${rub(s.ip.total)}`, 'Остаток владельца: УСН недоступна'] : [
+    `Налог УСН ${ruNum(cfg.usn, 2)}%: ${rub(s.usn6Tax)}`,
+    `Вычет взносов ИП: −${rub(s.usn6Deduction)} (${dedNote(s)}) ${rateTag(cfg, s.staff ? 'usn_deduction_with_staff_pct' : 'usn_deduction_no_staff_pct')}`,
+    // 1% сверх порога платится до 1 июля следующего года и по закону уменьшает налог того года — здесь это допущение
+    ...(s.ip && s.ip.extra > 0 ? [`Допущение: 1% взносов (${rub(s.ip.extra)}) учтён в вычете того же года; по закону он уменьшает налог следующего года — в первый год налог к уплате может быть выше`] : []),
+    `Налог к уплате: ${rub(s.usn6Pay)}`,
     `Взносы ИП: ${rub(s.ip.total)}`,
-    `Остаток владельца: ${s.usnLost ? 'УСН недоступна' : signed(s.netUsn6)}`
-  ];
-  const plates = T == null ? '' : `<div class="platerow">${plate(`До порога · ${rub(r.before.revenue)}`, usn6Text(r.before), ['налог УСН «Доходы»', ...side(r.before)])}${plate(`${c.over ? 'После порога · ваша выручка' : 'Сразу после порога'} · ${rub(r.after.revenue)}`, usn6Text(r.after), ['налог УСН «Доходы»', ...side(r.after)])}</div>`;
-  const bestName = s => (s.best ? `«${s.best.name}» · ${rub(s.best.tax)}` : 'нет данных');
+    ...(s.vat > 0 ? [`НДС за год: ${rub(s.vat)}`] : []),
+    `Остаток владельца: ${signed(s.ownerNet)}`
+  ]);
+  const plates = T == null ? '' : `<div class="platerow">${plate(`До порога · ${rub(r.before.revenue)}`, usn6Text(r.before), ['налог УСН «Доходы» к уплате', ...side(r.before)])}${plate(`${c.over ? 'После порога · ваша выручка' : 'Сразу после порога'} · ${rub(r.after.revenue)}`, usn6Text(r.after), ['налог УСН «Доходы» к уплате', ...side(r.after)])}</div>`;
+  const bestName = s => (s.bestPay ? `${s.bestPay.name} · ${rub(s.bestPay.pay)} к уплате` : 'нет данных');
   const cross = T == null ? nodata(`Порог НДС на ${yr} год не определён — введите вручную.`, `vat_threshold.${yr}`) :
     `<div class="ledger">
       ${kv(`Порог НДС (${yr})`, `${rub(T)} ${rateTag(cfg, `vat_threshold.${yr}`)}`)}
       ${kv(c.over ? 'Превышение порога' : 'Запас до порога', rub(Math.abs(c.headroom)))}
       ${kv('Лучший режим по налогу до порога', bestName(r.before))}
       ${kv('Лучший режим по налогу после порога', bestName(r.after))}
-      ${kv('Точка перехода: выручка, при которой остаток снова как на пороге', c.breakEven != null ? rub(c.breakEven) : 'не достигается')}
+      ${kv('Точка перехода: выручка, при которой остаток снова как на пороге (без вычета взносов)', c.breakEven != null ? rub(c.breakEven) : 'не достигается')}
       ${kv('Порог пересекается', c.month != null ? `в ${c.month}-м месяце` : 'не пересекается')}
       ${kv('НДС начинается', c.month == null ? '—' : (c.vatFromMonth != null ? `с ${c.vatFromMonth}-го месяца` : 'со следующего года'))}
       ${kv('НДС в год превышения', c.month != null ? rub(c.vatFirstYear) : '—')}
     </div>`;
   // таблица режимов до/после
-  const cell = (g, s) => { const x = s.regimes.find(q => q.id === g.id); return x && x.tax != null ? rub(x.tax) : (x && x.lost ? 'УСН недоступна' : 'нет данных'); };
-  const tbl = table(['Режим', 'До порога', 'После порога'], r.regimes.map(g => [g.name, cell(g, r.before), cell(g, r.after)]));
+  // в таблице — налог к уплате (после вычета взносов), чтобы цифры совпадали с плашками и шапкой
+  const cell = (g, s) => { const x = s.regimes.find(q => q.id === g.id); return x && x.pay != null ? rub(x.pay) : (x && x.lost ? 'УСН недоступна' : 'нет данных'); };
+  const tbl = table(['Режим', 'До порога, к уплате', 'После порога, к уплате'], r.regimes.map(g => [g.name, cell(g, r.before), cell(g, r.after)]));
   // карточки режимов (по вашей выручке)
   const cards = r.regimes.map(g => {
     let body;
@@ -322,15 +345,15 @@ R.taxes = (input, cfg, r) => {
     else if (g.id === 'patent' && g.noData) body = nodata('Потенциальный доход — нет данных', 'patent_potential_nsk') + more('Подробнее', legalLine(cfg, 'patent_nodata'));
     else if (g.lost) body = '<p class="tiny">Выручка выше верхней границы: право на УСН утрачено — режим недоступен.</p>';
     else {
-      const extra = g.taxAfterContrib != null ? `<div class="kv"><span>после вычета взносов (оценка)</span><b>${rub(g.taxAfterContrib)}</b></div>` : '';
+      const extra = g.taxAfterContrib != null ? `<div class="kv"><span>${g.id === 'usn15' ? 'к уплате, взносы в расходах (оценка)' : 'к уплате после вычета взносов'}</span><b>${rub(g.pay)}</b></div>` : (g.id === 'patent' ? '<div class="kv"><span>вычет взносов</span><b>не считается</b></div>' : '');
       const src = { usn6: 'usn_income_rate', usn15: 'usn_income_minus_costs_rate', usnSocial: `usn_nso_social_income.${yr}`, patent: 'patent_tax_rate' }[g.id];
       const note = {
-        usn6: `Вычет взносов — до ${g.dedPct != null ? ruNum(g.dedPct) + '%' : 'нет данных'} налога; сумма вычета ${rub(g.deduction)}`,
+        usn6: `Вычет взносов — до ${g.dedPct != null ? ruNum(g.dedPct) + '%' : 'нет данных'} налога${g.staff ? ' (есть работники / выплаты физлицам: взносы за себя и за работников)' : ' (без работников: взносы ИП за себя, включая 1%)'}; сумма вычета ${rub(g.deduction)}`,
         usn15: `Расходы ${input.costShare}% должны подтверждаться документами; минимальный налог ${ruNum(g.minTax)}% дохода`,
         usnSocial: legalLine(cfg, 'social_note', { rate: g.rate, rateDR: g.rateDR }),
         patent: legalLine(cfg, 'patent_note')
       }[g.id];
-      body = `<div class="big-num sm">${rub(g.tax)}</div><div class="kv"><span>ставка</span><b>${g.rate != null ? ruNum(g.rate, 2) + '%' : '—'}</b></div>${extra}${more('Условия', note)}${src ? rateTag(cfg, src) : ''}`;
+      body = `<div class="big-num sm">${rub(g.tax)}</div><p class="tiny">налог до вычета взносов</p><div class="kv"><span>ставка</span><b>${g.rate != null ? ruNum(g.rate, 2) + '%' : '—'}</b></div>${extra}${more('Условия', note)}${src ? rateTag(cfg, src) : ''}`;
     }
     return `<div class="cmpcol ${best && g.id === best.id ? 'best' : ''}"><h4>${g.name}</h4>${body}</div>`;
   }).join('');
@@ -346,14 +369,16 @@ R.taxes = (input, cfg, r) => {
   </div>${ip.fixedNoData ? nodata(`Фиксированные взносы ИП на ${yr} год не внесены.`, `ip_fixed_contributions.${yr}`) : ''}`;
   return top + plates +
     (T != null ? gauge({ value: r.revenue, limit: T, label: `Выручка к порогу НДС (${yr})`, aria: `Выручка ${rub(r.revenue)} при пороге ${rub(T)}` }) : '') +
-    barsChart({ rows: r.regimes.filter(g => g.tax != null).map(g => ({ label: g.name, a: g.tax })), aria: 'Налог за год по режимам', fmtV: rub }) +
+    barsChart({ rows: r.regimes.filter(g => g.pay != null).map(g => ({ label: g.name, a: g.pay })), aria: 'Налог к уплате за год по режимам (после вычета взносов)', fmtV: rub }) +
     '<h4 class="subh">Переход через порог НДС</h4>' + cross + tbl +
     '<h4 class="subh">Режимы при вашей выручке</h4>' + `<div class="cmpgrid">${cards}</div>` +
     '<h4 class="subh">Взносы ИП за себя</h4>' + contrib +
+    // предупреждение о лимите вычета не прячется в «Подробнее» (data-keep): оно меняет цифру налога к уплате
+    (r.staffConflict ? tip(cfg, `Есть выплаты по ГПХ — лимит вычета ${cfg.deductWithStaff != null ? ruNum(cfg.deductWithStaff) + '%' : 'ниже'}`, `При выплатах физлицам по ГПХ вычет взносов — не больше ${cfg.deductWithStaff != null ? ruNum(cfg.deductWithStaff) + '%' : 'половины'} налога, а расчёт сейчас берёт полный. Указаны гонорары команды ${rub(input.employees)}: выберите «Есть работники» или обнулите гонорары, если выплат физлицам нет.`, 'warn').replace('<div class="advice warn"', '<div data-keep class="advice warn"') : '') +
     (r.warning ? tip(cfg, 'Порог НДС', r.warning, 'warn') : '') +
     (r.now.usnLost ? tip(cfg, 'Право на УСН утрачено', `Выручка выше ${rub(r.bandHigh)}: общие ставки НДС и налогообложение — вне модели, вычеты входного НДС не считаются.`, 'warn') : '') +
     (r.now.bandUnknown ? tip(cfg, 'Верхняя граница диапазона неизвестна', 'Для этого года не внесены границы 5%/7%-диапазонов — введите вручную в списке источников.', 'warn') : '') +
-    tip(cfg, 'Совет помощника', best ? `Лучший режим по налогу — «${best.name}». Держите запас до порога НДС: переход съедает часть прибыли, а «точка перехода» показывает, сколько выручки нужно, чтобы её вернуть.` : 'Налог лучшего режима посчитать нельзя: введите недостающие значения вручную.') +
+    tip(cfg, 'Совет помощника', best ? `Лучший режим по налогу к уплате — ${best.name}. Держите запас до порога НДС: переход съедает часть прибыли, а «точка перехода» показывает, сколько выручки нужно, чтобы её вернуть.` : 'Налог лучшего режима посчитать нельзя: введите недостающие значения вручную.') +
     tip(cfg, 'Требует консультации', 'Итог выбора режима подтверждайте с бухгалтером: льготы, вычеты взносов и региональные условия здесь учтены только приблизительно.');
 };
 
@@ -400,7 +425,7 @@ R.parties = (input, cfg, r) => {
   const bench = b ? `${b.name}${b.address ? ` (${b.address.split(';')[0]})` : ''}: ${b.perHour != null ? rub(b.perHour) + '/час' : 'цена часа — нет данных'}${b.packageMin != null ? `, пакеты ${rub(b.packageMin)}–${rub(b.packageMax)}` : ''}. Не конкурировать числом игровых зон — продавать спектакль с участием именинника.` : 'Ориентиров рынка в data/competitors.json нет — нет данных.';
   const checks = cfg.stages.map(s => s.party_check);
   return head('parties', 'Прибыль праздника', r.profit, 'Один «День рождения в театре» после переменных, ФОТ и налога.') +
-    minis([['Выручка пакета', rub(r.revenue)], ['Маржа', pct(r.margin)], ['За месяц (' + input.perMonth + ')', signed(r.perMonth)]]) +
+    minis([['Выручка пакета', rub(r.revenue)], ['Маржа', marginText(r.revenue, r.margin)], ['За месяц (' + input.perMonth + ')', signed(r.perMonth)]]) +
     minis([
       ['Выручка на гостя', rub(input.guests > 0 ? r.revenue / input.guests : 0)],
       ['Прибыль на гостя', signed(input.guests > 0 ? r.profit / input.guests : 0)],
@@ -451,6 +476,8 @@ function foldDetails(html) {
   const keep = new Set(kids.slice(0, 2));
   const tip = kids.find(k => k.classList.contains('advice') && /Совет/.test((k.querySelector('strong') || {}).textContent || ''));
   if (tip) keep.add(tip);
+  // блоки с data-keep (важные предупреждения) остаются на виду
+  kids.filter(k => k.hasAttribute('data-keep')).forEach(k => keep.add(k));
   const rest = kids.filter(k => !keep.has(k));
   if (!rest.length) return html;
   return kids.filter(k => keep.has(k)).map(k => k.outerHTML).join('') +

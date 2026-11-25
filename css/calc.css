@@ -192,3 +192,39 @@
 
 /* кнопка «Сбросить ручной ввод» скрыта атрибутом hidden, пока ручных значений нет (display:inline-flex у .btn его перебивал) */
 .calcglobal [hidden]{display:none!important}
+
+/* ============================================================
+   Смета в 1 клик (js/estimate-export.js): лист #estSheet существует только на время печати.
+   body.est-printing — печатается один лист А4: заголовок, параметры, итоговая таблица, подпись.
+   Остальная страница (шапка, меню, тосты, плашки, декор) скрыта; чёрный текст на белом в обеих темах.
+   ============================================================ */
+#estSheet{display:none}
+.est-tools{margin-top:14px}
+/* кнопки сметы — касание не меньше 44px при любой ширине (на 1280 у .btn.small выходило 43,3px) */
+.est-tools .btn{min-height:44px}
+@page est{size:A4;margin:14mm}
+@media print{
+  body.est-printing>*:not(#estSheet){display:none!important}
+  html:has(body.est-printing),body.est-printing{background:#fff!important;color:#000!important}
+  body.est-printing #estSheet{display:block!important;page:est;color:#000;background:#fff;font-family:var(--font-text,system-ui,sans-serif);font-size:11pt;line-height:1.45;max-width:none;margin:0;padding:0;box-shadow:none;border:0}
+  #estSheet *{animation:none!important;transition:none!important;color:#000!important;background:transparent!important;box-shadow:none!important;text-shadow:none!important}
+  #estSheet .est-head{border-bottom:1.5pt solid #000;padding-bottom:6pt;margin-bottom:12pt}
+  #estSheet .est-app{margin:0 0 4pt;font-size:9pt;letter-spacing:.02em}
+  #estSheet h1{margin:0;font-size:17pt;line-height:1.25;font-weight:700;letter-spacing:-.01em}
+  #estSheet h2{margin:14pt 0 6pt;font-size:12pt;font-weight:700;text-transform:none}
+  #estSheet table{width:100%;border-collapse:collapse;break-inside:auto}
+  #estSheet tr{break-inside:avoid}
+  #estSheet th,#estSheet td{padding:4pt 6pt;border-bottom:.5pt solid #999;vertical-align:top;text-align:left;font-weight:400;font-size:10.5pt;text-transform:none;letter-spacing:0}
+  #estSheet td{text-align:right;font-variant-numeric:tabular-nums;width:38%}
+  #estSheet .est-params td{white-space:normal;text-align:left;width:50%}
+  #estSheet .est-item th{padding-left:18pt;font-size:9.5pt}
+  #estSheet .est-item td{font-size:9.5pt}
+  #estSheet .est-revenue th,#estSheet .est-revenue td,#estSheet .est-cost th,#estSheet .est-cost td,#estSheet .est-tax th,#estSheet .est-tax td{font-weight:600}
+  #estSheet .est-profit th,#estSheet .est-profit td{font-weight:700;border-top:1pt solid #000}
+  #estSheet .est-be th,#estSheet .est-be td{font-weight:600}
+  #estSheet .est-note{margin-top:14pt;font-size:9pt;font-style:italic}
+}
+
+/* ссылка «Летний сценарий» в шапке «Расчётов»: касание ≥44px, длинная подпись переносится на 360px */
+.calc-summer{margin:0 0 14px}
+.calc-summer .btn{min-height:44px;white-space:normal;text-align:left;max-width:100%}

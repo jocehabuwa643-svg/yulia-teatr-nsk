@@ -11,6 +11,7 @@ import { loadScenarios, saveScenarios, addScenario, removeScenario, buildCompari
 import { readOverrides, setOverride, clearOverrides, hasOverrides } from './calculators/overrides.js';
 import { buildCalcConfig } from './calculators/config.js';
 import { state } from './state.js';
+import { buildCalcEstimate, copyEstimate, printEstimate } from './estimate-export.js';
 
 const lastHeadline = {};            // текст большой цифры по калькуляторам — «поп» только при изменении
 const picked = {};                  // выбранные для сравнения сценарии: { calcId: Set(id) }
@@ -37,6 +38,14 @@ function currentInputs(id) {
   return readInputs(fieldsOf(mod));
 }
 const activeCalcId = () => registry[Math.max(0, [...$('calcpanels').children].findIndex(p => !p.hidden))].meta.id;
+
+/* Смета текущего калькулятора: те же входы и тот же расчёт, что на экране (js/estimate-export.js собирает строки) */
+function estimateOf(id) {
+  const mod = registry.find(m => m.meta.id === id);
+  const fields = fieldsOf(mod);
+  const inputs = readInputs(fields);
+  return buildCalcEstimate({ mod, fields, inputs, result: runCalc(mod, inputs, state.CFG, calcCtx()), date: new Date() });
+}
 
 /* ==== Сценарии ==== */
 function scenDate(at) { const d = new Date(at); return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('ru-RU'); }
@@ -179,7 +188,8 @@ export function initCalc(cfg) {
           <button type="button" class="btn small secondary" data-act="reset">${ic('rotate-ccw')}<span>Сбросить</span></button>
           <button type="button" class="btn small secondary" data-act="save">${ic('bookmark')}<span>Сохранить сценарий</span></button>
           <button type="button" class="btn small secondary" data-act="compare" aria-expanded="false" aria-controls="cmp-${m.meta.id}">${ic('git-compare-arrows')}<span>Сравнить сценарии</span></button>
-          <button type="button" class="btn small secondary" data-act="print">${ic('printer')}<span>Печать / PDF</span></button>
+          <button type="button" class="btn small secondary" data-act="share">${ic('copy')}<span>Скопировать для мессенджера</span></button>
+          <button type="button" class="btn small secondary" data-act="pdf">${ic('printer')}<span>Сохранить в PDF</span></button>
         </div>
         <div class="scenlist" id="scen-${m.meta.id}"></div>
         <details><summary>Допущения и источники данных</summary><div id="meth-${m.meta.id}"></div></details>
@@ -188,6 +198,21 @@ export function initCalc(cfg) {
       <section class="card compare" id="cmp-${m.meta.id}" aria-label="Сравнение сценариев" hidden></section>
     </div>`;
   }).join('');
+
+  // Ссылка «Летний сценарий» из шапки «Расчётов»: сначала переход к #launch (раздел собирается, высоты выше фиксируются),
+  // затем прокрутка к самому блоку — иначе якорь в конце длинной страницы промахивается по оценочной раскладке
+  const summerLink = document.querySelector('#calc [data-to-summer]');
+  if (summerLink) summerLink.addEventListener('click', e => {
+    e.preventDefault();
+    location.hash = 'launch';
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = document.getElementById('summerPlan');
+      if (!el) return;
+      el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      try { history.replaceState(null, '', '#summerPlan'); } catch (err) { /* адрес не меняется — блок уже на экране */ }
+    }));
+  });
 
   // Восстановить последние значения полей (удобство; без них — значения по умолчанию)
   registry.forEach(m => { const saved = store.get('calc.in.' + m.meta.id, null); if (saved && typeof saved === 'object') writeInputs(fieldsOf(m), saved); });
@@ -250,6 +275,10 @@ export function initCalc(cfg) {
         box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     }
+    // смета в 1 клик: текст для мессенджера и лист А4 только с этим калькулятором
+    if (act === 'share') copyEstimate(estimateOf(id), toast);
+    if (act === 'pdf') printEstimate(estimateOf(id));
+    // «Печать / PDF» в блоке «Сравнение сценариев» — обычная печать страницы по общим правилам @media print
     if (act === 'print') window.print();
   });
   panels.addEventListener('change', e => {

@@ -18,7 +18,7 @@
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { kindFromText } from '../js/competitor-prices.js';
+import { kindFromText, isArchived } from '../js/competitor-prices.js';
 import { DATA_DIR, PROJECT_UA, fetchRetry, readJson, writeJsonIfChanged, detectIndent, wait, robotsAllowsPath, ageInDays } from './fetch-util.mjs';
 
 /* ---------- Настройки ---------- */
@@ -214,7 +214,8 @@ export async function run({ now = new Date(), dataDir = DATA_DIR, deps = {} } = 
   const tally = {};
   for (const key of LISTS) {
     for (const item of doc[key] || []) {
-      if (!item || !item.source_url) continue;
+      // архивные места (закрыты или непрофильные) не проверяем: их сайты больше не источник цен
+      if (!item || !item.source_url || isArchived(item)) continue;
       const prevChecked = item.checked_at, prevStatus = item.check_status, prevObs = item.observed;
       const res = await checkItem(item, nowIso, deps);
       /* идемпотентность только для повторного запуска в тот же день (ручной перезапуск workflow, < 20 ч):

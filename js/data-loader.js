@@ -1,6 +1,7 @@
 /* data-loader.js — загрузка data/*.json с кэшем, версией и graceful fallback.
    Никаких расчётов: только доставка данных и флаги свежести. */
 import { store, toast } from './ui/helpers.js';
+import { networkNotice, dataDateOf, browserOffline } from './live-data.js';
 
 const FILES = ['rates', 'config', 'regions', 'competitors', 'market', 'meta', 'guide', 'seasonality', 'news', 'leads'];
 /* Необязательные файлы (дайджест «Сегодня», новости, «потенциальные клиенты» leads.json): их отсутствие не повод для тоста «данные не загрузились» —
@@ -25,7 +26,7 @@ async function fetchOne(name, fresh = false) {
     const json = await r.json();
     // Service worker без сети отдаёт сохранённую копию с заголовком X-SW-Fallback (sw.js) — это не свежие данные
     const swFallback = !!(r.headers && r.headers.get && r.headers.get('X-SW-Fallback'));
-    if (swFallback) return { data: json, fromCache: true, error: 'нет сети — копия из кэша приложения' };
+    if (swFallback) return { data: json, fromCache: true, sw: true, error: 'нет сети — копия из кэша приложения' };
     try { store.set(cacheKey(name), { t: Date.now(), d: json }); } catch (e) { /* квота — не критично */ }
     return { data: json, fromCache: false, error: null };
   } catch (e) {
@@ -49,10 +50,15 @@ export async function loadAll({ fresh = false } = {}) {
     if (entries[i].fromCache) out.health.cached.push(n);
   });
   if (fresh) return out;
-  if (out.health.errors.length && !out.health.cached.length) {
-    toast('Данные не загрузились — проверьте соединение');
-  } else if (out.health.cached.length) {
-    toast('Часть данных — из кэша браузера');
+  if (out.health.errors.length) {
+    /* Спокойная подпись вместо «ошибки»: на экране рабочие сохранённые данные.
+       Нет интернета (так говорит браузер или ответил сервис-воркер копией) — «Работа в офлайн-режиме · данные от …»;
+       интернет есть, но файлы не пришли — «Данные от … · обновятся автоматически».
+       Под сервис-воркером без сети ту же мысль скажет офлайн-плашка js/pwa.js — второй раз тостом не повторяем */
+    const viaSw = entries.some(e => e.sw);
+    const offline = browserOffline() || viaSw;
+    const swControls = typeof navigator !== 'undefined' && !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+    if (!(offline && swControls)) toast(networkNotice(offline ? 'offline' : 'stale', dataDateOf(out)));
   }
   return out;
 }

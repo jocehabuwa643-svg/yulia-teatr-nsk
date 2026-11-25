@@ -203,13 +203,36 @@ export function observedCompare(c, manual) {
   };
 }
 
+/* ---------- Архив: закрытые и непрофильные места ---------- */
+
+/* Архивная запись (archived:true) — закрыта или непрофильна: в списки, счётчики, диаграмму, сравнения и автопроверку не входит */
+export const isArchived = c => !!(c && c.archived === true);
+
+/* Списки групп competitors.json, где лежат действующие карточки */
+export const COMPETITOR_LISTS = ['outbound_performers', 'studio_scene', 'party_venues', 'stationary_benchmarks'];
+
+/* Действующие карточки всех групп (архивные отброшены) */
+export function activeCompetitors(doc) {
+  const d = doc || {};
+  return COMPETITOR_LISTS.flatMap(k => (Array.isArray(d[k]) ? d[k] : [])).filter(x => x && x.id && !isArchived(x));
+}
+
+/* Архив: отдельный массив archived[] плюс записи с archived:true, оставшиеся в группах; без повторов по id */
+export function archivedList(doc) {
+  const d = doc || {};
+  const inGroups = COMPETITOR_LISTS.flatMap(k => (Array.isArray(d[k]) ? d[k] : [])).filter(isArchived);
+  const seen = new Set();
+  return [...(Array.isArray(d.archived) ? d.archived : []), ...inGroups]
+    .filter(x => x && x.id && !seen.has(x.id) && seen.add(x.id));
+}
+
 /* ---------- Диаграмма и таблица сравнения ---------- */
 
 /* Строки диаграммы «за человека»: по каждой группе (билет в зал / выезд за ребёнка) — цены конкурентов.
    manualAll — { [id]: ручная запись }. Возвращает { ticket:[…], per_child:[…], none:[имена без цены за человека] } */
 export function perPersonRows(list, manualAll = {}) {
   const out = { ticket: [], per_child: [], none: [] };
-  (list || []).forEach(c => {
+  (list || []).filter(c => c && !isArchived(c)).forEach(c => {
     const groups = groupPrices(c, manualAll[c.id]).filter(g => PER_PERSON.has(g.kind));
     if (!groups.length) { if (c.type === 'outbound' || c.type === 'benchmark') out.none.push(c.name); return; }
     groups.forEach(g => {
@@ -229,7 +252,7 @@ export function perPersonRows(list, manualAll = {}) {
 export function otherKindRows(list, manualAll = {}) {
   const out = {};
   ['outbound_package', 'party_package', 'hour', 'subscription'].forEach(k => { out[k] = []; });
-  (list || []).forEach(c => groupPrices(c, manualAll[c.id]).forEach(g => {
+  (list || []).filter(c => c && !isArchived(c)).forEach(c => groupPrices(c, manualAll[c.id]).forEach(g => {
     if (!out[g.kind]) return;
     const s = groupSummary(g);
     // единица внутри типа: «₽/мес» и «₽/абонемент (4 или 8 занятий)» — разные величины, сравнивать их нельзя

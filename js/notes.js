@@ -102,8 +102,31 @@ function currentSection() {
   return s ? s.id : '';
 }
 
+/* База площадок (мини-CRM) живёт в localStorage (yulia.v2.crm), а не в IndexedDB — в общую копию кладётся отдельно,
+   в формате файла «Экспорт базы (JSON)». Модули грузятся по требованию: helpers.js трогает DOM при загрузке */
+async function crmForBackup() {
+  try {
+    const [{ store }, crm] = await Promise.all([import('./ui/helpers.js'), import('./crm.js')]);
+    const db = crm.normalizeDb(store.get(crm.STORE_KEY, null));
+    return Object.keys(db.items || {}).length ? crm.exportPayload(db) : null;
+  } catch (e) { return null; }
+}
+/* Слияние базы площадок из общей копии: та же проверка и правило «побеждает более поздняя правка», что у импорта CRM */
+async function crmFromBackup(payload) {
+  if (!payload) return '';
+  const [{ store }, crm] = await Promise.all([import('./ui/helpers.js'), import('./crm.js')]);
+  const parsed = crm.parseImport(JSON.stringify(payload));
+  if (!parsed.ok) return ` База площадок не загружена: ${parsed.error}`;
+  const merged = crm.mergeImport(crm.normalizeDb(store.get(crm.STORE_KEY, null)), parsed.items);
+  if (!store.set(crm.STORE_KEY, merged.db)) return ' База площадок не сохранена: память браузера недоступна.';
+  // открытая вкладка «Мои площадки» перечитывает базу по событию storage (как при правке в другой вкладке)
+  try { dispatchEvent(new StorageEvent('storage', { key: 'yulia.v2.' + crm.STORE_KEY })); } catch (e) { /* вкладка перечитает базу при следующем открытии */ }
+  return ` База площадок: ${crm.importSummary(merged, parsed.skipped)}`;
+}
+
 async function doExport() {
-  const data = await exportAll({ __notes: notes });
+  const crm = await crmForBackup();
+  const data = await exportAll(crm ? { __notes: notes, __crm: crm } : { __notes: notes });
   downloadJSON(data, `yulia-backup-${new Date().toISOString().slice(0, 10)}.json`);
   await store2.set('lastBackupAt', Date.now());
   if (ui.backup) ui.backup.hidden = true;
@@ -113,10 +136,12 @@ function doImport(file) {
   const r = new FileReader();
   r.onload = async () => {
     try {
-      const keys = await importAll(JSON.parse(r.result));
+      const obj = JSON.parse(r.result);
+      const keys = await importAll(obj);
       notes = normalize(await store2.get(KEY, []));
       renderList();
-      if (ui.status) ui.status.textContent = `Импортировано ключей: ${keys.length}`;
+      const crmNote = await crmFromBackup(obj.__crm).catch(() => ' База площадок из копии не загружена.');
+      if (ui.status) ui.status.textContent = `Импортировано ключей: ${keys.length}.${crmNote}`;
     } catch (e) {
       if (ui.status) ui.status.textContent = 'Импорт не удался: ' + (e.message || 'файл не распознан');
     }

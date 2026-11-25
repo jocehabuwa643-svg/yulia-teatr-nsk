@@ -179,3 +179,142 @@ html.cl-lock body{padding-right:var(--cl-sbw,0px)}
 
 /* Подпись OSM (ODbL) на узких экранах переносится, а не обрезается краем карты */
 .cl-map .leaflet-control-attribution{white-space:normal;max-width:100%;line-height:1.35;text-align:right}
+
+/* ===== Мини-CRM площадок: вкладка «Мои площадки» (js/crm-ui.js) и статусы на карте (js/client-map.js) =====
+   Статус читается не только цветом: «Написала» — кольцо, «Переговоры» — толстое кольцо, «Договорились» —
+   заливка со значком ✓, «Отказ» — бледная пунктирная. Цвета — те же, что у точек карты (STATUS_STYLE),
+   контраст графики ≥3:1 и на светлом, и на тёмном фоне. Анимации — только transform/opacity. */
+
+/* Четыре вкладки подраздела: на телефоне — сетка 2×2 (подписи не сжимаются в узкую колонку) */
+.cl-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:560px){ .cl-tabs{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media (min-width:700px){ .cl-tabs{display:flex} }
+
+/* Обозначение статуса (список, сегменты карточки, легенда карты) */
+.crm-dot{display:inline-block;width:14px;height:14px;border-radius:50%;flex-shrink:0;box-sizing:border-box;
+  background:var(--card);border:2px solid var(--silver);position:relative}
+.crm-dot.crm-st-sent{border:3px solid #2563EB}
+.crm-dot.crm-st-talks{border:4px solid #C2410C}
+.crm-dot.crm-st-deal{background:#15803D;border:2px solid #FFFFFF;box-shadow:0 0 0 1px #15803D;width:16px;height:16px}
+.crm-dot.crm-st-deal::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#FFFFFF;font-size:10px;font-weight:800;line-height:1}
+.crm-dot.crm-st-refused{border:2px dashed var(--silver);opacity:.6}
+
+/* Легенда статусов под картой (продолжение .clm-legend) */
+.crm-legend{margin-top:8px}
+
+/* Подсказка точки на карте: строка статуса и кнопка «Открыть карточку» (касание ≥44 px) */
+.cl-map .crm-popst{display:inline-block;margin-top:4px}
+.cl-map .crm-popbtn{margin-top:8px;min-height:var(--tap);padding:0 16px;border-radius:999px;border:0;
+  background:#1C1C1E;color:#FFFFFF;font:inherit;font-weight:600;font-size:13px;cursor:pointer}
+/* подсказка Leaflet белая в обеих темах — цвета кнопки фиксированные, не из токенов темы */
+.cl-map .crm-popbtn:focus-visible{outline:2px solid #1C1C1E;outline-offset:2px}
+.cl-map .crm-dealmark{display:grid!important;place-items:center;color:#FFFFFF;font-size:12px;font-weight:800;line-height:1;
+  pointer-events:none;text-shadow:0 0 2px rgba(0,0,0,.6)}
+
+/* Шапка вкладки: место + экспорт/импорт */
+.crm-root{min-width:0}
+.crm-head{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin-top:6px}
+.crm-head .cl-placebar{flex:1 1 240px;min-width:0}
+.crm-io{display:flex;flex-wrap:wrap;gap:8px}
+.crm-iob{min-height:var(--tap);font-size:12.5px}
+.crm-iob svg.lucide{width:16px;height:16px;flex-shrink:0}
+/* общий .ghostbtn на телефоне прячет подпись (иконочные кнопки шапки) — у CRM подпись обязательна */
+.crm-iob span,.crm-onmap span{display:inline!important}
+.cl-body .crm-iob,.cl-body .crm-onmap{padding:0 14px}
+@media (max-width:420px){ .crm-io{width:100%} .crm-iob{flex:1 1 0;min-width:0;padding:0 10px} .crm-iob span{overflow-wrap:anywhere;text-align:center;line-height:1.25} }
+.crm-msg{margin:10px 0 0;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-size:13px;line-height:1.45;color:var(--text);overflow-wrap:anywhere}
+.crm-msg.is-bad{border-color:#B91C1C;border-left-width:4px}
+:root[data-theme="dark"] .crm-msg.is-bad{border-color:#F87171}
+
+/* Счётчик прогресса и полоса */
+.crm-progress{margin:14px 0 4px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--card)}
+.crm-pline{margin:0 0 10px;font-size:14px;line-height:1.45;overflow-wrap:break-word}
+.crm-pline b{font-variant-numeric:tabular-nums}
+.crm-pline small{color:var(--mutedS);font-size:12px}
+.crm-bar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--track)}
+.crm-bar span{display:block;height:100%}
+.crm-bar span + span{box-shadow:inset 2px 0 0 var(--card)}
+.crm-seg-deal{background:#15803D}
+.crm-seg-talks{background:#C2410C}
+.crm-seg-sent{background:#2563EB}
+.crm-seg-refused{background:repeating-linear-gradient(-45deg,var(--silver),var(--silver) 3px,transparent 3px,transparent 6px)}
+
+/* Поиск и фильтры */
+.crm-tools{display:grid;gap:10px;margin-top:12px}
+@media (min-width:760px){ .crm-tools{grid-template-columns:minmax(0,1fr) auto auto;align-items:center} }
+.crm-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.crm-search{display:block;min-width:0}
+.crm-search input{width:100%;min-height:var(--tap);border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--card);color:var(--text);font:inherit;font-size:16px;box-sizing:border-box}
+.crm-search input::placeholder{color:var(--mutedS);opacity:1}
+.crm-kinds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.crm-kind{min-height:var(--tap);padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--chip);color:var(--text2);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.crm-kind[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
+.crm-kind:focus-visible,.crm-row:focus-visible,.crm-sb:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:2px}
+.crm-stsel{display:flex;align-items:center;gap:10px;min-width:0}
+.crm-stsel span{font-size:13px;color:var(--mutedS)}
+.crm-stsel select{flex:1 1 auto;min-width:0;min-height:var(--tap);border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--card);color:var(--text);font:inherit;font-size:14px}
+.crm-found{margin:12px 0 6px;font-size:12px;color:var(--mutedS);min-height:1em}
+
+/* Список площадок */
+.crm-list{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--r-s);background:var(--card);overflow:hidden}
+.crm-list > li + li{border-top:1px solid var(--line)}
+.crm-list > li.nodata{display:grid;gap:4px;padding:16px;border:0}
+.crm-row{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;min-height:56px;padding:10px 14px;
+  background:transparent;border:0;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+@media (hover:hover){ .crm-row:hover{background:var(--chip)} }
+.crm-rt{display:grid;gap:2px;min-width:0}
+.crm-rt b{font-size:14px;font-weight:600;line-height:1.3;overflow-wrap:break-word}
+.crm-rt small{font-size:12px;color:var(--mutedS);line-height:1.35}
+.crm-rt .crm-rnote{color:var(--text2);font-style:italic;overflow-wrap:anywhere}
+.crm-noname{font-weight:500!important;color:var(--text2)}
+.crm-chev{color:var(--mutedS);font-size:20px;line-height:1}
+.crm-more{width:100%;margin-top:10px}
+.crm-hint{margin-top:12px}
+
+/* Карточка площадки */
+.crm-card{margin-top:6px;display:grid;gap:14px;max-width:720px}
+.crm-card[hidden],.crm-listview[hidden]{display:none}
+.crm-back{justify-self:start}
+.crm-card h3{font-size:clamp(20px,2.6vw,28px);letter-spacing:-.03em;line-height:1.2;overflow-wrap:break-word;margin:0}
+.crm-card h3:focus{outline:none}
+.crm-card h3:focus-visible{outline:2px solid var(--a11y-focus);outline-offset:3px}
+.crm-sub{margin:-8px 0 0;color:var(--mutedS);line-height:1.45}
+.crm-status{border:0;margin:0;padding:0;min-width:0}
+.crm-status legend{font-size:13px;font-weight:600;color:var(--mutedS);margin-bottom:8px;padding:0}
+.crm-segs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:520px){ .crm-segs{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (min-width:760px){ .crm-segs{grid-template-columns:repeat(5,minmax(0,1fr))} }
+.crm-sb{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:6px 10px;border-radius:14px;border:1px solid var(--line);
+  background:var(--card);color:var(--text);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-align:center;line-height:1.2;
+  transition:transform .2s var(--ease)}
+.crm-sb:active{transform:scale(.97)}
+.crm-sb[aria-checked="true"]{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
+.crm-sb[aria-checked="true"] .crm-dot{box-shadow:0 0 0 2px var(--card)}
+.crm-fields{display:grid;gap:12px}
+@media (min-width:600px){ .crm-fields{grid-template-columns:200px minmax(0,1fr);align-items:start} }
+.crm-f{display:grid;gap:6px;min-width:0}
+.crm-f > span{font-size:13px;font-weight:600;color:var(--mutedS);display:flex;justify-content:space-between;gap:8px}
+.crm-f small{font-weight:400;font-variant-numeric:tabular-nums}
+.crm-f input,.crm-f textarea{width:100%;min-height:var(--tap);border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--card);color:var(--text);font:inherit;font-size:16px;box-sizing:border-box}
+.crm-f textarea{resize:vertical;min-height:96px;line-height:1.45}
+.crm-actions{display:flex;flex-wrap:wrap;gap:10px}
+.crm-copy{background:var(--solid);color:var(--on-solid);border:1px solid var(--solid)}
+.crm-copy[disabled]{opacity:.5;cursor:not-allowed}
+.crm-copy svg.lucide,.crm-onmap svg.lucide{width:16px;height:16px}
+@media (max-width:420px){ .crm-actions > *{flex:1 1 100%} }
+.crm-tpl{border:1px solid var(--line);border-radius:var(--r-s);background:var(--card)}
+.crm-tpl summary{cursor:pointer;min-height:var(--tap);display:flex;align-items:center;padding:6px 16px;font-size:13.5px;font-weight:600;line-height:1.35}
+.crm-tpltext{margin:0;padding:0 16px 10px;font-size:14px;line-height:1.55;overflow-wrap:break-word;user-select:text}
+.crm-tplsrc{display:block;padding:0 16px 12px;font-size:11.5px;color:var(--mutedS)}
+.crm-saved{color:var(--mutedS);margin:0}
+
+/* Тост внутри диалога (общий тост страницы перекрыт модальным слоем) */
+.crm-toast{position:fixed;left:50%;width:max-content;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:5;max-width:calc(100% - 32px);
+  padding:11px 20px;border-radius:999px;background:var(--solid);color:var(--on-solid);font-size:13px;font-weight:600;text-align:center;
+  box-shadow:var(--shadow-lg);pointer-events:none;opacity:0;transform:translate(-50%,16px);transition:transform .35s var(--ease),opacity .3s var(--ease)}
+.crm-toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){
+  .crm-toast,.crm-sb{transition:none}
+  .crm-toast{transform:translate(-50%,0)}
+  .crm-sb:active{transform:none}
+}

@@ -1,8 +1,11 @@
 /* clients-view.js — подраздел «Клиенты и площадки»: вход-карточка на главной, открытие —
-   полноэкранный диалог с тремя вкладками:
+   полноэкранный диалог с четырьмя вкладками:
      1) Карта клиентов — объекты OSM выбранного места (школы/сады/ДК) + счётчики и районы из data/leads.json;
-     2) Помещения — ручной список Юлии (premises.js монтируется сюда);
-     3) Цены и аренда — ориентиры из config.json и competitors.json, каждая строка с источником и датой.
+        цвет и обводка точки — статус мини-CRM, из подсказки точки — «Открыть карточку»;
+     2) Мои площадки — мини-CRM (js/crm-ui.js): список объектов того же места, статусы, заметки, шаблон
+        сообщения, экспорт/импорт базы; место выбирается общее с картой;
+     3) Помещения — ручной список Юлии (premises.js монтируется сюда);
+     4) Цены и аренда — ориентиры из config.json и competitors.json, каждая строка с источником и датой.
    Все числа — из данных или ручной ввод; «нет данных» показывается честно. Логика подсчётов и истории —
    в js/clients-model.js (чистые функции, покрыты тестами).
 
@@ -17,7 +20,8 @@
 import { fmt, ic, icons } from './ui/helpers.js';
 import { state } from './state.js';
 import { initPremises } from './premises.js';
-import { mountClientMap, showPlace, refreshClientMap, legendHTML } from './client-map.js';
+import { mountClientMap, showPlace, refreshClientMap, legendHTML, setCrmHooks, refreshStatuses, focusObject } from './client-map.js';
+import { mountCrm, setCrmPlace, openCard as openCrmCard, closeCard as closeCrmCard, crmCardOpen, crmStatus, onCrmChange } from './crm-ui.js';
 import { leadTotals, pickPlace, placeStat, districtRows, priceRows, confLabel, makeBackGuard, leadsMetaLine, placeStaleNote, countWord } from './clients-model.js';
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -25,11 +29,15 @@ const ruDate = d => { const t = new Date(d); return Number.isFinite(t.getTime())
 
 const TABS = [
   ['map', 'map', 'Карта'],
+  ['list', 'contact', 'Мои площадки'],
   ['rooms', 'key-round', 'Помещения'],
   ['prices', 'tag', 'Цены и аренда']
 ];
 
 let dlg = null, lastFocus = null, tab = 'map', premisesIn = false, placeId = null, scrollY0 = 0;
+/* Мини-CRM: вкладка «Мои площадки» монтируется при первом показе; статусы на карте перекрашиваются
+   лениво — при следующем показе карты, а не на каждое сохранение заметки */
+let crmIn = false, crmDirty = false;
 const guard = typeof history !== 'undefined' ? makeBackGuard(history) : null;
 
 /* ---------- Данные leads.json ----------
@@ -69,7 +77,7 @@ export function buildEntryCard() {
       <button type="button" class="card cl-entry" id="clientsOpen" aria-haspopup="dialog" aria-controls="clientsView">
         <span class="cl-ic">${ic('map-pin-check')}</span>
         <span class="cl-t"><small>Отдельный подраздел</small><span class="cl-h">Клиенты и площадки</span>
-          <span class="cl-sub">Карта школ, садов и ДК · помещения · ориентиры аренды и цен</span></span>
+          <span class="cl-sub">Карта школ, садов и ДК · мои площадки и переговоры · помещения · ориентиры аренды и цен</span></span>
         <span class="cl-go" aria-hidden="true">→</span>
         <span class="cl-stats" aria-live="polite"></span>
       </button>`;
@@ -128,6 +136,7 @@ function ensureDialog() {
         <div id="clDistricts"></div>
         <p class="hint" id="clNote"></p>
       </div>
+      <div class="cl-pane" id="clPane-list" role="tabpanel" aria-labelledby="clTab-list" data-pane="list" hidden><div id="clCrm" class="crm-root"></div></div>
       <div class="cl-pane" id="clPane-rooms" role="tabpanel" aria-labelledby="clTab-rooms" data-pane="rooms" hidden><div id="clRooms"></div></div>
       <div class="cl-pane" id="clPane-prices" role="tabpanel" aria-labelledby="clTab-prices" data-pane="prices" hidden><div id="clPrices"></div></div>
     </div>`;
@@ -141,11 +150,13 @@ function ensureDialog() {
   // единая точка закрытия: кнопки, Esc, «назад» телефона (CloseWatcher), программное dlg.close()
   dlg.addEventListener('close', onClosed);
   // Esc при фокусе на карте: обработчик клавиатуры Leaflet глотает Esc после закрытия подсказки,
-  // поэтому ловим его на диалоге в фазе перехвата: открыта подсказка точки — закрываем только её, иначе — подраздел
+  // поэтому ловим его на диалоге в фазе перехвата: открыта подсказка точки — закрываем только её;
+  // открыта карточка площадки — возвращаемся к списку; иначе — закрываем подраздел
   dlg.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
-    const pop = dlg.querySelector('.leaflet-popup');
+    const pop = tab === 'map' && dlg.querySelector('.leaflet-popup');
     if (pop) { const x = pop.querySelector('.leaflet-popup-close-button'); if (x) x.click(); else pop.remove(); }
+    else if (tab === 'list' && crmCardOpen()) closeCrmCard();
     else closeClients();
     e.preventDefault(); e.stopPropagation();
   }, true);
@@ -159,6 +170,28 @@ function ensureDialog() {
     dlg.querySelector(`[data-cl-tab="${ids[i]}"]`).focus();
   });
   dlg.querySelector('#clPlace').addEventListener('change', e => renderPlace(e.target.value));
+  // Связь карты и мини-CRM: точка красится по статусу, из подсказки точки открывается карточка
+  setCrmHooks({
+    status: crmStatus,
+    openCard: key => { showTab('list'); if (!openCrmCard(key)) dlg.querySelector('#clTab-list').focus(); }
+  });
+  onCrmChange(() => { crmDirty = true; });
+}
+
+/* Вкладка «Мои площадки»: монтаж один раз, место — общее с картой */
+function ensureCrm() {
+  const host = dlg.querySelector('#clCrm');
+  if (!crmIn) {
+    crmIn = true;
+    mountCrm(host, {
+      onPlace: id => renderPlace(id),
+      // «Показать на карте» из карточки: переключить вкладку и, когда карта готова, открыть подсказку точки
+      onShowOnMap: key => {
+        showTab('map').then(() => { if (!focusObject(key)) dlg.querySelector('#clTab-map').focus(); });
+      }
+    });
+  }
+  setCrmPlace(pickPlace((leadsNow() || {}).places, placeId), (leadsNow() || {}).places || []);
 }
 
 function showTab(id) {
@@ -166,10 +199,17 @@ function showTab(id) {
   dlg.querySelectorAll('[data-cl-tab]').forEach(b => { const on = b.dataset.clTab === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
   dlg.querySelectorAll('.cl-pane').forEach(p => { p.hidden = p.dataset.pane !== id; });
   dlg.querySelector('.cl-body').scrollTop = 0;
+  let ready = Promise.resolve();
   if (id === 'map') {
-    // карта создаётся один раз; при повторном показе — один пересчёт размера
-    mountClientMap(dlg.querySelector('#clMap')).then(m => { if (m) { showPlace(pickPlace((leadsNow() || {}).places, placeId)); refreshClientMap(); } });
+    // карта создаётся один раз; при повторном показе — один пересчёт размера (и перекраска, если статусы менялись)
+    ready = mountClientMap(dlg.querySelector('#clMap')).then(m => {
+      if (!m) return;
+      showPlace(pickPlace((leadsNow() || {}).places, placeId));
+      if (crmDirty) { crmDirty = false; refreshStatuses(); }
+      refreshClientMap();
+    });
   }
+  if (id === 'list') ensureCrm();
   if (id === 'rooms' && !premisesIn) {
     premisesIn = true;
     initPremises(dlg.querySelector('#clRooms')).then(() => icons()).catch(() => {
@@ -177,6 +217,7 @@ function showTab(id) {
       dlg.querySelector('#clRooms').innerHTML = '<div class="nodata"><strong>Список не открылся</strong><span>Хранилище браузера недоступно (приватный режим?). Попробуйте ещё раз позже.</span></div>';
     });
   }
+  return ready;
 }
 
 /* ---------- Данные вкладок ---------- */
@@ -214,6 +255,10 @@ function renderPlace(id) {
   const p = pickPlace((leadsNow() || {}).places, id);
   if (!p) return;
   placeId = p.id;
+  // место общее для карты и «Моих площадок»: выбор в любой вкладке синхронизирует оба списка
+  const sel = dlg.querySelector('#clPlace');
+  if (sel.value !== p.id) sel.value = p.id;
+  if (crmIn) setCrmPlace(p, (leadsNow() || {}).places || []);
   const s = placeStat(p);
   const stale = placeStaleNote(p);
   dlg.querySelector('#clPlaceStat').innerHTML = `

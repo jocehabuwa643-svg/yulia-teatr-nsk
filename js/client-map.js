@@ -15,6 +15,7 @@
    с атрибуцией и без массовой выгрузки, в рамках правил tile.openstreetmap.org. */
 import { ensureLeaflet, reduced } from './ui/helpers.js';
 import { validObjects, kindCounts, boundsOf } from './clients-model.js';
+import { objectKey, statusLabel, ruQuotes } from './crm.js';
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -27,7 +28,19 @@ export const KIND = {
   c: { label: 'ДК / клуб', plural: 'ДК и клубы', fill: '#F5F5F7', stroke: '#1C1C1E' }
 };
 
+/* Статус мини-CRM (js/crm.js) поверх типа: цвет обводки + толщина/размер, «Договорились» — ещё и значок ✓,
+   «Отказ» — бледная пунктирная точка. Так статус читается не только цветом. Те же обозначения — в легенде
+   (.crm-dot в css/restructure.css). Цвета подобраны контрастными к серой подложке в обеих темах. */
+export const STATUS_STYLE = {
+  sent: { color: '#2563EB', weight: 3, radius: 7 },
+  talks: { color: '#C2410C', weight: 4, radius: 8 },
+  deal: { color: '#FFFFFF', fillColor: '#15803D', weight: 2, radius: 9 },
+  refused: { opacity: 0.45, fillOpacity: 0.35, dashArray: '2 3', radius: 5 }
+};
+
 let L = null, mapObj = null, layer = null, renderer = null, ro = null, host = null;
+/* Связь с мини-CRM: статус по ключу объекта и действие «Открыть карточку» из подсказки точки */
+let statusFn = () => 'none', openCardFn = null, byKey = new Map();
 let place = null, drawnId = null, needFit = true, rafId = 0, tileOk = false;
 
 /* Сообщение вместо карты (Leaflet не загрузился / нет мест) */
@@ -59,6 +72,10 @@ export function mountClientMap(el) {
     tiles.on('tileload', () => { tileOk = true; setTileWarn(false); });
     tiles.on('tileerror', () => { if (!tileOk) setTileWarn(true); });
     layer = L.layerGroup().addTo(mapObj);
+    mapObj.on('popupopen', e => {
+      const b = e.popup.getElement() && e.popup.getElement().querySelector('[data-crm-open]');
+      if (b && openCardFn) b.addEventListener('click', ev => { ev.preventDefault(); openCardFn(b.dataset.crmOpen); }, { once: true });
+    });
     // Стартовый вид — центр области, пока не пришёл размер и не нарисовано место
     mapObj.setView([55.03, 82.92], 9, { animate: false });
     // Один наблюдатель размера: диалог на телефоне раскрывается не мгновенно
@@ -104,10 +121,42 @@ export function showPlace(p) {
   draw();
 }
 
-function draw() {
+/* Подключение мини-CRM: функция статуса по ключу и открытие карточки */
+export function setCrmHooks({ status, openCard } = {}) {
+  if (typeof status === 'function') statusFn = status;
+  if (typeof openCard === 'function') openCardFn = openCard;
+}
+
+/* Статусы изменились — перерисовать точки, не сдвигая вид карты */
+export function refreshStatuses() {
+  if (!mapObj || !place) return;
+  draw(true);
+}
+
+/* Показать объект на карте по ключу CRM и открыть его подсказку */
+export function focusObject(key) {
+  const m = byKey.get(key);
+  if (!mapObj || !m) return false;
+  needFit = false;
+  // вкладка карты только что стала видимой — сначала актуальный размер, иначе центр уедет
+  mapObj.invalidateSize({ pan: false, animate: false });
+  mapObj.setView(m.getLatLng(), Math.max(mapObj.getZoom(), 15), { animate: false });
+  m.openPopup();
+  return true;
+}
+
+function popupHTML(o, K, where, key, st) {
+  const name = o.n ? ruQuotes(o.n) : `${K.label} · без названия в OSM`;  // кавычки OSM → «ёлочки», как в списке
+  const stLine = st && st !== 'none' ? `<br><small class="crm-popst">Статус: <b>${esc(statusLabel(st))}</b></small>` : '';
+  const btn = openCardFn ? `<br><button type="button" class="crm-popbtn" data-crm-open="${esc(key)}">Открыть карточку</button>` : '';
+  return `<b>${esc(name)}</b><br><small>${K.label}${where} · OpenStreetMap</small>${stLine}${btn}`;
+}
+
+function draw(keepView) {
   layer.clearLayers();
+  byKey = new Map();
   drawnId = place ? place.id : null;
-  needFit = true;
+  if (!keepView) needFit = true;
   if (!place) return;
   const objs = validObjects(place);
   const where = place.name ? ' · ' + esc(place.name) : '';
@@ -115,12 +164,24 @@ function draw() {
   ['c', 'd', 's'].forEach(k => {
     const K = KIND[k];
     objs.filter(o => o.k === k).forEach(o => {
-      const name = o.n || `${K.label} · без названия в OSM`;
-      L.circleMarker(o.ll, { renderer, radius: 6, weight: 2, color: K.stroke, fillColor: K.fill, fillOpacity: 1, opacity: 1 })
-        .bindPopup(`<b>${esc(name)}</b><br><small>${K.label}${where} · OpenStreetMap</small>`, { autoPanPadding: [16, 16] })
+      const key = objectKey(o);
+      let st = 'none';
+      try { st = statusFn(key) || 'none'; } catch (e) { st = 'none'; }
+      const S = STATUS_STYLE[st] || {};
+      const m = L.circleMarker(o.ll, { renderer, radius: 6, weight: 2, color: K.stroke, fillColor: K.fill, fillOpacity: 1, opacity: 1, ...S })
+        .bindPopup(popupHTML(o, K, where, key, st), { autoPanPadding: [16, 16] })
         .addTo(layer);
+      byKey.set(key, m);
+      // «Договорились» — значок ✓ поверх точки (таких объектов единицы — DOM-маркер не нагружает карту)
+      if (st === 'deal') {
+        L.marker(o.ll, {
+          icon: L.divIcon({ className: 'crm-dealmark', html: '✓', iconSize: [18, 18], iconAnchor: [9, 9] }),
+          interactive: false, keyboard: false
+        }).addTo(layer);
+      }
     });
   });
+  if (keepView) return;
   scheduleResize();
 }
 
@@ -140,7 +201,7 @@ export function destroyClientMap() {
   if (ro) { try { ro.disconnect(); } catch (e) { /* уже отключён */ } ro = null; }
   if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
   if (mapObj) { try { mapObj.remove(); } catch (e) { /* уже снята */ } }
-  mapObj = null; layer = null; renderer = null; host = null; drawnId = null; needFit = true; tileOk = false;
+  mapObj = null; layer = null; renderer = null; host = null; drawnId = null; needFit = true; tileOk = false; byKey = new Map();
 }
 
 /* Совместимость со старым вызовом initClientMap(el, place): создать карту (однажды) и показать место */
@@ -160,5 +221,11 @@ export function legendHTML(p) {
     <span><i class="clm-dot clm-s" aria-hidden="true"></i>${KIND.s.plural}${n('s')}</span>
     <span><i class="clm-dot clm-d" aria-hidden="true"></i>${KIND.d.plural}${n('d')}</span>
     <span><i class="clm-dot clm-c" aria-hidden="true"></i>${KIND.c.plural}${n('c')}</span>
+  </div>
+  <div class="clm-legend crm-legend" aria-label="Статусы площадок на карте">
+    <span><i class="crm-dot crm-st-sent" aria-hidden="true"></i>Написала — синее кольцо</span>
+    <span><i class="crm-dot crm-st-talks" aria-hidden="true"></i>Переговоры — толстое оранжевое</span>
+    <span><i class="crm-dot crm-st-deal" aria-hidden="true"></i>Договорились — зелёная с ✓</span>
+    <span><i class="crm-dot crm-st-refused" aria-hidden="true"></i>Отказ — бледная</span>
   </div>`;
 }

@@ -46,7 +46,13 @@ export function validObjects(p) {
   return objs.filter(o => o && Array.isArray(o.ll) && o.ll.length === 2
     && Number.isFinite(o.ll[0]) && Number.isFinite(o.ll[1])
     && Math.abs(o.ll[0]) <= 90 && Math.abs(o.ll[1]) <= 180)
-    .map(o => ({ n: typeof o.n === 'string' ? o.n.trim() : '', k: o.k === 'd' || o.k === 'c' ? o.k : 's', ll: o.ll }));
+    .map(o => {
+      const v = { n: typeof o.n === 'string' ? o.n.trim() : '', k: o.k === 'd' || o.k === 'c' ? o.k : 's', ll: o.ll };
+      // OSM-идентификатор (если появится в leads.json) — для стабильного ключа записи мини-CRM (js/crm.js objectKey)
+      const osm = o.osm != null ? o.osm : o.id;
+      if (osm != null && String(osm).trim()) v.osm = String(osm).trim();
+      return v;
+    });
 }
 
 /* Число объектов каждого типа на карте (может быть меньше счётчиков, если у объекта нет координат) */

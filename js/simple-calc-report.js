@@ -186,18 +186,32 @@ export function buildReport(input, cfg, ctx = {}) {
     invest, payback, breakEven, run, cumulative, caveats, empty: base.empty,
     profitAfterInvest: fin(profit - invest), margin: revenue > 0 ? fin(100 * profit / revenue) : 0
   };
+  out.shown = shownBook(out, cfg);
   out.verdict = verdictText(out, cfg);
   return out;
 }
 
+/* Подача бухгалтерии из ОДНОЙ точки округления: «Пришло», «Ушло всего», строки расходов и «Осталось» сходятся до рубля.
+   Пришло и Ушло округляются до шага подачи; строки расходов делят округлённое «Ушло» методом наибольших остатков
+   (в единицах шага), поэтому их сумма ровно равна «Ушло»; «Осталось» = Пришло − Ушло, а не отдельно округлённая прибыль. */
+export function shownBook(r, cfg) {
+  const step = roundStep(cfg);
+  const revenue = roundTo(r.revenue, step);
+  const expensesTotal = roundTo(r.expensesTotal, step);
+  const units = splitInt(r.expenses.map(e => fin(e.amount) / step), Math.round(expensesTotal / step));
+  const items = r.expenses.map((e, i) => ({ key: e.key, label: e.label, amount: (units[i] ?? 0) * step }));
+  return { step, revenue, expensesTotal, profit: revenue - expensesTotal, items };
+}
+
 /* Одна фраза-вывод простыми словами */
 export function verdictText(r, cfg) {
+  const shownProfit = r.shown ? r.shown.profit : r.profit;          // та же цифра, что в «Осталось вам»
   const per = (PERIODS.find(p => p.id === r.period) || PERIODS[1]).word;
   if (r.empty === 'shows' || r.empty === 'revenue' || r.empty === 'kids') return 'Пока нечего считать: нет выручки. Укажите, сколько детей приходит и сколько показов в неделю.';
-  if (r.status === 'minus') return `За ${per} получается в минусе: расходы больше выручки примерно на ${approxRub(-r.profit, cfg).replace('≈' + NBSP, '')}. Поднимите цену или число детей, либо сократите расходы.`;
+  if (r.status === 'minus') return `За ${per} получается в минусе: расходы больше выручки примерно на ${approxRub(-shownProfit, cfg).replace('≈' + NBSP, '')}. Поднимите цену или число детей, либо сократите расходы.`;
   if (r.status === 'zero') return `За ${per} выходите примерно в ноль: выручка почти равна расходам.`;
   const pm = monthsText(r.payback.months, cfg);
   const tail = r.payback.state === 'ok' ? ` Вложения вернутся ${pm === 'меньше месяца' ? 'меньше чем за месяц' : 'примерно за ' + pm.replace('≈' + NBSP, '')}` : (r.payback.state === 'never' ? ' Вложения пока не окупаются.' : '');
-  const s = `За ${per} остаётся примерно ${approxRub(r.profit, cfg).replace('≈' + NBSP, '')} чистыми.${tail}`;
+  const s = `За ${per} остаётся примерно ${approxRub(shownProfit, cfg).replace('≈' + NBSP, '')} чистыми.${tail}`;
   return s.endsWith('.') ? s : s + '.';
 }

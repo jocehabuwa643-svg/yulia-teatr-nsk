@@ -259,6 +259,8 @@
     </div>
     <p class="tiny">Выберите расчёт. Сценарии можно сохранять, сравнивать и печатать.</p>
   </div>
+  <!-- ссылка на «Летний сценарий» в «Плане запуска»: просадка каникул (июнь–август) учитывается там -->
+  <p class="calc-summer"><a href="#summerPlan" class="btn small secondary" data-to-summer><i data-lucide="sun" aria-hidden="true"></i><span>Летний сценарий (июнь–август): чем заменить сады на каникулах</span></a></p>
   <details class="calc-cases"><summary>Готовые кейсы: посчитать за 5 секунд</summary><div id="presetCards" aria-label="Кейсы «Рассчитай за 5 секунд»"></div></details>
   <div class="modes" id="calcnav" role="tablist" aria-label="Расчёты"></div>
   <div id="calcpanels"></div>
@@ -334,6 +336,7 @@
     <div class="rowline"><h3>Конкуренты и ориентиры</h3><span class="tiny" id="rivalsMeta"></span></div>
     <div class="filters" id="marketFilters" role="group" aria-label="Фильтр конкурентов по группам"></div>
     <div class="rivals" id="marketCards" aria-live="polite"></div>
+    <div id="marketArchive"></div>
   </article>
   <div class="mk-bento">
     <article class="card mk-panel rv">
@@ -342,7 +345,7 @@
       <div class="chartmeta" id="priceMeta"></div>
     </article>
     <article class="card mk-panel rv">
-      <div class="rowline"><h3>Спрос по запросам</h3><span class="badge" id="demandBadge">нет источника</span></div>
+      <div class="rowline"><h3>Спрос по запросам</h3><span class="badge" id="demandBadge">оценочный ориентир</span></div>
       <div id="demandBox"></div>
     </article>
   </div>
@@ -419,6 +422,9 @@
     <div><div class="eyebrow"><span class="dash"></span>Режиссёрский план</div><h2>Чек-лист запуска на 30 дней</h2></div>
     <span class="badge"><span class="dotp"></span>Личный чек-лист</span>
   </div>
+  <!-- Допуск в сады и школы и Летний сценарий: блоки строит js/launch-extras.js, стили — css/launch-extras.css -->
+  <link rel="stylesheet" href="css/launch-extras.css">
+  <div id="accessStart" class="lx-host"></div>
   <div class="checklist-grid">
     <article class="card rv">
       <div class="rowline"><h3 id="checklistTitle">10 шагов</h3></div>
@@ -436,6 +442,7 @@
       </div>
     </article>
   </div>
+  <div id="summerPlan" class="lx-host"></div>
 </section>
 
 <footer class="footin">

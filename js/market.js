@@ -7,7 +7,7 @@ import { $, $$, fmt, ic, icons, toast, store, isStale, enter, counter } from './
 import { state } from './state.js';
 import { monthWindow, windowTitle, holidayStatus, holidayEndedInMonth } from './calendar.js';
 import { openCompetitorDetail, setDetailFocus } from './competitor-detail.js';
-import { KINDS, groupSummary, groupDate, observedCompare, perPersonRows, otherKindRows, priceText, confirmedGroups, planAssumptionGroups } from './competitor-prices.js';
+import { KINDS, groupSummary, groupDate, observedCompare, perPersonRows, otherKindRows, priceText, confirmedGroups, planAssumptionGroups, isArchived, archivedList } from './competitor-prices.js';
 
 /* ---------- Общие утилиты ---------- */
 
@@ -73,11 +73,12 @@ const STATUS = { public: 'Публичное предложение', historical
 const manualAll = () => { const v = store.get(MANUAL_KEY, {}); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; };
 const groupsList = () => (COMP.groups && COMP.groups.length ? COMP.groups : GROUPS_FALLBACK);
 
-/* Плоский список: группа берётся из поля type записи (а не из позиции в массиве) */
+/* Плоский список: группа берётся из поля type записи (а не из позиции в массиве).
+   Архивные места (archived:true — закрыты или непрофильные) в списки, счётчики, диаграмму и сравнения не входят */
 function flatten(c) {
   const out = [];
   [c.outbound_performers, c.studio_scene, c.party_venues, c.stationary_benchmarks]
-    .forEach(list => (list || []).forEach(x => { if (x && x.type && x.id) out.push(x); }));
+    .forEach(list => (list || []).forEach(x => { if (x && x.type && x.id && !isArchived(x)) out.push(x); }));
   return out;
 }
 const groupOf = type => groupsList().find(g => g.type === type) || { type, label: type, icon: 'tag' };
@@ -100,6 +101,7 @@ export function initMarket(cfg, competitors, market) {
   renderFilters();
   renderCards(true);
   bindCards();
+  renderArchive();
   renderPriceChart();
   initDemand(mk.demand || {});
   renderSeason(mk.seasonality_model || { months: [] });
@@ -269,6 +271,30 @@ function renderCards(first) {
   else $$('.rival', box).forEach((el, i) => { el.style.setProperty('--i', Math.min(i, 12)); el.classList.add('arm'); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('shown'))); });
 }
 
+/* Свёрнутый блок «Архив (N)» под карточками: закрытые и непрофильные места с причиной, датой и источником.
+   Ни в счётчики, ни в диаграмму, ни в сравнения они не попадают — только для памяти, чтобы не искать их заново */
+const ARCH_KIND = { closed: 'закрыто', not_relevant: 'непрофильное' };
+export function archiveHtml(list) {
+  if (!list.length) return '';
+  const li = c => {
+    const u = safeUrl(c.archived_source_url);
+    const tag = ARCH_KIND[c.archived_kind] || 'архив';
+    return `<li class="mk-arch-i"><div class="mk-arch-t"><b>${esc(c.name || c.id)}</b><span class="stat st-arch">${esc(tag)}</span></div>
+      <p>${esc(c.archived_reason || 'в архиве')}${c.archived_at && !String(c.archived_reason || '').includes(ruDate(c.archived_at)) ? ` · в архиве с ${ruDate(c.archived_at)}` : ''}</p>
+      ${c.archived_evidence ? `<p class="tiny">${esc(c.archived_evidence)}</p>` : ''}${u ? `<p class="mk-arch-src">${srcLink(u, 'подтверждение')}</p>` : ''}</li>`;
+  };
+  return `<details class="mk-more wide mk-arch"><summary>Архив (${list.length}) · закрытые и непрофильные места</summary>
+    <p class="tiny">Эти места не считаются конкурентами: их нет в счётчиках, ценах и сравнениях. Список — чтобы не проверять их повторно.</p>
+    <ul class="mk-arch-l">${list.map(li).join('')}</ul></details>`;
+}
+
+function renderArchive() {
+  const box = $('marketArchive');
+  if (!box) return;
+  box.innerHTML = archiveHtml(archivedList(COMP));
+  icons();
+}
+
 /* Обновить одну карточку и зависимые блоки после ручного ввода цены */
 function refreshAfterManual(id) {
   const c = ALL.find(x => x.id === id);
@@ -380,6 +406,26 @@ function renderPriceChart() {
 
 const demandAll = () => { const v = store.get(DEMAND_KEY, []); return Array.isArray(v) ? v : []; };
 
+/* Пока источник спроса не подключён: нейтральная подпись «Оценочный ориентир · требует проверки через Яндекс Вордстат»,
+   список запросов для проверки (без чисел — чисел без источника нет) и короткая инструкция: wordstat.yandex.ru, регион.
+   Тексты берутся из market.json → demand (estimate_label, check_*), иначе — запасные формулировки */
+export const DEMAND_LABEL_FALLBACK = 'Оценочный ориентир · требует проверки через Яндекс Вордстат';
+export function demandEstimateHtml(d) {
+  const label = String((d && d.estimate_label) || DEMAND_LABEL_FALLBACK);
+  const [head, ...tail] = label.split(' · ');
+  const url = safeUrl(d && d.check_url) || 'https://wordstat.yandex.ru/';
+  const region = (d && d.check_region) || 'Новосибирск';
+  const qs = (d && Array.isArray(d.queries) ? d.queries : []).map(q => (typeof q === 'string' ? q : q && q.q)).filter(Boolean);
+  const steps = d && Array.isArray(d.check_steps) && d.check_steps.length ? d.check_steps
+    : [`Откройте wordstat.yandex.ru, выберите регион «${region}».`, 'Введите запрос и посмотрите число показов в месяц.', 'Внесите число ниже — «Добавить значение вручную».'];
+  return `<div class="dm-est">
+    <p class="dm-est-h">${ic('search')}<span><b>${esc(head)}</b>${tail.length ? ` · ${esc(tail.join(' · '))}` : ''}</span></p>
+    ${qs.length ? `<p class="dm-est-sub">Какие запросы проверить (регион — ${esc(region)}):</p><ul class="dm-qs">${qs.map(q => `<li>${esc(q)}</li>`).join('')}</ul>` : ''}
+    <details class="mk-more"><summary>Как проверить за пару минут</summary><ol class="dm-steps">${steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+      <p class="tiny"><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Открыть Вордстат ${ic('external-link')}</a> · нужен вход в аккаунт Яндекса. Чисел здесь нет, пока вы их не проверите и не внесёте.</p></details>
+  </div>`;
+}
+
 function initDemand(d) {
   const box = $('demandBox');
   const renderDemand = () => {
@@ -392,7 +438,8 @@ function initDemand(d) {
       ? autoSrc.filter(x => x.q && Number.isFinite(x.shows)).sort((x, y) => y.shows - x.shows)
         .map(x => ({ id: 'auto-' + x.q, q: x.q, shows: x.shows, date: d.fetched_at, url: d.source_url || null, auto: true })) : [];
     const rows = [...auto, ...mine];
-    $('demandBadge').textContent = rows.length ? (auto.length ? (d.stale ? 'источник · устарело' : 'источник подключён') : `ручной ввод · ${rows.length}`) : 'нет источника';
+    // бейдж — спокойная подпись статуса: без источника это «оценочный ориентир», а не тревожное «нет источника»
+    $('demandBadge').textContent = rows.length ? (auto.length ? (d.stale ? 'источник · устарело' : 'источник подключён') : `ручной ввод · ${rows.length}`) : 'оценочный ориентир';
     const max = Math.max(1, ...rows.map(r => r.shows));
     // Пометка устаревания: stale / stale_since из адаптера (при сбое обновления прежние данные остаются)
     // freshBadge сам рисует «Данные устарели» при stale === true; здесь добавляем дату начала устаревания
@@ -409,7 +456,7 @@ function initDemand(d) {
             <div class="ptrack" aria-hidden="true"><span class="pw" style="width:${r.shows / max * 100}%"><span class="pfill"></span></span></div>
             <div class="pval">${fmt(r.shows)}<small>${r.auto ? 'за 30 дн.' : 'показов/мес'}</small>${r.auto ? '' : `<button type="button" class="iconbtn" data-del="${esc(r.id)}" aria-label="Удалить запись «${esc(r.q)}»">${ic('trash-2')}</button>`}</div></li>`;
         }).join('')}</ul>${autoMeta}${mine.length ? '<div class="chartmeta"><span>Строки с кнопкой удаления введены вручную.</span></div>' : ''}`
-      : `<div class="nodata nodata-line"><strong>Нет данных: источник спроса не подключён</strong><span>График не строится и не имитируется.</span></div>${sources ? `<details class="mk-more"><summary>Какие источники и как подключить</summary><ul class="srclist">${sources}</ul></details>` : ''}`;
+      : demandEstimateHtml(d) + (sources ? `<details class="mk-more"><summary>Как подключить автоматически</summary><ul class="srclist">${sources}</ul></details>` : '');
     box.innerHTML = chart + `<details class="mk-more"><summary>Добавить значение вручную</summary>
       <form class="mform" id="demandForm" novalidate>
         <label class="mf"><span>Запрос</span><input name="q" type="text" maxlength="80" placeholder="например, выездной театр" required list="demandQueries"></label>

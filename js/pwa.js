@@ -7,6 +7,8 @@
    открытых диалогов, мобильного меню и плашки новостей (на узком экране ждём, пока она уйдёт); «Не сейчас» — тишина 14 дней;
    уже установлено (display-mode: standalone, appinstalled, getInstalledRelatedApps) — не предлагаем. */
 
+import { fmtDayMonth, savedDataDate } from './live-data.js';
+
 const PFX = 'yulia.v2.pwa.';
 export const DISMISS_DAYS = 14;
 export const ACTION_DELAY_MS = 8000;   // пауза после первого осмысленного действия
@@ -70,6 +72,8 @@ export const GLYPHS = {
   dots: SVG('<circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/>'),
   install: SVG('<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>'),
   refresh: SVG('<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>'),
+  // офлайн-плашка: спокойный значок «сохранённые данные» (Lucide database) вместо перечёркнутого Wi-Fi
+  saved: SVG('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>'),
   offline: SVG('<path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 4.2-2.6"/><path d="M19 12.9a10 10 0 0 0-2.4-1.7"/><path d="M12 20h.01"/>')
 };
 
@@ -117,16 +121,25 @@ export function copyFor(kind, platform, extra = {}) {
     steps: [], primary: 'Обновить', secondary: 'Позже'
   };
   if (kind === 'offline') {
+    /* Спокойно, без «ошибки»: помощник работает на сохранённых данных.
+       extra.dataDate — дата последнего успешного обновления данных (meta/news, js/live-data.js → savedDataDate): «данные от 23 ноября».
+       Её нет — запасной вариант с датой сохранённой копии из заголовка Date ответа сервис-воркера */
+    const day = fmtDayMonth(extra.dataDate, extra.now);
+    if (day) return {
+      title: `Работа в офлайн-режиме · данные от ${day}`,
+      text: 'Калькуляторы, заметки и справочник работают на сохранённых данных. Когда интернет появится, данные обновятся сами.',
+      steps: [], primary: 'Понятно', secondary: ''
+    };
     const when = formatSavedDate(extra.date);
     return {
-      title: 'Нет сети',
+      title: 'Работа в офлайн-режиме',
       text: `Показаны сохранённые данные${when ? ' от ' + when : ''}. Когда интернет появится, они обновятся сами.`,
       steps: [], primary: 'Понятно', secondary: ''
     };
   }
   if (kind === 'online') return {
-    title: 'Сеть вернулась',
-    text: 'Можно загрузить свежие данные.',
+    title: 'Сеть есть',
+    text: 'Можно загрузить свежие данные — это займёт пару секунд.',
     steps: [], primary: 'Обновить', secondary: 'Позже'
   };
   return { title: '', text: '', steps: [], primary: 'Понятно', secondary: '' };
@@ -188,6 +201,12 @@ export function initPwa({ win = globalThis.window, doc = globalThis.document } =
     const group = (kind === 'prompt' || kind === 'ios' || kind === 'manual') ? 'install' : kind;
     if (sheet && PRIORITY[sheetKind] > PRIORITY[group]) return false; // важная плашка уже на экране
     if (sheet) { sheet.remove(); sheet = null; }
+    // офлайн-плашке — дата последних успешно загруженных данных (сохранены data-loader.js в localStorage)
+    if (kind === 'offline' && extra.dataDate == null) {
+      let ls = null;
+      try { ls = win.localStorage; } catch { /* хранилище недоступно */ }
+      extra = Object.assign({}, extra, { dataDate: savedDataDate(ls) });
+    }
     const c = copyFor(kind, platform, extra);
     const folded = compact && c.steps.length > 0;
     const box = doc.createElement('section');
@@ -198,7 +217,7 @@ export function initPwa({ win = globalThis.window, doc = globalThis.document } =
     box.setAttribute('aria-describedby', 'pwaText');
     const art = group === 'install'
       ? '<img class="pwa-ic" src="icons/icon-192.png" alt="" width="48" height="48" decoding="async">'
-      : `<span class="pwa-ic pwa-ic-glyph" aria-hidden="true">${group === 'update' || group === 'online' ? GLYPHS.refresh : GLYPHS.offline}</span>`;
+      : `<span class="pwa-ic pwa-ic-glyph" aria-hidden="true">${group === 'update' || group === 'online' ? GLYPHS.refresh : GLYPHS.saved}</span>`;
     box.innerHTML =
       `<div class="pwa-row">${art}<div class="pwa-body"><h2 class="pwa-title" id="pwaTitle">${c.title}</h2>` +
       `<p class="pwa-text" id="pwaText">${c.text}</p></div></div>` +

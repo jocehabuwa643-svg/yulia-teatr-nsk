@@ -22,8 +22,23 @@ export const controls = cfg => [
   rangeField(cfg, 'taxes', 'revenue', 'Выручка за год', { wide: true }),
   rangeField(cfg, 'taxes', 'costShare', 'Доля расходов в выручке'),
   rangeField(cfg, 'taxes', 'employees', 'Гонорары команды за год (ГПХ)'),
+  // переключатель штата для вычета взносов из УСН «Доходы» (ст. 346.21 п. 3.1 НК РФ): до 100% без работников, до 50% с ними
+  { type: 'select', id: 'staff', label: 'Работники и выплаты физлицам (для вычета взносов)', wide: true, def: 'auto', options: STAFF_OPTIONS },
   { type: 'select', id: 'social', label: 'Статус социального предприятия (реестр МСП)', options: [[0, 'Нет / не подтверждён'], [1, 'Да, подтверждён']], wide: true }
 ];
+
+/* Варианты переключателя штата. «auto» — по полю гонораров: есть выплаты команде по ГПХ → считаем, что штат есть */
+export const STAFF_OPTIONS = [
+  ['auto', 'По гонорарам команды: есть выплаты — до 50% налога'],
+  [0, 'Работаю одна, без работников — вычет до 100% налога'],
+  [1, 'Есть работники / штат — вычет до 50% налога']
+];
+/* Есть ли штат для лимита вычета: явный выбор переключателя, иначе — по сумме гонораров (поведение до переключателя) */
+export function hasStaff(staff, employees) {
+  if (staff === 0 || staff === '0') return false;
+  if (staff === 1 || staff === '1') return true;
+  return nonNeg(employees) > 0;
+}
 
 /* Последний год, за который известна ставка соцпредприятия (по cfg.byYear) */
 export function lastSocialYear(cfg) {
@@ -45,9 +60,11 @@ export function scenario(rev0, ctx) {
   // 1% взносов ИП — от дохода УСН (без НДС), а не от кассы: допущение проекта, см. contributions_1pct_threshold в rates.json
   const ip = ipContributions(usnIncome, p, cfg);
   const gphContribs = ctx.employees * cfg.gphRate;            // модельная ставка взносов с гонораров
-  // пул вычета: взносы ИП за себя + взносы с гонораров; лимит — % налога (без работников выше, с выплатами физлицам ниже)
-  const pool = ip.total + (ctx.employees > 0 ? gphContribs : 0);
-  const dedPct = ctx.employees > 0 ? cfg.deductWithStaff : cfg.deductNoStaff;
+  // пул вычета: взносы ИП за себя (фикс + 1% сверх порога) + при штате взносы за работников (модель — с гонораров ГПХ);
+  // лимит — % налога из rates.json: без работников до 100%, с работниками / выплатами физлицам до 50% (ст. 346.21 п. 3.1 НК РФ)
+  const staff = ctx.staff == null ? ctx.employees > 0 : !!ctx.staff;
+  const pool = ip.total + (staff ? gphContribs : 0);
+  const dedPct = staff ? cfg.deductWithStaff : cfg.deductNoStaff;
 
   const regimes = [];
   // --- УСН «Доходы»
@@ -55,7 +72,7 @@ export function scenario(rev0, ctx) {
   const ded6 = dedPct == null ? 0 : Math.min(pool, usn6 * share(dedPct));
   regimes.push({
     id: 'usn6', name: 'УСН «Доходы»', rate: cfg.usn, lost,
-    tax: lost ? null : usn6, taxAfterContrib: lost ? null : usn6 - ded6, deduction: ded6, dedPct,
+    tax: lost ? null : usn6, taxAfterContrib: lost ? null : usn6 - ded6, deduction: ded6, dedPct, staff,
     noData: false
   });
   // --- УСН «Доходы − расходы» (минимальный налог — % от доходов)
@@ -76,6 +93,13 @@ export function scenario(rev0, ctx) {
     needStatus: !ctx.social,                                    // ставка применяется только при подтверждённом статусе
     noData: socRate == null || !ctx.social                       // налог посчитать нельзя: нет ставки года либо статуса
   });
+  // соцпредприятие — тот же объект «Доходы» по сниженной ставке: вычет взносов по тому же правилу и лимиту, что у usn6
+  const soc = regimes[regimes.length - 1];
+  if (soc.tax != null) {
+    soc.deduction = dedPct == null ? 0 : Math.min(pool, soc.tax * share(dedPct));
+    soc.taxAfterContrib = soc.tax - soc.deduction;
+    soc.dedPct = dedPct; soc.staff = staff;
+  }
   // --- Патент НСО: потенциальный доход × ставка (нет данных → ручной ввод)
   const pot = cfg.patentPotential;
   regimes.push({
@@ -84,12 +108,21 @@ export function scenario(rev0, ctx) {
     noData: pot == null
   });
 
+  // налог К УПЛАТЕ по режиму: УСН — после вычета/учёта взносов (taxAfterContrib), патент — без вычета (в модели не считается)
+  regimes.forEach(g => { g.pay = g.tax == null ? null : Math.max(0, g.taxAfterContrib != null ? g.taxAfterContrib : g.tax); });
   const withTax = regimes.filter(r => r.tax != null);
+  // best — по налогу ДО вычета взносов (прежняя логика, на ней держится сравнение сценариев «Налог года»);
+  // bestPay — по налогу К УПЛАТЕ: его показывает шапка калькулятора, карточки и смета
   const best = withTax.length ? withTax.reduce((a, b) => (a.tax <= b.tax ? a : b)) : null;
+  const bestPay = withTax.length ? withTax.reduce((a, b) => (a.pay <= b.pay ? a : b)) : null;
   return {
     revenue: rev, costs, vat, vatState: vs.state, vatRate: vs.rate, bandUnknown: vs.bandUnknown, usnLost: lost,
-    usnIncome, ip, gphContribs, pool, dedPct, regimes, best,
-    // остаток владельца при УСН «Доходы» без вычета взносов: выручка − расходы − налог − НДС − взносы ИП
+    usnIncome, ip, gphContribs, pool, dedPct, staff, regimes, best, bestPay,
+    // детализация УСН «Доходы»: налог 6% → вычет взносов → налог к уплате (не меньше 0: вычет ограничен % налога ≤ 100%)
+    usn6Tax: usn6, usn6Deduction: ded6, usn6Pay: Math.max(0, usn6 - ded6),
+    // ОСТАТОК ВЛАДЕЛЬЦА (показывается в интерфейсе): выручка − расходы − налог к уплате (после вычета) − НДС − взносы ИП
+    ownerNet: rev - costs - Math.max(0, usn6 - ded6) - vat - ip.total,
+    // остаток без вычета взносов (полный налог + полные взносы) — только для «точки перехода НДС» (сравнение берегов порога)
     netUsn6: rev - costs - usn6 - vat - ip.total
   };
 }
@@ -119,7 +152,8 @@ export function calc(input, cfg) {
     p, cfg,
     costShare: clamp(nonNeg(input.costShare), 0, 100),
     social: num(input.social) ? 1 : 0,
-    employees: nonNeg(input.employees)
+    employees: nonNeg(input.employees),
+    staff: hasStaff(input.staff, input.employees)
   };
   const revenue = nonNeg(input.revenue);
   const T = p.vatThreshold;
@@ -144,8 +178,11 @@ export function calc(input, cfg) {
     vatSaved: now.vat * share(cfg.usn),                         // УСН не облагает НДС-часть
     onePct: now.ip.extra, ip: now.ip, ipFixed: now.ip.fixedNoData ? null : now.ip.fixed,
     ipFixedNoData: now.ip.fixedNoData, ipCapNoData: now.ip.capNoData,
-    regimes: now.regimes, best: now.best, now, before, after, crossing,
-    gphContribs: now.gphContribs, dedPct: now.dedPct, social: ctx.social,
+    regimes: now.regimes, best: now.best, bestPay: now.bestPay, now, before, after, crossing,
+    // выбрано «Работаю одна», но есть гонорары по ГПХ: по НК лимит вычета в этом случае 50% (см. note в rates.json)
+    staffConflict: (input.staff === 0 || input.staff === '0') && ctx.employees > 0,
+    gphContribs: now.gphContribs, dedPct: now.dedPct, staff: now.staff, social: ctx.social,
+    usn6Tax: now.usn6Tax, usn6Deduction: now.usn6Deduction, usn6Pay: now.usn6Pay, ownerNet: now.usnLost ? null : now.ownerNet,
     socialYear: p.usnSocial != null ? p.year : lastSocialYear(cfg),
     warning: over ? `Годовая выручка выше порога ${ruNum(T / 1e6)} млн ₽ (${p.year}): в цену включается НДС ${ruNum(now.vatRate)}%, для УСН он исключается из дохода` : null
   };
@@ -153,9 +190,11 @@ export function calc(input, cfg) {
 
 /* Ключевые показатели для сравнения сценариев */
 export const summary = r => [
-  { label: 'Налог года (лучший режим)', v: r.best ? r.best.tax : null, t: 'rub', empty: 'нет данных' },
+  { label: 'Налог года (лучший режим, до вычета взносов)', v: r.best ? r.best.tax : null, t: 'rub', empty: 'нет данных' },
   { label: 'Режим', v: r.best ? r.best.name : null, t: 'text', empty: 'нет данных' },
+  { label: 'Налог к уплате (лучший режим, после вычета взносов)', v: r.bestPay ? r.bestPay.pay : null, t: 'rub', empty: 'нет данных' },
   { label: 'НДС за год', v: r.vat, t: 'rub' },
   { label: 'Взносы ИП (с 1% сверх порога)', v: r.ip.total, t: 'rub' },
+  { label: 'Остаток владельца (УСН «Доходы», с вычетом взносов)', v: r.ownerNet, t: 'rub', empty: 'УСН недоступна' },
   { label: 'Точка перехода НДС (выручка)', v: r.crossing ? r.crossing.breakEven : null, t: 'rub', empty: 'нет данных' }
 ];

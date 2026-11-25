@@ -24,6 +24,7 @@ import { buildEntryCard } from './clients-view.js';
 import { initLiveData } from './live-data.js';
 import './pwa.js'; // самоподключаемый: сервис-воркер, плашка «Установить приложение», «Доступна новая версия»
 import './afford.js'; // самоподключаемый: «пальчик»-пульс на главных кнопках при первом входе
+import './launch-extras.js'; // самоподключаемый: «Допуск в сады и школы» и «Летний сценарий» в разделе «План запуска» (#launch)
 import { initReveal, enter, whenIdle } from './ui/helpers.js';
 import { lazyChartLib } from './charts.js';
 import { state, hasCoreData } from './state.js';

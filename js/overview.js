@@ -1,9 +1,10 @@
 /* overview.js — раздел «Обзор» и схемы проекта: bento-KPI, график денежного потока, рост базы, смета фаз.
    Все числа берутся из data/config.json (через cfg); единственное допущение проекта — площадь базы. */
-import { $, $$, fmt, rub, signed, pct, ic, table, enter, counter, popNumber, motionOK } from './ui/helpers.js';
+import { $, $$, fmt, rub, signed, pct, ic, table, enter, counter, popNumber, motionOK, toast } from './ui/helpers.js';
 import { drawCash, drawSplit, onChartTheme } from './charts.js';
 import { baseMonth } from './calculators/basecamp.js';
 import { state } from './state.js';
+import { buildOverviewEstimate, copyEstimate, printEstimate } from './estimate-export.js';
 
 const chartState = { chart: null, split: null, month: 8, view: 'net', seen: false, splitSeen: false };
 const SPRING = 'cubic-bezier(.16,1,.3,1)';
@@ -59,6 +60,21 @@ export function initOverview(cfg) {
     redrawCharts(); setMonth(chartState.month, rows);
   };
   enter($('cash').parentElement, () => { chartState.seen = true; redrawCharts(); });
+
+  /* ---------- Смета в 1 клик: сводка денежного потока и бюджета запуска — в мессенджер или на лист А4 ---------- */
+  const cashCard = $('cashTable') && $('cashTable').closest('article');
+  if (cashCard && !cashCard.querySelector('.est-tools')) {
+    cashCard.insertAdjacentHTML('beforeend', `<div class="toolrow est-tools" role="group" aria-label="Смета обзора">
+        <button type="button" class="btn small secondary" data-est="share">${ic('copy')}<span>Скопировать для мессенджера</span></button>
+        <button type="button" class="btn small secondary" data-est="pdf">${ic('printer')}<span>Сохранить в PDF</span></button>
+      </div>`);
+    const estimate = () => buildOverviewEstimate({ rows, budget: pb, zeroShows, payIdx, date: new Date() });
+    cashCard.querySelector('.est-tools').addEventListener('click', e => {
+      const b = e.target.closest('[data-est]'); if (!b) return;
+      if (b.dataset.est === 'share') copyEstimate(estimate(), toast);
+      else printEstimate(estimate());
+    });
+  }
   enter($('split'), () => { chartState.splitSeen = true; redrawCharts(); });
 
   /* ---------- Как растёт база ---------- */
