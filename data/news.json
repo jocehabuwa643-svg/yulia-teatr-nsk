@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-25T00:08:53.712Z",
+  "updated_at": "2026-11-25T12:54:30.148Z",
   "stale": false,
   "sources_total": 8,
   "sources_failed": 0,
@@ -11,81 +11,81 @@
       "name": "ФНС России (УФНС по Новосибирской области)",
       "url": "https://www.nalog.gov.ru/rn54/",
       "feed_url": "https://www.nalog.gov.ru/rn54/rss/",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
-      "status": "empty",
-      "items": 0,
-      "total": 4,
-      "last_ok_at": "2026-11-25T00:08:53.712Z"
+      "fetched_at": "2026-11-25T12:54:30.148Z",
+      "status": "ok",
+      "items": 1,
+      "total": 2,
+      "last_ok_at": "2026-11-25T12:54:30.148Z"
     },
     {
       "name": "Infopro54",
       "url": "https://infopro54.ru/category/news/society/culture/",
       "feed_url": "https://infopro54.ru/category/news/society/culture/feed/",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "ok",
       "items": 11,
       "total": 50,
-      "last_ok_at": "2026-11-25T00:08:53.712Z"
+      "last_ok_at": "2026-11-25T12:54:30.148Z"
     },
     {
       "name": "Вести Новосибирск",
       "url": "https://www.nsktv.ru/",
       "feed_url": "https://www.nsktv.ru/rss.php",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "ok",
-      "items": 4,
+      "items": 3,
       "total": 30,
-      "last_ok_at": "2026-11-25T00:08:53.712Z"
+      "last_ok_at": "2026-11-25T12:54:30.148Z"
     },
     {
       "name": "Новосибирские новости",
       "url": "https://nsknews.info/",
       "feed_url": "https://nsknews.info/feed/",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "ok",
-      "items": 4,
+      "items": 6,
       "total": 60,
-      "last_ok_at": "2026-11-25T00:08:53.712Z"
+      "last_ok_at": "2026-11-25T12:54:30.148Z"
     },
     {
       "name": "АиФ-Новосибирск",
       "url": "https://nsk.aif.ru/",
       "feed_url": "https://nsk.aif.ru/rss/all.php",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "ok",
       "items": 2,
-      "total": 105,
-      "last_ok_at": "2026-11-25T00:08:53.712Z"
+      "total": 108,
+      "last_ok_at": "2026-11-25T12:54:30.148Z"
     },
     {
       "name": "Infopro54 · бизнес",
       "url": "https://infopro54.ru/category/news/biznes/probiznes/",
       "feed_url": "https://infopro54.ru/category/news/biznes/probiznes/feed/",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "ok",
       "items": 8,
       "total": 50,
-      "last_ok_at": "2026-11-25T00:08:53.712Z"
+      "last_ok_at": "2026-11-25T12:54:30.148Z"
     },
     {
       "name": "Газета «Культура»",
       "url": "https://portal-kultura.ru/",
       "feed_url": "https://portal-kultura.ru/rss/",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "ok",
-      "items": 4,
+      "items": 5,
       "total": 30,
-      "last_ok_at": "2026-11-25T00:08:53.712Z"
+      "last_ok_at": "2026-11-25T12:54:30.148Z"
     },
     {
       "name": "Клерк.ру",
       "url": "https://www.klerk.ru/",
       "feed_url": "https://www.klerk.ru/xml/index.xml",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "ok",
-      "items": 13,
+      "items": 5,
       "total": 100,
-      "last_ok_at": "2026-11-25T00:08:53.712Z"
+      "last_ok_at": "2026-11-25T12:54:30.148Z"
     }
   ],
   "skipped_sources": [
@@ -93,7 +93,7 @@
       "name": "Минкультуры Новосибирской области",
       "url": "https://mk.nso.ru/",
       "feed_url": "https://mk.nso.ru/rss.xml",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -103,7 +103,7 @@
       "name": "Правительство Новосибирской области",
       "url": "https://www.nso.ru/",
       "feed_url": "https://www.nso.ru/rss.xml",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -113,7 +113,7 @@
       "name": "Минкультуры России — новости министерства",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=2&lang=ru&TYPE=ministry&LIMIT=40&SECTION_ID=30",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -123,7 +123,7 @@
       "name": "Минкультуры России — культурная жизнь регионов",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=34&lang=ru&TYPE=news&LIMIT=40",
-      "fetched_at": "2026-11-25T00:08:53.712Z",
+      "fetched_at": "2026-11-25T12:54:30.148Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -131,6 +131,136 @@
     }
   ],
   "items": [
+    {
+      "id": "475d63897ebf",
+      "title": "Новосибирская консерватория имени Глинки отметила 70-летний юбилей",
+      "summary": "",
+      "url": "https://portal-kultura.ru/articles/news/379881-novosibirskaya-konservatoriya-imeni-glinki-otmetila-70-letniy-yubiley/",
+      "source_name": "Газета «Культура»",
+      "source_url": "https://portal-kultura.ru/",
+      "published_at": "2026-11-25T11:03:47.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "588eea72a19d",
+      "title": "Иностранец работает вне региона выдачи патента: что делать организации",
+      "summary": "Организация обнаружила несостыковку между регионом деятельности, который указан в патенте (Санкт-Петербург), и фактическим местом осуществления деятельности (Ленобласть). Рассказываем, что делать.",
+      "url": "https://www.klerk.ru/buh/articles/720416/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-25T09:37:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "f0136e0ae533",
+      "title": "ФНС России разъяснила, как применять налоговый вычет по акцизу на фармсубстанцию",
+      "summary": "",
+      "url": "https://www.nalog.gov.ru/rn54/news/activities_fts/16678541/",
+      "source_name": "ФНС России (УФНС по Новосибирской области)",
+      "source_url": "https://www.nalog.gov.ru/rn54/",
+      "published_at": "2026-11-25T09:30:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "6d0facdeb87f",
+      "title": "Фестиваль «Книжная Сибирь» в Новосибирске принял свыше 12 тысяч гостей",
+      "summary": "",
+      "url": "https://nsk.aif.ru/society/festival-knizhnaya-sibir-v-novosibirske-prinyal-svyshe-12-tysyach-gostey",
+      "source_name": "АиФ-Новосибирск",
+      "source_url": "https://nsk.aif.ru/",
+      "published_at": "2026-11-25T09:22:33.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "31d4d27ff8af",
+      "title": "Фасады и концертный зал отреставрируют в ДК имени Октябрьской революции",
+      "summary": "В Новосибирске приведут в порядок большой зал и внешние стены объекта культурного наследия регионального значения «Клуб Сталина», расположенного на Ленина, 24. Горожанам это здание известно по его…",
+      "url": "https://nsknews.info/news/fasady-i-koncertnyi-zal-otrestavriruiut-v-dk-imeni-oktiabrskoi-revoliucii",
+      "source_name": "Новосибирские новости",
+      "source_url": "https://nsknews.info/",
+      "published_at": "2026-11-25T09:10:50.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "becce751b39c",
+      "title": "Бизнесу и самозанятым могут разрешить повторные кредитные каникулы при ЧС",
+      "summary": "Подать требование кредитору нужно будет в течение 60 дней после введения режима ЧС. Правительственная комиссия предложила увеличить срок каникул с трех до шести месяцев.",
+      "url": "https://www.klerk.ru/buh/news/720396/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-25T08:40:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "c42d97ee2352",
+      "title": "Театральный сквер в Новосибирске оформят к Новому году до 13 декабря",
+      "summary": "На главной праздничной площадке города установят ель, развесят гирлянды и смонтируют световые арки. Информацию о тендере на выполнение работ опубликовали на сайте госзакупок.",
+      "url": "https://nsknews.info/news/teatralnyi-skver-v-novosibirske-oformiat-k-novomu-godu-do-13-dekabria",
+      "source_name": "Новосибирские новости",
+      "source_url": "https://nsknews.info/",
+      "published_at": "2026-11-25T07:02:50.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "bb47aa03e29d",
+      "title": "ТЮЗ имени Брянцева к 100-летию Корогодского покажет спектакль-альманах «Посвящение»",
+      "summary": "",
+      "url": "https://portal-kultura.ru/articles/news/379874-tyuz-imeni-bryantseva-k-100-letiyu-korogodskogo-pokazhet-spektakl-almanakh-posvyashchenie/",
+      "source_name": "Газета «Культура»",
+      "source_url": "https://portal-kultura.ru/",
+      "published_at": "2026-11-25T06:47:29.000Z",
+      "topic": "industry"
+    },
+    {
+      "id": "878bab886dac",
+      "title": "300 рублей дополнительно предоставят новосибирцам по «Пушкинской карте»",
+      "summary": "В 2026 году её номинал увеличили с 5000 до 5300 рублей. Добавленные деньги можно потратить на билет в кино. О новых возможностях программы сообщили в региональном минкульте.",
+      "url": "https://nsknews.info/news/300-rublei-dopolnitelno-predostaviat-novosibircam-po-puskinskoi-karte",
+      "source_name": "Новосибирские новости",
+      "source_url": "https://nsknews.info/",
+      "published_at": "2026-11-25T04:15:50.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "04e303bcae2b",
+      "title": "Шесть новосибирских спектаклей продолжат борьбу за «Золотую маску»",
+      "summary": "Во вторник, 24 ноября, эксперты национальной театральной премии объявили номинантов, которые прошли предварительный отбор и представят свои постановки на фестивале.",
+      "url": "https://nsknews.info/news/sest-novosibirskix-spektaklei-prodolzat-borbu-za-zolotuiu-masku",
+      "source_name": "Новосибирские новости",
+      "source_url": "https://nsknews.info/",
+      "published_at": "2026-11-25T03:42:00.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "c74d1ea80040",
+      "title": "Активные владельцы Пушкинской карты смогут посетить больше мероприятий",
+      "summary": "",
+      "url": "https://nsk.aif.ru/society/aktivnye-vladelcy-pushkinskoy-karty-smogut-posetit-bolshe-meropriyatiy",
+      "source_name": "АиФ-Новосибирск",
+      "source_url": "https://nsk.aif.ru/",
+      "published_at": "2026-11-25T03:36:24.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "7fe410188513",
+      "title": "В новосибирской «Меге» установили ёлку с мечтами детей из интерната",
+      "summary": "Благотворительный проект «Ёлка желаний» запускают в Новосибирске. Праздничное дерево, украшенное мечтами ребят, появилось в торговом центре «Мега» на улице Ватутина.",
+      "url": "https://nsknews.info/news/v-novosibirskoi-mege-ustanovili-elku-s-mectami-detei-iz-internata",
+      "source_name": "Новосибирские новости",
+      "source_url": "https://nsknews.info/",
+      "published_at": "2026-11-25T03:27:34.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "d6f07273af33",
+      "title": "Забудьте про кассу и взносы: почему ИП на НПД выгоднее, чем кажется",
+      "summary": "61 154 рубля. Именно столько в 2027 году заплатит ИП на УСН только за право работать — еще до того, как получит первую выручку. На НПД эта сумма остается в обороте. И это лишь первая из статей…",
+      "url": "https://www.klerk.ru/user/2734119/720350/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T20:12:24.000Z",
+      "topic": "taxes"
+    },
     {
       "id": "8523127c5175",
       "title": "Налог на имущество ИП на УСН: когда платить не нужно и как не переплатить",
@@ -180,36 +310,6 @@
       "source_url": "https://portal-kultura.ru/",
       "published_at": "2026-11-24T13:21:37.000Z",
       "topic": "culture"
-    },
-    {
-      "id": "9c3b0ef1e07c",
-      "title": "Какие задачи бизнес может поручить самозанятым в сезон распродаж",
-      "summary": "На время распродаж и предновогоднего ажиотажа бизнес может поручить самозанятым отдельные задачи, например инвентаризацию или упаковку партии товаров. Даже короткий договор могут признать трудовым…",
-      "url": "https://www.klerk.ru/buh/news/720198/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-24T13:00:00.000Z",
-      "topic": "taxes"
-    },
-    {
-      "id": "948e67260622",
-      "title": "НДС на УСН в 2026 году: кому придется платить налог и как выбрать ставку",
-      "summary": "Порог доходов, позволяющий не платить НДС, снизился до 20 млн рублей. Поэтому обязанность исчислять налог появилась у части компаний и ИП, которые раньше работали без НДС.",
-      "url": "https://www.klerk.ru/blogs/klerk/720257/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-24T12:26:01.000Z",
-      "topic": "taxes"
-    },
-    {
-      "id": "f5d14d90bdad",
-      "title": "Ответ ФНС: подойдет ли УКЭП физлица из «Госключа» для работы ИП",
-      "summary": "Предпринимателю нельзя использовать УКЭП физлица из «Госключа» для бизнеса.",
-      "url": "https://www.klerk.ru/buh/news/719894/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-24T11:49:00.000Z",
-      "topic": "taxes"
     },
     {
       "id": "5ea5d59accef",
@@ -312,26 +412,6 @@
       "topic": "city"
     },
     {
-      "id": "62fe05ab30f0",
-      "title": "Новосибирская актриса отмечает 80-летие бенефисом в «Мадам Рубинштейн»",
-      "summary": "Известная новосибирская актриса Галина Алёхина сыграла главную роль в новом спектакле «Красного факела».",
-      "url": "https://nsknews.info/news/novosibirskaia-aktrisa-otmecaet-80-letie-benefisom-v-madam-rubinstein",
-      "source_name": "Новосибирские новости",
-      "source_url": "https://nsknews.info/",
-      "published_at": "2026-11-23T12:00:50.000Z",
-      "topic": "city"
-    },
-    {
-      "id": "64f91047f6ec",
-      "title": "Театр «Старый дом» открыл камерную сцену на Зыряновской",
-      "summary": "Новосибирский театр «Старый дом» открыл камерную сцену без дистанции со зрителем. В новой точке на улице Зыряновской, 55 будут репетировать и устраивать неформатные спектакли. Первым стала…",
-      "url": "https://nsknews.info/news/teatr-staryi-dom-otkryl-kamernuiu-scenu-na-zyrianovskoi",
-      "source_name": "Новосибирские новости",
-      "source_url": "https://nsknews.info/",
-      "published_at": "2026-11-23T11:37:00.000Z",
-      "topic": "city"
-    },
-    {
       "id": "5e294288b436",
       "title": "О способах уплаты имущественных налогов рассказали во время встречи с работниками новосибирской организации",
       "summary": "",
@@ -379,16 +459,6 @@
       "source_name": "АиФ-Новосибирск",
       "source_url": "https://nsk.aif.ru/",
       "published_at": "2026-11-23T06:09:41.000Z",
-      "topic": "city"
-    },
-    {
-      "id": "503cc8ff2715",
-      "title": "Детсад на 120 мест строят в экоквартале «На Кедровой» под Новосибирском",
-      "summary": "Процесс проконтролировали специалисты первого отдела госстройнадзора Новосибирской области.",
-      "url": "https://nsknews.info/news/detsad-na-120-mest-stroiat-v-ekokvartale-na-kedrovoi-pod-novosibirskom",
-      "source_name": "Новосибирские новости",
-      "source_url": "https://nsknews.info/",
-      "published_at": "2026-11-23T05:52:00.000Z",
       "topic": "city"
     },
     {
@@ -459,76 +529,6 @@
       "source_name": "Минкультуры Новосибирской области",
       "source_url": "https://mk.nso.ru/",
       "published_at": "2026-11-20T09:30:00.000Z",
-      "topic": "culture"
-    },
-    {
-      "id": "3c2039f63c6a",
-      "title": "Мероприятия IX Большого Детского фестиваля собрали более 30 тысяч зрителей",
-      "summary": "IX Большой Детский фестиваль под руководством народного артиста Российской Федерации Сергея Безрукова проходил в двух городах: с 22 августа по 17 ноября в Москве и с 12 сентября по 4 ноября – в…",
-      "url": "https://culture.gov.ru/press/news/meropriyatiya_ix_bolshogo_detskogo_festivalya_sobrali_bolee_30_tysyach_zriteley/",
-      "source_name": "Минкультуры России — новости министерства",
-      "source_url": "https://culture.gov.ru/press/news/",
-      "published_at": "2026-11-18T09:01:51.000Z",
-      "topic": "industry"
-    },
-    {
-      "id": "851e8ebff9b7",
-      "title": "В Рязани открылся крупнейший в стране детский культурно-просветительский центр",
-      "summary": "13 ноября состоялось торжественное открытие детского культурно-просветительского центра «Паустовский» на базе Рязанской областной универсальной научной библиотеки имени Горького. В церемонии приняли…",
-      "url": "https://culture.gov.ru/press/news/v_ryazani_otkrylsya_krupneyshiy_v_strane_detskiy_kulturno_prosvetitelskiy_tsentr/",
-      "source_name": "Минкультуры России — новости министерства",
-      "source_url": "https://culture.gov.ru/press/news/",
-      "published_at": "2026-11-14T07:37:51.000Z",
-      "topic": "culture"
-    },
-    {
-      "id": "5338c1577c92",
-      "title": "Филиппа Селиванова назначили главным дирижером НОВАТа",
-      "summary": "Он сменил Михаила Татарникова, который продолжит сотрудничать с театром Сообщение Филиппа Селиванова назначили главным дирижером НОВАТа появились сначала на Infopro54 - Новости Новосибирска. Новости…",
-      "url": "https://infopro54.ru/news/filippa-selivanova-naznachili-glavnym-dirizherom-novata/",
-      "source_name": "Infopro54",
-      "source_url": "https://infopro54.ru/category/news/society/culture/",
-      "published_at": "2026-11-03T05:15:37.000Z",
-      "topic": "culture"
-    },
-    {
-      "id": "b601e62ddeb6",
-      "title": "Новосибирская филармония приглашает на «Белый фестиваль»",
-      "summary": "С 2 по 17 декабря состоятся шесть ярких концертов с участием выдающихся музыкантов из различных жанров Сообщение Новосибирская филармония приглашает на «Белый фестиваль» появились сначала на…",
-      "url": "https://infopro54.ru/news/novosibirskaya-filarmoniya-priglashaet-na-belyj-festival/?erid=F7NfYUJCUneVewx4uRhQ",
-      "source_name": "Infopro54",
-      "source_url": "https://infopro54.ru/category/news/society/culture/",
-      "published_at": "2026-10-30T09:05:38.000Z",
-      "topic": "culture"
-    },
-    {
-      "id": "a1182588da97",
-      "title": "Патенты для бизнеса в Новосибирской области подорожают в 2027 году",
-      "summary": "Минфин региона не зафиксировал оттока предпринимателей после предыдущих индексаций. Размер индексации будет зависеть от вида деятельности Сообщение Патенты для бизнеса в Новосибирской области…",
-      "url": "https://infopro54.ru/news/patenty-dlya-biznesa-v-novosibirskoj-oblasti-podorozhayut-v-2027-godu/",
-      "source_name": "Infopro54 · бизнес",
-      "source_url": "https://infopro54.ru/category/news/biznes/probiznes/",
-      "published_at": "2026-10-29T10:00:11.000Z",
-      "topic": "taxes"
-    },
-    {
-      "id": "a76f9351b9e5",
-      "title": "Предприниматели предложили свои поправки в Налоговый Кодекс России",
-      "summary": "Изменения, которые включены в проект федерального закона сейчас, увеличивают налоговую нагрузку на бизнес, повышают штрафы и ухудшают условия его работы Сообщение Предприниматели предложили свои…",
-      "url": "https://infopro54.ru/news/predprinimateli-predlozhili-svoi-popravki-v-nalogovyj-kodeks-rossii/",
-      "source_name": "Infopro54 · бизнес",
-      "source_url": "https://infopro54.ru/category/news/biznes/probiznes/",
-      "published_at": "2026-10-27T10:00:47.000Z",
-      "topic": "taxes"
-    },
-    {
-      "id": "3e4661335848",
-      "title": "Игорь Бутман отпразднует юбилей на сцене Новосибирской филармонии",
-      "summary": "Зрителей ожидают эксклюзивные выступления, неповторимые совместные импровизации и атмосфера энергии и вдохновения, которая неизменно сопровождает концерты маэстро Сообщение Игорь Бутман отпразднует…",
-      "url": "https://infopro54.ru/news/igor-butman-otprazdnuet-yubilej-na-scene-novosibirskoj-filarmonii/?erid=F7NfYUJCUneVewcQqxp1",
-      "source_name": "Infopro54",
-      "source_url": "https://infopro54.ru/category/news/society/culture/",
-      "published_at": "2026-10-21T08:04:07.000Z",
       "topic": "culture"
     }
   ]
