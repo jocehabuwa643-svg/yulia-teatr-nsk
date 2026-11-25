@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-24T11:32:33.616Z",
+  "updated_at": "2026-11-25T00:08:53.712Z",
   "stale": false,
   "sources_total": 8,
   "sources_failed": 0,
@@ -11,81 +11,81 @@
       "name": "ФНС России (УФНС по Новосибирской области)",
       "url": "https://www.nalog.gov.ru/rn54/",
       "feed_url": "https://www.nalog.gov.ru/rn54/rss/",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "empty",
       "items": 0,
       "total": 4,
-      "last_ok_at": "2026-11-24T11:32:33.616Z"
+      "last_ok_at": "2026-11-25T00:08:53.712Z"
     },
     {
       "name": "Infopro54",
       "url": "https://infopro54.ru/category/news/society/culture/",
       "feed_url": "https://infopro54.ru/category/news/society/culture/feed/",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "ok",
       "items": 11,
       "total": 50,
-      "last_ok_at": "2026-11-24T11:32:33.616Z"
+      "last_ok_at": "2026-11-25T00:08:53.712Z"
     },
     {
       "name": "Вести Новосибирск",
       "url": "https://www.nsktv.ru/",
       "feed_url": "https://www.nsktv.ru/rss.php",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "ok",
       "items": 4,
       "total": 30,
-      "last_ok_at": "2026-11-24T11:32:33.616Z"
+      "last_ok_at": "2026-11-25T00:08:53.712Z"
     },
     {
       "name": "Новосибирские новости",
       "url": "https://nsknews.info/",
       "feed_url": "https://nsknews.info/feed/",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "ok",
-      "items": 3,
+      "items": 4,
       "total": 60,
-      "last_ok_at": "2026-11-24T11:32:33.616Z"
+      "last_ok_at": "2026-11-25T00:08:53.712Z"
     },
     {
       "name": "АиФ-Новосибирск",
       "url": "https://nsk.aif.ru/",
       "feed_url": "https://nsk.aif.ru/rss/all.php",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "ok",
-      "items": 3,
+      "items": 2,
       "total": 105,
-      "last_ok_at": "2026-11-24T11:32:33.616Z"
+      "last_ok_at": "2026-11-25T00:08:53.712Z"
     },
     {
       "name": "Infopro54 · бизнес",
       "url": "https://infopro54.ru/category/news/biznes/probiznes/",
       "feed_url": "https://infopro54.ru/category/news/biznes/probiznes/feed/",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "ok",
       "items": 8,
       "total": 50,
-      "last_ok_at": "2026-11-24T11:32:33.616Z"
+      "last_ok_at": "2026-11-25T00:08:53.712Z"
     },
     {
       "name": "Газета «Культура»",
       "url": "https://portal-kultura.ru/",
       "feed_url": "https://portal-kultura.ru/rss/",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "ok",
-      "items": 3,
+      "items": 4,
       "total": 30,
-      "last_ok_at": "2026-11-24T11:32:33.616Z"
+      "last_ok_at": "2026-11-25T00:08:53.712Z"
     },
     {
       "name": "Клерк.ру",
       "url": "https://www.klerk.ru/",
       "feed_url": "https://www.klerk.ru/xml/index.xml",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "ok",
-      "items": 8,
+      "items": 13,
       "total": 100,
-      "last_ok_at": "2026-11-24T11:32:33.616Z"
+      "last_ok_at": "2026-11-25T00:08:53.712Z"
     }
   ],
   "skipped_sources": [
@@ -93,7 +93,7 @@
       "name": "Минкультуры Новосибирской области",
       "url": "https://mk.nso.ru/",
       "feed_url": "https://mk.nso.ru/rss.xml",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -103,7 +103,7 @@
       "name": "Правительство Новосибирской области",
       "url": "https://www.nso.ru/",
       "feed_url": "https://www.nso.ru/rss.xml",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -113,7 +113,7 @@
       "name": "Минкультуры России — новости министерства",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=2&lang=ru&TYPE=ministry&LIMIT=40&SECTION_ID=30",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -123,7 +123,7 @@
       "name": "Минкультуры России — культурная жизнь регионов",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=34&lang=ru&TYPE=news&LIMIT=40",
-      "fetched_at": "2026-11-24T11:32:33.616Z",
+      "fetched_at": "2026-11-25T00:08:53.712Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -131,6 +131,86 @@
     }
   ],
   "items": [
+    {
+      "id": "8523127c5175",
+      "title": "Налог на имущество ИП на УСН: когда платить не нужно и как не переплатить",
+      "summary": "1 декабря 2026 года – срок уплаты налога на имущество физлиц за 2025 год. У ИП на УСН в Уведомлении нередко оказываются объекты, которые используются в бизнесе и налогом Облагаться не должны…",
+      "url": "https://www.klerk.ru/user/2721878/720330/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T16:46:15.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "49c20df97474",
+      "title": "Число женщин-ИП в России выросло на 42,5% в 2026 году",
+      "summary": "К 1 ноября 2026 года в России работали 2,11 млн женщин-ИП. Их доля среди всех индивидуальных предпринимателей достигла 41,1%.",
+      "url": "https://www.klerk.ru/buh/news/719811/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T16:39:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "5eddee4a9d92",
+      "title": "НДС на УСН в 2026 году: новые лимиты, ставки 5%, 7% и 22% — как выбрать выгодный вариант и избежать ошибок",
+      "summary": "Разберем, кто должен платить НДС на УСН в 2026 году, какие ставки доступны, как выбрать подходящий вариант и какие ошибки могут привести к финансовым потерям. А также расскажем, как бухгалтеру…",
+      "url": "https://www.klerk.ru/blogs/klerk/720253/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T14:17:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "0a26a9c34a36",
+      "title": "Готовность концессионных школ в Новосибирске выросла на треть с октября",
+      "summary": "По поручению полпреда президента РФ в СФО Анатолия Серышева его заместитель Вадим Головко провёл очередное рабочее совещание по строительству шести концессионных школ в Новосибирске. Перед…",
+      "url": "https://nsknews.info/news/uskorit-process-zadaci-stroiteliam-koncessionnyx-skol-v-novosibirske",
+      "source_name": "Новосибирские новости",
+      "source_url": "https://nsknews.info/",
+      "published_at": "2026-11-24T13:45:50.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "d9b7f695adb7",
+      "title": "В Мариинском театре представят новогоднюю елку «Танцы кукол» к 120-летию Шостаковича",
+      "summary": "",
+      "url": "https://portal-kultura.ru/articles/news/379867-v-mariinskom-teatre-predstavyat-novogodnyuyu-elku-tantsy-kukol-k-120-letiyu-shostakovicha/",
+      "source_name": "Газета «Культура»",
+      "source_url": "https://portal-kultura.ru/",
+      "published_at": "2026-11-24T13:21:37.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "9c3b0ef1e07c",
+      "title": "Какие задачи бизнес может поручить самозанятым в сезон распродаж",
+      "summary": "На время распродаж и предновогоднего ажиотажа бизнес может поручить самозанятым отдельные задачи, например инвентаризацию или упаковку партии товаров. Даже короткий договор могут признать трудовым…",
+      "url": "https://www.klerk.ru/buh/news/720198/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T13:00:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "948e67260622",
+      "title": "НДС на УСН в 2026 году: кому придется платить налог и как выбрать ставку",
+      "summary": "Порог доходов, позволяющий не платить НДС, снизился до 20 млн рублей. Поэтому обязанность исчислять налог появилась у части компаний и ИП, которые раньше работали без НДС.",
+      "url": "https://www.klerk.ru/blogs/klerk/720257/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T12:26:01.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "f5d14d90bdad",
+      "title": "Ответ ФНС: подойдет ли УКЭП физлица из «Госключа» для работы ИП",
+      "summary": "Предпринимателю нельзя использовать УКЭП физлица из «Госключа» для бизнеса.",
+      "url": "https://www.klerk.ru/buh/news/719894/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-24T11:49:00.000Z",
+      "topic": "taxes"
+    },
     {
       "id": "5ea5d59accef",
       "title": "В ГИТИСе подвели итоги IX фестиваля театральных школ стран СНГ",
@@ -140,16 +220,6 @@
       "source_url": "https://portal-kultura.ru/",
       "published_at": "2026-11-24T10:35:21.000Z",
       "topic": "culture"
-    },
-    {
-      "id": "573f85370335",
-      "title": "Перешли с АУСН на УСН, а доход сотрудника превысил 2,4 млн рублей: как считать НДФЛ",
-      "summary": "Смена АУСН на УСН не влияет на базу НДФЛ.",
-      "url": "https://www.klerk.ru/buh/news/719816/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-24T10:30:00.000Z",
-      "topic": "taxes"
     },
     {
       "id": "0f74b757444b",
@@ -182,16 +252,6 @@
       "topic": "culture"
     },
     {
-      "id": "1589229ef962",
-      "title": "ИП, работающий по трудовому договору, может получить двойные больничные",
-      "summary": "Человек-ИП-сотрудник имеет право на больничные по двум основаниям.",
-      "url": "https://www.klerk.ru/buh/news/720020/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-24T09:25:00.000Z",
-      "topic": "taxes"
-    },
-    {
       "id": "14cf63c60f47",
       "title": "Подведены итоги первого грантового конкурса ПФКИ",
       "summary": "",
@@ -200,36 +260,6 @@
       "source_url": "https://portal-kultura.ru/",
       "published_at": "2026-11-24T08:30:42.000Z",
       "topic": "grants"
-    },
-    {
-      "id": "8f5c64190e61",
-      "title": "Самозанятые могут формировать пенсионный стаж добровольными взносами",
-      "summary": "Для получения страховой пенсии по старости нужно не менее 15 лет стажа и 30 пенсионных баллов. Самозанятые могут накапливать их через добровольное пенсионное страхование.",
-      "url": "https://www.klerk.ru/buh/news/720116/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-24T08:30:00.000Z",
-      "topic": "taxes"
-    },
-    {
-      "id": "80d28ed99e71",
-      "title": "Лимиты УСН в 2027 году: таблица изменений, НДС и новые правила для бизнеса",
-      "summary": "Разберём, какие лимиты УСН и НДС будут действовать с 1 января 2027 года, как выбрать ставку налога, когда можно потерять право на спецрежим и что бухгалтеру необходимо проверить до конца 2026 года.",
-      "url": "https://www.klerk.ru/blogs/klerk/720180/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-24T08:20:32.000Z",
-      "topic": "taxes"
-    },
-    {
-      "id": "5d42327277d9",
-      "title": "Налоговики находят нарушения при каждой проверке ККТ на рынках",
-      "summary": "Налоговики контролируют выдачу кассовых чеков и легализацию выручки в торговле и сфере услуг. Проверки на рынках и в других торговых пространствах продолжатся по всему региону.",
-      "url": "https://www.klerk.ru/buh/news/719751/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-24T08:10:00.000Z",
-      "topic": "taxes"
     },
     {
       "id": "14ddb31b09e5",
@@ -270,16 +300,6 @@
       "source_url": "https://www.nsktv.ru/",
       "published_at": "2026-11-24T05:34:33.000Z",
       "topic": "city"
-    },
-    {
-      "id": "9f3e9a700c87",
-      "title": "Льготные ставки УСН для НКО и религиозных объединений оставили в ведении регионов",
-      "summary": "Особые условия смогут устанавливать для социально ориентированных НКО и религиозных объединений. Без поправки налог для некоторых организаций мог вырасти в несколько раз.",
-      "url": "https://www.klerk.ru/buh/news/719945/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-23T18:09:00.000Z",
-      "topic": "taxes"
     },
     {
       "id": "b523ac4bf805",
@@ -510,16 +530,6 @@
       "source_url": "https://infopro54.ru/category/news/society/culture/",
       "published_at": "2026-10-21T08:04:07.000Z",
       "topic": "culture"
-    },
-    {
-      "id": "e0efbd196b5e",
-      "title": "Период осенний отчетности начинается у новосибирских предпринимателей",
-      "summary": "Эта отчетная кампания значительно отличается от предыдущих Сообщение Период осенний отчетности начинается у новосибирских предпринимателей появились сначала на Infopro54 - Новости Новосибирска…",
-      "url": "https://infopro54.ru/news/period-osennij-otchetnosti-nachinaetsya-u-novosibirskix-predprinimatelej/",
-      "source_name": "Infopro54 · бизнес",
-      "source_url": "https://infopro54.ru/category/news/biznes/probiznes/",
-      "published_at": "2026-10-06T12:00:55.000Z",
-      "topic": "taxes"
     }
   ]
 }
