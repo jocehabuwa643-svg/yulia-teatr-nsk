@@ -671,13 +671,13 @@
   },
   "cbr": {
     "usd_rub": {
-      "value": 82.1265,
+      "value": 82.2732,
       "unit": "₽",
       "label": "Курс USD/RUB (Банк России)",
       "source_name": "Банк России, XML_daily",
       "source_url": "https://www.cbr.ru/scripts/XML_daily.asp",
       "fetched_at": "2026-11-27",
-      "valid_from": "2026-11-27",
+      "valid_from": "2026-11-28",
       "valid_to": null,
       "confidence": "high",
       "note": "Обновляется scripts/fetch-cbr.mjs по XML_daily.asp (курс на дату valid_from).",
@@ -685,13 +685,13 @@
       "stale": false
     },
     "eur_rub": {
-      "value": 89.8053,
+      "value": 90.2948,
       "unit": "₽",
       "label": "Курс EUR/RUB (Банк России)",
       "source_name": "Банк России, XML_daily",
       "source_url": "https://www.cbr.ru/scripts/XML_daily.asp",
       "fetched_at": "2026-11-27",
-      "valid_from": "2026-11-27",
+      "valid_from": "2026-11-28",
       "valid_to": null,
       "confidence": "high",
       "note": "Обновляется scripts/fetch-cbr.mjs по XML_daily.asp (курс на дату valid_from).",

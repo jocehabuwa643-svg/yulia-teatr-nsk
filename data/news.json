@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-27T12:19:00.227Z",
+  "updated_at": "2026-11-27T23:45:12.549Z",
   "stale": false,
   "sources_total": 8,
   "sources_failed": 0,
@@ -11,81 +11,81 @@
       "name": "ФНС России (УФНС по Новосибирской области)",
       "url": "https://www.nalog.gov.ru/rn54/",
       "feed_url": "https://www.nalog.gov.ru/rn54/rss/",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "ok",
       "items": 1,
-      "total": 3,
-      "last_ok_at": "2026-11-27T12:19:00.227Z"
+      "total": 2,
+      "last_ok_at": "2026-11-27T23:45:12.549Z"
     },
     {
       "name": "Infopro54",
       "url": "https://infopro54.ru/category/news/society/culture/",
       "feed_url": "https://infopro54.ru/category/news/society/culture/feed/",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "ok",
       "items": 11,
       "total": 50,
-      "last_ok_at": "2026-11-27T12:19:00.227Z"
+      "last_ok_at": "2026-11-27T23:45:12.549Z"
     },
     {
       "name": "Вести Новосибирск",
       "url": "https://www.nsktv.ru/",
       "feed_url": "https://www.nsktv.ru/rss.php",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "ok",
       "items": 1,
       "total": 30,
-      "last_ok_at": "2026-11-27T12:19:00.227Z"
+      "last_ok_at": "2026-11-27T23:45:12.549Z"
     },
     {
       "name": "Новосибирские новости",
       "url": "https://nsknews.info/",
       "feed_url": "https://nsknews.info/feed/",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "ok",
-      "items": 4,
+      "items": 6,
       "total": 60,
-      "last_ok_at": "2026-11-27T12:19:00.227Z"
+      "last_ok_at": "2026-11-27T23:45:12.549Z"
     },
     {
       "name": "АиФ-Новосибирск",
       "url": "https://nsk.aif.ru/",
       "feed_url": "https://nsk.aif.ru/rss/all.php",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
-      "status": "empty",
-      "items": 0,
+      "fetched_at": "2026-11-27T23:45:12.549Z",
+      "status": "ok",
+      "items": 1,
       "total": 104,
-      "last_ok_at": "2026-11-27T12:19:00.227Z"
+      "last_ok_at": "2026-11-27T23:45:12.549Z"
     },
     {
       "name": "Infopro54 · бизнес",
       "url": "https://infopro54.ru/category/news/biznes/probiznes/",
       "feed_url": "https://infopro54.ru/category/news/biznes/probiznes/feed/",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "ok",
       "items": 8,
       "total": 50,
-      "last_ok_at": "2026-11-27T12:19:00.227Z"
+      "last_ok_at": "2026-11-27T23:45:12.549Z"
     },
     {
       "name": "Газета «Культура»",
       "url": "https://portal-kultura.ru/",
       "feed_url": "https://portal-kultura.ru/rss/",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "ok",
-      "items": 1,
+      "items": 3,
       "total": 30,
-      "last_ok_at": "2026-11-27T12:19:00.227Z"
+      "last_ok_at": "2026-11-27T23:45:12.549Z"
     },
     {
       "name": "Клерк.ру",
       "url": "https://www.klerk.ru/",
       "feed_url": "https://www.klerk.ru/xml/index.xml",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "ok",
-      "items": 9,
+      "items": 8,
       "total": 100,
-      "last_ok_at": "2026-11-27T12:19:00.227Z"
+      "last_ok_at": "2026-11-27T23:45:12.549Z"
     }
   ],
   "skipped_sources": [
@@ -93,7 +93,7 @@
       "name": "Минкультуры Новосибирской области",
       "url": "https://mk.nso.ru/",
       "feed_url": "https://mk.nso.ru/rss.xml",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -103,7 +103,7 @@
       "name": "Правительство Новосибирской области",
       "url": "https://www.nso.ru/",
       "feed_url": "https://www.nso.ru/rss.xml",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -113,7 +113,7 @@
       "name": "Минкультуры России — новости министерства",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=2&lang=ru&TYPE=ministry&LIMIT=40&SECTION_ID=30",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -123,7 +123,7 @@
       "name": "Минкультуры России — культурная жизнь регионов",
       "url": "https://culture.gov.ru/press/news/",
       "feed_url": "https://culture.gov.ru/rssall/rss.php?ID=34&lang=ru&TYPE=news&LIMIT=40",
-      "fetched_at": "2026-11-27T12:19:00.227Z",
+      "fetched_at": "2026-11-27T23:45:12.549Z",
       "status": "skipped",
       "items": 0,
       "note": "источник недоступен с GitHub, используется при локальном запуске",
@@ -131,6 +131,86 @@
     }
   ],
   "items": [
+    {
+      "id": "c624fd8973f0",
+      "title": "Названы самые прибыльные сферы подработки для самозанятых",
+      "summary": "Гостиничный бизнес и туризм стали самой высокооплачиваемой сферой подработки для самозанятых. Число предложений для них выросло на 20%.",
+      "url": "https://www.klerk.ru/buh/news/720817/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-27T17:52:00.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "df7c1dd4ce97",
+      "title": "Глава ФНС объяснил, как спишут деньги с ЕНС ИП и посчитают налог по вкладам",
+      "summary": "Деньги, зарезервированные под имущественные налоги ИП, могут уйти на более ранний платёж. А с 2027 года банки начнут удерживать НДФЛ с процентов по вкладам, если поправки вступят в силу. Об этом…",
+      "url": "https://www.klerk.ru/buh/articles/720969/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-27T16:48:14.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "cf79a69b62a0",
+      "title": "️ Стройка и ремонт: уходить с ОСНО на УСН или остаться с НДС? Решать до 31 декабря",
+      "summary": "К нам регулярно прилетают вопросы в духе: «А если мы на стройке, стоит ли переходить на УСН?», «А можно платить НДС и потом вернуть часть?» - И каждый раз разговор упирается в цифры, а не в общие…",
+      "url": "https://www.klerk.ru/user/2088604/720961/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-27T15:18:22.000Z",
+      "topic": "taxes"
+    },
+    {
+      "id": "a10cedf2c42c",
+      "title": "В РГДБ открылась выставка «Сказка и быль Ивана Билибина» к 150-летию художника",
+      "summary": "",
+      "url": "https://portal-kultura.ru/articles/news/379934-v-rgdb-otkrylas-vystavka-skazka-i-byl-ivana-bilibina-k-150-letiyu-khudozhnika/",
+      "source_name": "Газета «Культура»",
+      "source_url": "https://portal-kultura.ru/",
+      "published_at": "2026-11-27T14:55:09.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "5ad9d9db1048",
+      "title": "В Новосибирске раскрыли аферу с «Пушкинской картой»",
+      "summary": "",
+      "url": "https://nsk.aif.ru/society/v-novosibirske-raskryli-aferu-s-pushkinskoy-kartoy",
+      "source_name": "АиФ-Новосибирск",
+      "source_url": "https://nsk.aif.ru/",
+      "published_at": "2026-11-27T14:41:24.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "19c55858743d",
+      "title": "Культурный Новосибирск: костюмы для сцены и спектакль о мадам Рубинштейн",
+      "summary": "Вышел новый выпуск нашего видеопроекта «Культурный Новосибирск», посвящённого самым необычным местам и ярким событиям в жизни города.",
+      "url": "https://nsknews.info/news/kulturnyi-novosibirsk-kostiumy-dlia-sceny-i-spektakl-o-madam-rubinstein",
+      "source_name": "Новосибирские новости",
+      "source_url": "https://nsknews.info/",
+      "published_at": "2026-11-27T13:23:50.000Z",
+      "topic": "city"
+    },
+    {
+      "id": "ef6b6a5df2fd",
+      "title": "В Херсонесе Таврическом открылся детский центр «Арго»",
+      "summary": "",
+      "url": "https://portal-kultura.ru/articles/news/379930-v-khersonese-tavricheskom-otkrylsya-detskiy-tsentr-argo/",
+      "source_name": "Газета «Культура»",
+      "source_url": "https://portal-kultura.ru/",
+      "published_at": "2026-11-27T13:04:08.000Z",
+      "topic": "culture"
+    },
+    {
+      "id": "4114e363a08d",
+      "title": "Превысили лимит численности на АУСН: пошаговая инструкция по переходу на УСН в середине года",
+      "summary": "Какое уведомление нужно подать, чтобы после автоУСН не оказаться на ОСНО.",
+      "url": "https://www.klerk.ru/buh/news/720433/",
+      "source_name": "Клерк.ру",
+      "source_url": "https://www.klerk.ru/",
+      "published_at": "2026-11-27T11:55:00.000Z",
+      "topic": "taxes"
+    },
     {
       "id": "f5f978b257f8",
       "title": "Ремонт 77-летней школы на Расточке проконтролировал мэр Новосибирска",
@@ -159,16 +239,6 @@
       "source_name": "Клерк.ру",
       "source_url": "https://www.klerk.ru/",
       "published_at": "2026-11-27T10:38:18.000Z",
-      "topic": "taxes"
-    },
-    {
-      "id": "6b9297d09a64",
-      "title": "Региональные льготы по УСН сокращают: кому придется платить больше налогов?",
-      "summary": "Для малого бизнеса, работающего на упрощенной системе налогообложения, региональная налоговая ставка нередко имеет принципиальное значение. Разница между стандартными 6% и льготными 1% с доходов за…",
-      "url": "https://www.klerk.ru/user/2724878/720865/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-27T09:57:21.000Z",
       "topic": "taxes"
     },
     {
@@ -212,16 +282,6 @@
       "topic": "culture"
     },
     {
-      "id": "c89f40fe2cde",
-      "title": "НДС на УСН, налоговая реформа и новые ФСБУ: какие онлайн-курсы за 5900 ₽ выбрать бухгалтеру в 2026 году",
-      "summary": "Онлайн-курсы для бухгалтеров помогают обновить профессиональные знания, освоить новые инструменты и разобраться в сложных рабочих вопросах без отрыва от работы. В этой подборке собраны обучающие…",
-      "url": "https://www.klerk.ru/blogs/klerk/720735/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-27T07:24:02.000Z",
-      "topic": "taxes"
-    },
-    {
       "id": "7f21ba1bb362",
       "title": "Новосибирские школьники сдали нормативы ГТО в виртуальной реальности",
       "summary": "Для семиклассницы Анастасии Хильченко спорт уже давно стал частью жизни. Она занимается волейболом, боксом, особенно ей нравится каратэ. По стопам отца, кандидата в мастера спорта, через два года…",
@@ -230,26 +290,6 @@
       "source_url": "https://www.nsktv.ru/",
       "published_at": "2026-11-27T06:36:29.000Z",
       "topic": "city"
-    },
-    {
-      "id": "14cad7e32837",
-      "title": "Директор стал ИП: экономия 844 тыс. ₽ Или налоговая ловушка? Почему в одном деле ФНС выиграла, а в другом проиграла",
-      "summary": "Один суд, два противоположных решения по ИП-управляющим. Разбираем, почему в одном случае бизнес выиграл, а в другом ФНС доначислила налоги. Узнайте, как в 2026 году законно сэкономить на взносах и…",
-      "url": "https://www.klerk.ru/user/1963286/720798/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-27T05:24:58.000Z",
-      "topic": "taxes"
-    },
-    {
-      "id": "c39abc3463cc",
-      "title": "Компании и ИП продолжат отчитываться в МВД об иностранцах, а физлиц от этой обязанности освободят в 2027 году",
-      "summary": "Обязанность отменят для тех, кто нанимает иностранцев для личных и домашних нужд без ведения бизнеса. Новые правила начнут действовать с 1 января 2027 года.",
-      "url": "https://www.klerk.ru/buh/news/720588/",
-      "source_name": "Клерк.ру",
-      "source_url": "https://www.klerk.ru/",
-      "published_at": "2026-11-27T05:13:00.000Z",
-      "topic": "taxes"
     },
     {
       "id": "63eb817d42cd",
@@ -332,16 +372,6 @@
       "topic": "city"
     },
     {
-      "id": "c42d97ee2352",
-      "title": "Театральный сквер в Новосибирске оформят к Новому году до 13 декабря",
-      "summary": "На главной праздничной площадке города установят ель, развесят гирлянды и смонтируют световые арки. Информацию о тендере на выполнение работ опубликовали на сайте госзакупок.",
-      "url": "https://nsknews.info/news/teatralnyi-skver-v-novosibirske-oformiat-k-novomu-godu-do-13-dekabria",
-      "source_name": "Новосибирские новости",
-      "source_url": "https://nsknews.info/",
-      "published_at": "2026-11-25T07:02:50.000Z",
-      "topic": "city"
-    },
-    {
       "id": "bb47aa03e29d",
       "title": "ТЮЗ имени Брянцева к 100-летию Корогодского покажет спектакль-альманах «Посвящение»",
       "summary": "",
@@ -360,26 +390,6 @@
       "source_url": "https://nsk.aif.ru/",
       "published_at": "2026-11-25T03:36:24.000Z",
       "topic": "city"
-    },
-    {
-      "id": "d9b7f695adb7",
-      "title": "В Мариинском театре представят новогоднюю елку «Танцы кукол» к 120-летию Шостаковича",
-      "summary": "",
-      "url": "https://portal-kultura.ru/articles/news/379867-v-mariinskom-teatre-predstavyat-novogodnyuyu-elku-tantsy-kukol-k-120-letiyu-shostakovicha/",
-      "source_name": "Газета «Культура»",
-      "source_url": "https://portal-kultura.ru/",
-      "published_at": "2026-11-24T13:21:37.000Z",
-      "topic": "culture"
-    },
-    {
-      "id": "5ea5d59accef",
-      "title": "В ГИТИСе подвели итоги IX фестиваля театральных школ стран СНГ",
-      "summary": "",
-      "url": "https://portal-kultura.ru/articles/news/379862-v-gitise-podveli-itogi-ix-festivalya-teatralnykh-shkol-stran-sng/",
-      "source_name": "Газета «Культура»",
-      "source_url": "https://portal-kultura.ru/",
-      "published_at": "2026-11-24T10:35:21.000Z",
-      "topic": "culture"
     },
     {
       "id": "0f74b757444b",
@@ -519,16 +529,6 @@
       "source_name": "Минкультуры Новосибирской области",
       "source_url": "https://mk.nso.ru/",
       "published_at": "2026-11-23T03:20:00.000Z",
-      "topic": "culture"
-    },
-    {
-      "id": "a31f4eb6e802",
-      "title": "Концерт Молодежного духового оркестра",
-      "summary": "Концерт Молодежного духового оркестра Новосибирской государственной консерватории имени М. И. Глинки под управлением Игоря Шаталова объединяет академическую и популярную музыку – от торжественных…",
-      "url": "https://culture.gov.ru/press/culture_life/kontsert_molodezhnogo_dukhovogo_orkestra_20261121012213_6b00c815b7344/",
-      "source_name": "Минкультуры России — культурная жизнь регионов",
-      "source_url": "https://culture.gov.ru/press/news/",
-      "published_at": "2026-11-21T14:35:07.000Z",
       "topic": "culture"
     }
   ]
