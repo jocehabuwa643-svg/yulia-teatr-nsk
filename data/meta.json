@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0.0",
-  "generated_at": "2026-11-27T23:45:17.135Z",
+  "generated_at": "2026-11-28T11:44:04.602Z",
   "project": "Бизнес-помощник Юлии · детский театр и студия, Новосибирск",
   "data_files": [
     "rates.json",
@@ -37,5 +37,5 @@
     }
   },
   "source_of_truth": "https://github.com/jocehabuwa643-svg/yulia-teatr-nsk",
-  "checked_at": "2026-11-27T23:45:17.135Z"
+  "checked_at": "2026-11-28T11:44:04.602Z"
 }
